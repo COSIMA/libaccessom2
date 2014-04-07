@@ -1,16 +1,13 @@
 #! /bin/csh -f
 
 if ( $1 == '') then
-  echo '*** Please issue this command like ***'
-  echo '     > ./build.sh <platform>  ' 
-  echo 'For example: ./build.sh nci   ' 
-  exit 1
+  set platform = nci
 else
   set platform = $1
 endif
 
 # Location of this model
-setenv SRCDIR $cwd:h
+setenv SRCDIR $cwd
 setenv BLD $SRCDIR/build
 setenv OASIS_HOME $cwd:h:h/oasis3-mct/
 
