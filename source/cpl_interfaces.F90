@@ -1,20 +1,6 @@
 module cpl_interfaces
-!
-!============================================================================
-! coupling interface between this dummy (data) atmo model and the oasis3_25
-! coupler (via MPI2) using the PRISM System Model Interface (PSMILe).
-!
-!============================================================================
 
-#ifdef OASIS3_MCT
-  use mod_prism
-#else
-  use mod_prism_proto
-  use mod_prism_def_partition_proto
-  use mod_prism_put_proto
-  use mod_prism_get_proto
-  !use mod_prism_grids_writing
-#endif
+use mod_prism
 
 use atm_kinds
 use atm_domain
@@ -25,7 +11,6 @@ use cpl_forcing_handler
 implicit none
 
 include 'mpif.h'
-!...not needed if 'use mod_prism_grids_writing'
 
 logical :: mpiflag
 
