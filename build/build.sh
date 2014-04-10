@@ -9,7 +9,7 @@ endif
 # Location of this model
 setenv SRCDIR $cwd
 setenv BLD $SRCDIR/build
-setenv OASIS_HOME $cwd:h:h/oasis3-mct/
+setenv OASIS_HOME $cwd:h/coupler
 
 # Set local setting such as loading modules. 
 source $BLD/environs.$platform

@@ -1,6 +1,6 @@
 
 .PHONY: build
 
-build:
+access-om:
 	build/build.sh
 
