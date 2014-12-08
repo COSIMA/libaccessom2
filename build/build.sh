@@ -9,17 +9,16 @@ endif
 # Location of this model
 setenv SRCDIR $cwd
 setenv BLD $SRCDIR/build
-setenv OASIS_HOME $cwd:h/coupler
 
 # Set local setting such as loading modules. 
 source $BLD/environs.$platform
 
 ### Location and names of coupling libraries
-setenv CPLLIBDIR $OASIS_HOME/Linux/lib
+setenv CPLLIBDIR $OASIS_ROOT/lib
 setenv CPLLIBS '-L$(CPLLIBDIR) -lpsmile.MPI1 -lmct -lmpeu -lscrip'
 
 ### Location of coupling inclusions
-setenv CPLINCDIR $OASIS_HOME/Linux/build/lib
+setenv CPLINCDIR $OASIS_ROOT/include
 setenv CPL_INCS '-I$(CPLINCDIR)/psmile.MPI1 -I$(CPLINCDIR)/pio -I$(CPLINCDIR)/mct'
 
 ### Grid resolution
