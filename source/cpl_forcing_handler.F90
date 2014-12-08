@@ -7,6 +7,8 @@ use cpl_arrays
 
 implicit none
 
+include 'netcdf.inc'
+
 contains
 
 !===========================================================================

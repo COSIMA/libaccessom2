@@ -9,9 +9,13 @@ implicit none
 include 'netcdf.inc'
 integer(kind=int_kind) :: pLonDimId, pLatDimId, timeDimId, pDepDimId
 
-contains 
+private
 
-subroutine ncheck(status, error_str) 
+public :: ncheck, create_ncfile, write_nc_1Dtime, write_nc2D, write_nc2D_notime
+
+contains
+
+subroutine ncheck(status, error_str)
 
     implicit none
 
