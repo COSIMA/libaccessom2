@@ -6,6 +6,11 @@ else
   set platform = $1
 endif
 
+set debug = $2
+if ($debug == 'debug') then
+    setenv DEBUG yes
+endif
+
 # Location of this model
 setenv SRCDIR $cwd
 setenv BLD $SRCDIR/build
