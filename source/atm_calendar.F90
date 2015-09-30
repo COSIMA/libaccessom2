@@ -147,7 +147,7 @@
       year_init = init_date/10000
 
       ! determine initial date (assumes namelist year_init, istep0 unchanged)     
-      sec = mod(int(time),secday)            ! elapsed seconds into date at
+      sec = int(mod(time,float(secday)))! elapsed seconds into date at
                                         ! end of dt
       tday = (time-sec)/secday + c1     ! absolute day number
       yday = mod(tday-c1,days_year(year_init)) + c1    ! day of the year
