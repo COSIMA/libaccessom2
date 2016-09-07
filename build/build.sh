@@ -19,11 +19,11 @@ setenv BLD $SRCDIR/build
 source $BLD/environs.$platform
 
 ### Location and names of coupling libraries
-setenv CPLLIBDIR $OASIS_ROOT/lib
+setenv CPLLIBDIR $OASIS_ROOT/Linux/lib
 setenv CPLLIBS '-L$(CPLLIBDIR) -lpsmile.MPI1 -lmct -lmpeu -lscrip'
 
 ### Location of coupling inclusions
-setenv CPLINCDIR $OASIS_ROOT/include
+setenv CPLINCDIR $OASIS_ROOT/Linux/build/lib
 setenv CPL_INCS '-I$(CPLINCDIR)/psmile.MPI1 -I$(CPLINCDIR)/pio -I$(CPLINCDIR)/mct'
 
 ### Grid resolution
