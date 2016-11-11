@@ -30,6 +30,8 @@ PROGRAM datm
 !* nt_read = itap_sec/dt_cpl + 2 					    *
 !									    !
 !* Note there itap_sec/dt_cpl = 0 for the first coupling interval!	    *
+!                                                                           !
+! Modified by Fabio Dias (21/02/2016) to accept JRA-55 forcing.             !
 !============================================================================
 
   use atm_kinds
@@ -65,9 +67,9 @@ PROGRAM datm
   allocate (dewpt(nx_global,ny_global)); dewpt = 0.
   !allocate (rain(nx_global,ny_global)); rain = 0.
   !allocate (snow(nx_global,ny_global)); snow = 0.
-
+  
   call prism_init
-
+  
   call init_cpl
 
   !B: All processors read the namelist--
@@ -117,6 +119,7 @@ PROGRAM datm
       trim(dataset) /= 'era40' .and. &
       trim(dataset) /= 'core'  .and. &
       trim(dataset) /= 'core2' .and. &
+      trim(dataset) /= 'jra55' .and. &
       trim(dataset) /= 'hadgem3' ) then
       print *, 'MATM: Wrong forcing data-- ', trim(dataset)
       stop 'MATM: FATAL ERROR--unrecognised atmospheric forcing!' 
@@ -320,10 +323,59 @@ PROGRAM datm
 
           enddo
 
-        else !if (trim(dataset) == 'era40' .or. trim(dataset) == 'ncep2') then
+        else if (trim(dataset) == 'jra55') then
 
           do jf = 1, nfields
 
+          ! need read in the First record from next year dataset
+          !-------------------------------------------------------!
+          if (imonth == 12) then
+            if (icpl == num_cpl) then           !the last cpl interval
+              call nextyear_forcing(cfile(jf))
+              nt_read = 1
+            endif
+          endif
+
+          !nrec = nt_read               ! changed to handle different time scale
+                                        ! in runoff data
+          if ( jf /= 8 ) then
+            nrec = nt_read
+          else
+            nrec = (nt_read+1)/2
+          endif
+
+          write(il_out,*) '(main) reading forcing data no: ', jf, ' ',trim(cfield(jf))
+          write(il_out,*) '       record no: ', nrec
+
+          if ( jf==8 .and. runtype == 'IA' ) then
+          ! runoff is unavailable from core, we thus read it from the ncep2
+          ! data,
+            call read_ncep2(vwork, nx_global, ny_global, nrec, trim(cfield(jf)),cfile(jf))
+          ! BUT for spinup run (runtype == 'NY', ie., normal year run), we've
+          ! generated
+          ! multi-year mean (1979-2006) runof from ncep2 IA data, and its format
+          ! is the
+          ! same as the real core data, thus use read_core below.
+          else
+            call read_core(vwork, nx_global,ny_global, nrec, trim(cfield(jf)),cfile(jf))
+          endif
+
+          if (jf == 1) swfld = vwork
+          if (jf == 2) lwfld = vwork
+          if (jf == 3) uwnd  = vwork
+          if (jf == 4) vwnd  = vwork
+          if (jf == 5) rain  = vwork
+          if (jf == 6) snow  = vwork
+          if (jf == 7) press = vwork
+          if (jf == 8) runof = vwork
+          if (jf == 9) tair  = vwork
+          if (jf ==10) qair  = vwork
+
+          enddo
+        
+        else !if (trim(dataset) == 'era40' .or. trim(dataset) == 'ncep2') then
+
+          do jf = 1, nfields  
           ! need read in the First record from next year dataset
           !-------------------------------------------------------!
           if (imonth == 12) then
@@ -400,7 +452,7 @@ PROGRAM datm
 
   enddo        !icpl = 1, num_cpl
 
-  call coupler_termination()
+  call coupler_termination
 
   !--------------------------------------------------------------------------!
   
