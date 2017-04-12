@@ -331,7 +331,9 @@ PROGRAM datm
           !-------------------------------------------------------!
           if (imonth == 12) then
             if (icpl == num_cpl) then           !the last cpl interval
-              call nextyear_forcing(cfile(jf))
+               if ( runtype == 'IA' ) then
+                  call nextyear_forcing(cfile(jf))
+               end if
               nt_read = 1
             endif
           endif
