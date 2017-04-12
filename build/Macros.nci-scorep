@@ -1,0 +1,48 @@
+#==============================================================================
+# Makefile macros for xe.nci.org.au, an SGI ALTIX system running Linux
+#==============================================================================
+
+INCLDIR    := -I.
+SLIBS      := 
+ULIBS      := 
+CPP        := cpp
+CPPFLAGS   := -P -traditional
+CPPDEFS    :=
+CFLAGS     := -c -O2
+FIXEDFLAGS := -132
+FREEFLAGS  := 
+
+ifeq ($(VTRACE), yes)
+    FC         := mpif90-vt
+else
+    FC         := scorep mpif90
+endif
+
+ifeq ($(DEBUG), yes)
+    FFLAGS     := -g -r8 -i4 -O0 -traceback -debug all -no-vec -align all -w -fpe0 -ftz -convert big_endian -assume byterecl -assume buffered_io -check noarg_temp_created
+else
+    FFLAGS     := -r8 -i4 -O2 -align all -g -traceback -w -fpe0 -ftz -convert big_endian -assume byterecl -assume buffered_io -check noarg_temp_created
+endif
+
+#08/01/09: try FFLAGS used by toyclim (which works for toyclim model)
+#FFLAGS	:= -g  -heap-arrays 1m -convert big_endian -r8 $(PSMILE_INCDIR) $(CPPDEF) -I$(NETCDF_INCLUDE)
+ 
+
+MOD_SUFFIX := mod
+LD         := $(FC)
+LDFLAGS    := $(FFLAGS) -v 
+
+CPPDEFS :=  $(CPPDEFS) -DNXGLOB=$(NXGLOB) -DNYGLOB=$(NYGLOB)
+SLIBS   :=  $(SLIBS) #$(OMPI_F90LIBS)
+
+INCLDIR := $(INCLDIR) -I$(NETCDF_ROOT)/include
+SLIBS   := $(SLIBS) -L$(NETCDF_ROOT)/lib -lnetcdf -lnetcdff
+
+INCLDIR := $(INCLDIR) $(CPL_INCS)
+SLIBS   := $(SLIBS) $(CPLLIBS)
+SLIBS   := $(SLIBS) -L$(NETCDF_ROOT)/lib/ -lnetcdf -lnetcdff
+
+ifeq ($(OASIS3_MCT), yes)
+   CPPDEFS := $(CPPDEFS) -DOASIS3_MCT
+endif
+
