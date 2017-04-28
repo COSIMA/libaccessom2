@@ -8,7 +8,7 @@ implicit none
 
 integer(kind=int_kind), parameter :: jpfldout = 10  ! Number of fields sent
 !!!integer(kind=int_kind), parameter :: jpfldin  = 5   ! Number of fields rcvd
-integer(kind=int_kind), parameter :: jpfldin  = 1
+integer(kind=int_kind), parameter :: jpfldin  = 0
 
 character(len=8), dimension(jpfldout) :: cl_writ ! Symb names fields sent
 character(len=8), dimension(jpfldin)  :: cl_read ! Symb names fields rcvd

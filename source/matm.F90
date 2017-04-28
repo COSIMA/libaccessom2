@@ -173,7 +173,7 @@ PROGRAM datm
     write(il_out,*) '(main) calling from_cpl at icpl, rtime= ',icpl,rtimestamp
 !    print *, 'MATM: (main) calling from_cpl at icpl, rtime= ',icpl,rtimestamp
 
-    call from_cpl(rtimestamp)
+    !call from_cpl(rtimestamp)
 
     write(il_out,*)
     write(il_out,*) '(main) called from_cpl at icpl, rtime= ',icpl,rtimestamp
