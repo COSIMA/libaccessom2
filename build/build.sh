@@ -27,8 +27,8 @@ setenv CPLINCDIR $OASIS_ROOT/Linux/build/lib
 setenv CPL_INCS '-I$(CPLINCDIR)/psmile.MPI1 -I$(CPLINCDIR)/pio -I$(CPLINCDIR)/mct'
 
 ### Grid resolution
-setenv GRID nt62
-setenv RES 192x94
+setenv GRID jrat
+setenv RES 640x320
 
 ### Location and name of the generated exectuable 
 setenv EXE matm_${GRID}.exe
