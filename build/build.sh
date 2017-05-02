@@ -27,7 +27,7 @@ setenv CPLINCDIR $OASIS_ROOT/Linux/build/lib
 setenv CPL_INCS '-I$(CPLINCDIR)/psmile.MPI1 -I$(CPLINCDIR)/pio -I$(CPLINCDIR)/mct'
 
 ### Grid resolution
-setenv GRID jrat
+setenv GRID jra55
 setenv RES 640x320
 
 ### Location and name of the generated exectuable 
