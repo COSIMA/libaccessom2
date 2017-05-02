@@ -36,10 +36,9 @@ real(kind=dbl_kind),dimension(nx_global,ny_global) :: dla_lon, dla_lat, dla_srf
 integer(kind=int_kind),dimension(nx_global,ny_global) :: ila_msk 
 real(kind=dbl_kind),dimension(nx_global,ny_global,4) :: dla_lonb, dla_latb
  
-integer(kind=int_kind) :: io_size, ii, il_bufsize, il_real, il_bufsizebyt
+integer(kind=int_kind) :: io_size, ii, il_bufsize, il_real
 integer(kind=int_kind) :: integer_byte_size, integer_io_size 
 real(kind=dbl_kind), dimension(nx_global,ny_global)  :: rla_array
-real(kind=dbl_kind), dimension(:), allocatable :: rla_bufsend
 
 contains
 
@@ -83,9 +82,6 @@ contains
   inquire (iolength=io_size) rla_array(1,1)
   il_real = io_size/integer_io_size*integer_byte_size
   il_bufsize = ncells + MPI_BSEND_OVERHEAD/il_real + 1
-  allocate (rla_bufsend(il_bufsize), stat = ierror)
-  il_bufsizebyt = il_bufsize * il_real
-  call MPI_Buffer_Attach(rla_bufsend, il_bufsizebyt, ierror)
 
   if (ierror /= PRISM_Ok) then
 !      print *, 'MATM: (prism_init) Error in MPI_Buffer_Attach.'
@@ -392,10 +388,6 @@ subroutine coupler_termination()
     deallocate(runof)
     deallocate(snow)
     deallocate(vwork)
-
-    ! Detach from MPI buffer, FIXME this may not be needed. 
-    call MPI_Buffer_Detach(rla_bufsend, il_bufsize, ierror)
-    deallocate (rla_bufsend)
 
     call prism_terminate_proto(ierror)
     if (ierror /= PRISM_Ok) then
