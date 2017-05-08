@@ -1,5 +1,6 @@
 module cpl_interfaces
 
+use mpi
 use mod_prism
 
 use atm_kinds
@@ -9,8 +10,6 @@ use cpl_arrays
 use cpl_forcing_handler
 
 implicit none
-
-include 'mpif.h'
 
 logical :: mpiflag
 
@@ -29,6 +28,8 @@ integer(kind=int_kind), dimension(4) :: il_var_shape
   
 integer(kind=int_kind), dimension(3) :: il_paral ! Definition of monoprocess partition
   
+integer(kind=int_kind) :: il_commice, my_commice_task   
+
 integer(kind=int_kind) :: il_flag        ! Flag for grid writing
 integer(kind=int_kind) :: il_status, il_fileid, il_varid 
 integer(kind=int_kind), dimension(2) :: icnt   !,ist ==> what is it?
@@ -103,6 +104,10 @@ contains
   else
       print *, 'MOCN: _get_localcomm_ OK! il_commlocal= ',il_commlocal
   endif
+
+  ! Get an intercommunicator with the ice.
+  call prism_get_intercomm(il_commice, 'cicexx', ierror)
+  call MPI_Comm_Rank(il_commice, my_commice_task, ierror)
 
   end subroutine prism_init
 
@@ -306,7 +311,10 @@ contains
   !--------------------------------------------------------------
 
   integer(kind=int_kind), intent(in) :: istep1
-  integer(kind=int_kind) :: i, jf
+  integer(kind=int_kind) :: i, jf, tag
+  integer(kind=int_kind) :: stat(MPI_STATUS_SIZE)
+  integer(kind=int_kind) :: buf(1)
+
 
   if (my_task == 0 .or. ll_comparal) then
 
@@ -365,7 +373,13 @@ contains
     call check_a2i_fields(istep1)
   endif
 
-  return
+  ! Block until we receive from ice. This prevents the atm from sending
+  ! continuously.
+  if (my_commice_task == 0) then
+    tag = MPI_ANY_TAG
+    call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, il_commice,  stat, ierror)
+  endif
+
   end subroutine into_cpl
   
 
