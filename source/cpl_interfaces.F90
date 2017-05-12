@@ -380,6 +380,8 @@ contains
     call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, il_commice,  stat, ierror)
   endif
 
+  call MPI_Barrier(il_commlocal, ierror)
+
   end subroutine into_cpl
   
 
