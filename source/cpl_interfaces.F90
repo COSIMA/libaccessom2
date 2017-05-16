@@ -390,7 +390,7 @@ subroutine coupler_termination()
     implicit none
 
     ! Write out restart file.
-    call save_a2i_fields('a2i.nc')
+    call save_a2i_fields('INPUT/a2i.nc')
 
     deallocate(isst)
     deallocate(tair) 
