@@ -125,8 +125,8 @@ contains
   call MPI_Comm_Rank(il_commlocal, my_task, ierror)
   
   il_out = 85 + my_task
-  write(chout,'(I3)')il_out
-  chatmout='atmout'//chout
+  write(chout,'(I6.3)')il_out
+  chatmout='atmout'//trim(chout)
   
   open(il_out,file=chatmout,form='formatted')
   write(il_out,*) 'Number of processes:', il_nbtotproc
