@@ -14,8 +14,8 @@ implicit none
 logical :: mpiflag
 
 integer(kind=int_kind)  :: ierror, ibou
-character(len=8) :: chatmout
-character(len=2) :: chout 
+character(len=9) :: chatmout
+character(len=3) :: chout 
 integer(kind=int_kind) :: il_comp_id     ! Component ID
 integer(kind=int_kind) :: il_commlocal   ! Component internal communicator
 integer(kind=int_kind) :: il_nbtotproc   ! Total number of processes
@@ -125,7 +125,7 @@ contains
   call MPI_Comm_Rank(il_commlocal, my_task, ierror)
   
   il_out = 85 + my_task
-  write(chout,'(I2)')il_out
+  write(chout,'(I3)')il_out
   chatmout='atmout'//chout
   
   open(il_out,file=chatmout,form='formatted')
