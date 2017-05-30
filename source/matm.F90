@@ -46,8 +46,9 @@ PROGRAM datm
 
   integer :: jf, icpl, itap, itap_sec, icpl_sec, rtimestamp, stimestamp
 
-  integer :: num_cpl       ! = runtime/dt_cpl !
-  integer :: npas          ! = dt_cpl/dt_atm !
+  integer :: num_cpl              ! = runtime/dt_cpl !
+  integer :: num_cpl_in_year      ! = runtime/dt_cpl !
+  integer :: npas                 ! = dt_cpl/dt_atm !
   
   character(len=80), dimension(:), allocatable :: cfile
   character(len=8),  dimension(:), allocatable :: cfield
@@ -83,7 +84,12 @@ PROGRAM datm
   write(*, coupling)
 
   num_cpl = runtime/dt_cpl
+  num_cpl_in_year = (365*86400) / dt_cpl
   npas = dt_cpl/dt_atm 
+
+  if (num_cpl < num_cpl_in_year) then
+    num_cpl_in_year = num_cpl
+  endif
 
   iniday  = mod(inidate, 100)
   inimon  = mod( (inidate - iniday)/100, 100)
@@ -131,7 +137,7 @@ PROGRAM datm
   write(il_out,*) 'Atmospheric forcing dataset: ', trim(dataset) 
   write(il_out,*) 'Runtime for this integration  (s): ',runtime
   write(il_out,*) 'dt_cpl, dt_atm : ',dt_cpl, dt_atm
-  write(il_out,*) 'num of cpl int and matm-iner loop: ',num_cpl,npas
+  write(il_out,*) 'num of cpl int, num cpl in year,  and matm-iner loop: ',num_cpl, num_cpl_in_year, npas
 
   dt_accum = real(dt_cpl)
 
@@ -164,19 +170,21 @@ PROGRAM datm
 ! --- *** BE CAREFUL WITH the timestamp for coupling operation: *** ---
 !       (here rtimestamp for receiving and stimestamp for sending)
 
+  nt_read = 1
+
   do icpl = 1, num_cpl
 
     icpl_sec = dt_cpl * (icpl - 1)        !runtime for this run segment! 
     rtimestamp = icpl_sec                 !recv timestamp
 
-    write(il_out,*)
-    write(il_out,*) '(main) calling from_cpl at icpl, rtime= ',icpl,rtimestamp
+!    write(il_out,*)
+!    write(il_out,*) '(main) calling from_cpl at icpl, rtime= ',icpl,rtimestamp
 !    print *, 'MATM: (main) calling from_cpl at icpl, rtime= ',icpl,rtimestamp
 
     !call from_cpl(rtimestamp)
 
-    write(il_out,*)
-    write(il_out,*) '(main) called from_cpl at icpl, rtime= ',icpl,rtimestamp
+!    write(il_out,*)
+!    write(il_out,*) '(main) called from_cpl at icpl, rtime= ',icpl,rtimestamp
 !    print *, 'MATM: (main) called from_cpl at icpl, rtime= ',icpl,rtimestamp
 
     !=== matm internal time loop ===!
@@ -208,7 +216,7 @@ PROGRAM datm
         ! coupling interval! 
 
         ! Note the 'position' of the record in the yearly data (yruntime0 counted in)!
-        nt_read = itap_sec/dt_cpl + 2         ! see comments above !
+        nt_read = nt_read + 1
 
         write(il_out,*)
         write(il_out,*) 'idate, iday, imonth, iyear: ', idate, iday, imonth, iyear
@@ -330,7 +338,7 @@ PROGRAM datm
           ! need read in the First record from next year dataset
           !-------------------------------------------------------!
           if (imonth == 12) then
-            if (icpl == num_cpl) then           !the last cpl interval
+            if (mod(icpl, num_cpl_in_year) == 0) then           !the last cpl interval
                if ( runtype == 'IA' ) then
                   call nextyear_forcing(cfile(jf))
                end if
