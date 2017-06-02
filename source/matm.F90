@@ -245,7 +245,7 @@ PROGRAM datm
           ! to read in at the beginning of next year
           !------------------------------------------------------------------------!
           if (imonth == 12) then
-            if (icpl == num_cpl) then           !the last cpl interval
+            if (mod(icpl, num_cpl_in_year) == 0) then           !the last cpl interval
               ! Comment out below to re-use the same file year after year.    
               !if ( (jf-1)*(jf-2)*(jf-5)*(jf-6) /= 0 ) then
               !  call nextyear_forcing(cfile(jf))  
@@ -346,12 +346,12 @@ PROGRAM datm
             endif
           endif
 
-          !nrec = nt_read               ! changed to handle different time scale
-                                        ! in runoff data
           if ( jf /= 8 ) then
             nrec = nt_read
           else
-            nrec = (nt_read+1)/2
+            ! changed to handle daily time scale
+            ! in runoff data
+            nrec = (nt_read-1)/8 + 1
           endif
 
           write(il_out,*) '(main) reading forcing data no: ', jf, ' ',trim(cfield(jf))
