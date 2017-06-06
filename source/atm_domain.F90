@@ -12,8 +12,7 @@ save
 
 integer(kind=int_kind), parameter :: &
   nx_global = NXGLOB,   &  ! i-axis size
-  ny_global = NYGLOB,   &  ! j-axis size
-  ncells    = nx_global * ny_global 
+  ny_global = NYGLOB       ! j-axis size
 
 end module atm_domain
 !=======================================================================

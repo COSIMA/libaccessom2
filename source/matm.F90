@@ -41,6 +41,7 @@ PROGRAM datm
   use cpl_arrays
   use cpl_interfaces   
   use atm_calendar
+  use cpl_netcdf_setup, only : get_field_dims
 
   implicit none
 
@@ -55,6 +56,9 @@ PROGRAM datm
   integer :: nt_read, nfields, nrec 
   integer :: nt_read12, nt_read56  !for core data special handling
   integer :: iday, imonth, iyear
+  integer :: i, unused
+
+  integer :: nx_global_runoff, ny_global_runoff
 
   real, dimension(:,:), allocatable :: dewpt
   ! era40 has only dewpoint temperature (K), which needs be converted into 
@@ -65,13 +69,35 @@ PROGRAM datm
   real, parameter :: Tffresh = 273.15 
   !============================================================================
 
+  open(1,file='data_4_matm.table',form='formatted',status='old')
+  read(1,*)nfields
+
+  allocate (cfile(nfields))
+  allocate (cfield(nfields))
+
+!  print *, 'MATM: nfields= ',nfields, ' and jpfldout= ',jpfldout
+  write(il_out,*) ' nfields= ',nfields, ' and jpfldout= ',jpfldout
+  
+  do i = 1,nfields
+    read(1,'(a)')cfile(i)
+    read(1,'(a)')cfield(i)
+!    print *, 'MATM: forcing data to be read in: ',i, '  ',trim(cfile(i))
+!    print *, '        which contains field: ', cfield(i)
+    write(il_out,*) 'forcing dataset to be read in: ',i, '  ',trim(cfile(i))
+    write(il_out,*) '      for field: ', cfield(i)
+  enddo 
+  close(1)
+
   allocate (dewpt(nx_global,ny_global)); dewpt = 0.
   !allocate (rain(nx_global,ny_global)); rain = 0.
   !allocate (snow(nx_global,ny_global)); snow = 0.
-  
+
   call prism_init
+
+  call get_field_dims(nx_global_runoff, ny_global_runoff, unused, &
+                      cfile(8), cfield(8))
   
-  call init_cpl
+  call init_cpl(nx_global_runoff, ny_global_runoff)
 
   !B: All processors read the namelist--
   !   get runtime0, runtime, dt_cpl, dt_atm in seconds, and 
@@ -141,24 +167,6 @@ PROGRAM datm
 
   dt_accum = real(dt_cpl)
 
-  open(1,file='data_4_matm.table',form='formatted',status='old')
-  read(1,*)nfields
-
-  allocate (cfile(nfields))
-  allocate (cfield(nfields))
-
-!  print *, 'MATM: nfields= ',nfields, ' and jpfldout= ',jpfldout
-  write(il_out,*) ' nfields= ',nfields, ' and jpfldout= ',jpfldout
-  
-  do ii = 1,nfields
-    read(1,'(a)')cfile(ii)
-    read(1,'(a)')cfield(ii)
-!    print *, 'MATM: forcing data to be read in: ',ii, '  ',trim(cfile(ii))
-!    print *, '        which contains field: ', cfield(ii)
-    write(il_out,*) 'forcing dataset to be read in: ',ii, '  ',trim(cfile(ii))
-    write(il_out,*) '      for field: ', cfield(ii)
-  enddo 
-  close(1)
 
   !=========================================================!
   ! Component model coupling and internal timestepping      !
@@ -349,37 +357,38 @@ PROGRAM datm
           if ( jf /= 8 ) then
             nrec = nt_read
           else
-            ! changed to handle daily time scale
-            ! in runoff data
-            nrec = (nt_read-1)/8 + 1
+            nrec = (nt_read+1)/2
           endif
 
           write(il_out,*) '(main) reading forcing data no: ', jf, ' ',trim(cfield(jf))
           write(il_out,*) '       record no: ', nrec
 
-          if ( jf==8 .and. runtype == 'IA' ) then
-          ! runoff is unavailable from core, we thus read it from the ncep2
-          ! data,
-            call read_ncep2(vwork, nx_global, ny_global, nrec, trim(cfield(jf)),cfile(jf))
-          ! BUT for spinup run (runtype == 'NY', ie., normal year run), we've
-          ! generated
-          ! multi-year mean (1979-2006) runof from ncep2 IA data, and its format
-          ! is the
-          ! same as the real core data, thus use read_core below.
+
+          if ( jf==8 ) then
+            if ( runtype == 'IA' ) then
+              ! runoff is unavailable from core, we thus read it from the ncep2
+              ! data,
+                call read_ncep2(runof, nx_global_runoff, ny_global_runoff, nrec, trim(cfield(jf)),cfile(jf))
+              ! BUT for spinup run (runtype == 'NY', ie., normal year run), we've
+              ! generated
+              ! multi-year mean (1979-2006) runof from ncep2 IA data, and its format
+              ! is the
+              ! same as the real core data, thus use read_core below.
+            else
+              call read_core(runof, nx_global_runoff , ny_global_runoff, nrec, trim(cfield(jf)),cfile(jf))
+            endif
           else
             call read_core(vwork, nx_global,ny_global, nrec, trim(cfield(jf)),cfile(jf))
+            if (jf == 1) swfld = vwork
+            if (jf == 2) lwfld = vwork
+            if (jf == 3) uwnd  = vwork
+            if (jf == 4) vwnd  = vwork
+            if (jf == 5) rain  = vwork
+            if (jf == 6) snow  = vwork
+            if (jf == 7) press = vwork
+            if (jf == 9) tair  = vwork
+            if (jf ==10) qair  = vwork
           endif
-
-          if (jf == 1) swfld = vwork
-          if (jf == 2) lwfld = vwork
-          if (jf == 3) uwnd  = vwork
-          if (jf == 4) vwnd  = vwork
-          if (jf == 5) rain  = vwork
-          if (jf == 6) snow  = vwork
-          if (jf == 7) press = vwork
-          if (jf == 8) runof = vwork
-          if (jf == 9) tair  = vwork
-          if (jf ==10) qair  = vwork
 
           enddo
         

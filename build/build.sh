@@ -30,6 +30,9 @@ setenv CPL_INCS '-I$(CPLINCDIR)/psmile.MPI1 -I$(CPLINCDIR)/pio -I$(CPLINCDIR)/mc
 setenv GRID jra55
 setenv RES 640x320
 
+#setenv GRID nt62
+#setenv RES 192x94
+
 ### Location and name of the generated exectuable 
 setenv EXE matm_${GRID}.exe
 
