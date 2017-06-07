@@ -1,0 +1,267 @@
+
+module remap_runoff_mod
+
+  use netcdf
+  use kdrunoff_mod, only : kdrunoff_class, kdrunoff_new, kdrunoff_del
+  use kdrunoff_mod, only : kdrunoff_remap
+
+  implicit none
+  private
+
+  type :: remap_runoff_class
+    real, dimension(:), allocatable :: row, col, s
+    real, dimension(:), allocatable :: frac_a, frac_b, area_a, area_b
+    integer :: n_s, n_a, n_b
+    integer :: num_land_pts, num_ocean_pts
+    type(kdrunoff_class) :: kdrunoff
+  end type remap_runoff_class
+
+  real, parameter :: MAX_RELATIVE_ERROR = 1e-12
+
+  public :: remap_runoff_class, remap_runoff_new, remap_runoff_del
+  public :: remap_runoff_do
+
+contains
+
+  subroutine remap_runoff_new(this, weights, lats, lons, mask)
+    type(remap_runoff_class), intent(inout) :: this
+
+    character(len=*), intent(in) :: weights
+    real, dimension(:, :), intent(in) :: lats, lons, mask
+
+    integer :: ncid
+    integer :: n_s, n_a, n_b
+
+    ! Initialise remapping weights arrays
+    call ncheck(nf90_open(weights, NF90_NOWRITE, ncid), "Can't open weights")
+    call read_weight_dims(ncid, n_s, n_a, n_b)
+
+    allocate(this%row(n_s), this%col(n_s), this%s(n_s))
+    allocate(this%frac_a(n_a), this%frac_b(n_b))
+    allocate(this%area_a(n_a), this%area_b(n_b))
+
+    call read_weights(ncid, this%row, this%col, this%s, &
+                      this%frac_a, this%frac_b, this%area_a, this%area_b)
+
+    this%n_s = n_s
+    this%n_a = n_a
+    this%n_b = n_b
+
+    call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
+                      this%num_land_pts, this%num_ocean_pts)
+
+  end subroutine remap_runoff_new
+
+  subroutine remap_runoff_del(this)
+    type(remap_runoff_class), intent(inout) :: this
+
+    deallocate(this%row, this%col, this%s)
+    deallocate(this%frac_a, this%frac_b, this%area_a, this%area_b)
+
+    call kdrunoff_del(this%kdrunoff)
+
+  end subroutine remap_runoff_del
+
+  subroutine remap_runoff_do(this, runoff_in, runoff_out, mask)
+    type(remap_runoff_class), intent(inout) :: this
+
+    real, dimension(:, :), intent(in) :: runoff_in
+    real, dimension(:, :), intent(inout) :: runoff_out
+    real, dimension(:, :), intent(in) :: mask
+
+    real, dimension(size(runoff_out)) :: dst_field
+    real, dimension(size(runoff_in)) :: src_field
+    real, dimension(size(runoff_out, 1), size(runoff_out, 2)) :: areas
+    real :: total_runoff_into_kd, total_runoff_outof_kd
+    real :: rel_err
+    integer :: i, j
+
+    ! Do interpolation.
+    src_field = reshape(runoff_in, (/ size(runoff_in) /))
+
+    runoff_out(:, :) = 0.0
+    dst_field(:) = 0.0
+
+    ! Conservation checks are done within apply_weights
+    call apply_weights(this, src_field, dst_field)
+
+    runoff_out(:, :) = reshape(dst_field, shape(runoff_out)) 
+    areas(:, :) = reshape(this%area_b, shape(runoff_out))
+
+    ! Now move runoff from land to ocean.
+    total_runoff_into_kd = sum(runoff_out(:, :) * areas(:, :))
+    if (total_runoff_into_kd > 0.0 .and. this%num_ocean_pts == 0) then
+      write(*,*) "Error: remap_runoff_do() can't remap runoff"
+      stop
+    endif
+
+    call kdrunoff_remap(this%kdrunoff, runoff_out, &
+                        reshape(this%area_b, shape(runoff_out)), 1)
+
+    total_runoff_outof_kd = sum(runoff_out(:, :) * areas(:, :))
+
+    ! Check that no runoff is conserving
+    rel_err = abs(total_runoff_into_kd - total_runoff_outof_kd) /  &
+                total_runoff_outof_kd
+    if (rel_err > MAX_RELATIVE_ERROR) then
+      write(*,*) "Error: remap_runoff_do() runoff not conserving"
+      stop
+    endif
+
+    ! Check that there is no runoff on land.
+    do j=1, size(mask, 2)
+      do i=1, size(mask, 1)
+        if (mask(i, j) < 0.5 .and. runoff_out(i, j) > 0.0) then
+          write(*, *) "Error: remap_runoff_do() runoff on land"
+        endif
+      enddo
+    enddo
+
+  end subroutine remap_runoff_do
+
+  subroutine read_weights(ncid, row, col, s, frac_a, frac_b, area_a, area_b)
+    integer, intent(in) :: ncid
+    real, dimension(:), intent(inout) :: row, col, s
+    real, dimension(:), intent(inout) :: frac_a, frac_b, area_a, area_b
+
+    integer :: rowid, colid, sid
+    integer :: frac_aid, frac_bid, area_aid, area_bid
+    integer :: status
+
+    status = nf90_inq_varid(ncid, "dst_address", rowid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "row", rowid), "Can't find row")
+    endif
+    call ncheck(nf90_get_var(ncid, rowid, row), "Can't read row")
+
+    status = nf90_inq_varid(ncid, "src_address", colid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "col", colid), "Can't find col")
+    endif
+    call ncheck(nf90_get_var(ncid, colid, col), "Can't read col")
+
+    call ncheck(nf90_inq_varid(ncid, "S", sid), "Can't find S")
+    call ncheck(nf90_get_var(ncid, sid, s), "Can't read S")
+
+    ! A (src) side area and frac
+    status = nf90_inq_varid(ncid, "src_grid_area", area_aid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "area_a", area_aid), &
+                  "Can't find area_a")
+    endif
+    call ncheck(nf90_get_var(ncid, area_aid, area_a), "Can't read area_a")
+
+    status = nf90_inq_varid(ncid, "src_grid_frac", frac_aid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "frac_a", frac_aid), &
+                  "Can't find frac_a")
+    endif
+    call ncheck(nf90_get_var(ncid, frac_aid, frac_a), "Can't read frac_a")
+
+    ! B (dest) side area and frac
+    status = nf90_inq_varid(ncid, "dst_grid_area", area_bid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "area_b", area_bid), &
+                  "Can't find frac_b")
+    endif
+    call ncheck(nf90_get_var(ncid, area_bid, area_b), &
+                "Can't read area_b")
+
+    status = nf90_inq_varid(ncid, "dst_grid_frac", frac_bid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "frac_b", frac_bid), &
+                  "Can't find frac_b")
+    endif
+    call ncheck(nf90_get_var(ncid, frac_bid, frac_b), "Can't read frac_b")
+
+  end subroutine read_weights
+
+  subroutine read_weight_dims(ncid, n_s, n_a, n_b)
+    integer, intent(in) :: ncid
+    integer, intent(out) :: n_s, n_a, n_b
+
+    integer :: n_sid, n_aid, n_bid
+    integer :: status
+
+    ! Read out, these names can use either the SCRIP or ESMF convention.
+    status = nf90_inq_dimid(ncid, "num_links", n_sid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "n_s", n_sid), &
+                  "Can't find n_s")
+    endif
+    call ncheck(nf90_inquire_dimension(ncid, n_sid, len=n_s), &
+                "Can't read n_s")
+
+    status = nf90_inq_dimid(ncid, "src_grid_size", n_aid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "n_a", n_aid), &
+                  "Can't find n_a")
+    endif
+    call ncheck(nf90_inquire_dimension(ncid, n_aid, len=n_a), &
+                "Can't read n_a")
+
+    status = nf90_inq_dimid(ncid, "dst_grid_size", n_bid)
+    if (status /= nf90_noerr) then
+      call ncheck(nf90_inq_varid(ncid, "n_b", n_bid), &
+                  "Can't find n_b")
+    endif
+    call ncheck(nf90_inquire_dimension(ncid, n_bid, len=n_b), &
+                "Can't read n_b")
+
+  end subroutine read_weight_dims
+
+  subroutine apply_weights(this, src_field, dst_field)
+    type(remap_runoff_class), intent(in) :: this
+    real, dimension(:), intent(in) :: src_field
+    real, dimension(:), intent(inout) :: dst_field
+
+    real :: src_total, dst_total, rel_err
+    integer :: i
+
+    ! Apply weights
+    do i=1, this%n_s
+       dst_field(this%row(i)) = dst_field(this%row(i)) + &
+                                  this%S(i)*src_field(this%col(i))
+    enddo
+
+    ! Adjust destination field by fraction. Not strictly needed for global
+    ! remapping but doesn't hurt.
+    do i=1, this%n_b
+      if (this%frac_b(i) /= 0.0) then
+        dst_field(i) = dst_field(i)/this%frac_b(i)
+      endif
+    enddo
+
+    ! Calculate source integral
+    src_total = 0.0
+    do i=1, size(src_field)
+      src_total = src_total + src_field(i)*this%area_a(i)*this%frac_a(i)
+    enddo
+
+    ! Calculate destination integral
+    dst_total= 0.0
+    do i=1, size(dst_field)
+      dst_total = dst_total + dst_field(i)*this%area_b(i)*this%frac_b(i)
+    enddo
+
+    ! Compare the above.
+    rel_err = abs(src_total - dst_total) / src_total
+    if (rel_err > MAX_RELATIVE_ERROR) then
+      stop 'Error: apply_weights not conserving.'
+    endif
+
+  end subroutine apply_weights
+
+  subroutine ncheck(status, error_str)
+    integer, intent(in) :: status
+    character(len=*), intent(in) :: error_str
+
+    if (status /= nf90_noerr) then
+      write(*,'(a)') 'Error'
+      write(*,'(a)') error_str
+      write(*,'(a/)') trim(nf90_strerror(status))
+      stop 'Error in remap module'
+    endif
+  end subroutine ncheck
+
+end module remap_runoff_mod

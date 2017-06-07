@@ -9,7 +9,8 @@ use cpl_parameters
 use cpl_arrays
 use cpl_forcing_handler
 
-use remap, only : remap_runoff
+use remap_runoff_mod, only : remap_runoff_class, remap_runoff_do
+use remap_runoff_mod, only : remap_runoff_new, remap_runoff_del
 
 implicit none
 
@@ -39,7 +40,11 @@ real(kind=dbl_kind),dimension(nx_global,ny_global) :: dla_lon, dla_lat, dla_srf
 integer(kind=int_kind),dimension(nx_global,ny_global) :: ila_msk 
 real(kind=dbl_kind),dimension(nx_global,ny_global,4) :: dla_lonb, dla_latb
 
-integer(kind=int_kind) :: nx_global_cice, ny_global_cice
+integer(kind=int_kind) :: nx_global_ice, ny_global_ice
+real(kind=dbl_kind), dimension(:, :), allocatable :: ice_lats, ice_lons
+real(kind=dbl_kind), dimension(:, :), allocatable :: ice_mask
+
+type(remap_runoff_class) :: remap_runoff
 
 contains
 
@@ -49,9 +54,6 @@ contains
   ! Initialize PSMILe.
   !-------------------
 
-  integer :: tag
-  integer, dimension(2) :: buf
-  integer(kind=int_kind) :: stat(MPI_STATUS_SIZE)
   
   ! Initialise MPI
   mpiflag = .FALSE.
@@ -99,17 +101,6 @@ contains
   call prism_get_intercomm(il_commice, 'cicexx', ierror)
   call MPI_Comm_Rank(il_commice, my_commice_task, ierror)
 
-  ! Receive dimensions of the ice grid that we'll be sending to.
-  nx_global_cice = 0
-  ny_global_cice = 0
-
-  if (my_commice_task == 0) then
-    tag = MPI_ANY_TAG
-    call MPI_recv(buf, 2, MPI_INTEGER, 0, tag, il_commice,  stat, ierror)
-    nx_global_cice = buf(1)
-    ny_global_cice = buf(2)
-  endif
-
   end subroutine prism_init
 
   !=======================================================================
@@ -134,7 +125,12 @@ contains
   write(il_out,*) 'Number of processes:', il_nbtotproc
   write(il_out,*) 'Local process number:', my_task
   write(il_out,*) 'Local communicator is : ',il_commlocal
-  
+
+  ! Initialise module level variables with details about the ice grid.
+  call recv_grid_from_ice()
+  call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
+                        ice_lats, ice_lons, ice_mask)
+
   ! Compare the total number of processes and the number of processes
   ! involved in the coupling.
   !
@@ -184,7 +180,7 @@ contains
 
     il_paral_runoff( clim_strategy ) = clim_serial
     il_paral_runoff( clim_offset   ) = 0
-    il_paral_runoff( clim_length   ) = nx_global_cice*ny_global_cice
+    il_paral_runoff( clim_length   ) = nx_global_ice*ny_global_ice
     call prism_def_partition_proto (il_part_runoff_id, il_paral_runoff, ierror)
  
     allocate(isst(nx_global,ny_global))   ; isst(:,:) = 0
@@ -230,10 +226,9 @@ contains
     do jf=1, jpfldout
       if (cl_writ(jf) == 'runof_ai') then
         il_var_shape(1)= 1     ! min index for the coupling field local dim
-        il_var_shape(2)= nx_global_cice ! max index for the coupling field local dim
+        il_var_shape(2)= nx_global_ice ! max index for the coupling field local dim
         il_var_shape(3)= 1
-        il_var_shape(4)= ny_global_cice
-        print*, 'nx_global_cice, ny_global_cice: ', nx_global_cice, ny_global_cice
+        il_var_shape(4)= ny_global_ice
         call prism_def_var_proto (il_var_id_out(jf),cl_writ(jf), il_part_runoff_id, &
          il_var_nodims, PRISM_Out, il_var_shape, PRISM_Real, ierror)
 
@@ -247,15 +242,51 @@ contains
 
       endif
     enddo
-    
+
     ! PSMILe end of declaration phase 
-    
     call prism_enddef_proto (ierror)
-    
+
   endif
-    
+
+
   end subroutine init_cpl
-    
+
+subroutine recv_grid_from_ice()
+
+  integer :: tag
+  integer(kind=int_kind), dimension(2) :: buf_int
+  real(kind=dbl_kind), dimension(:), allocatable :: buf_real
+  integer(kind=int_kind) :: stat(MPI_STATUS_SIZE)
+
+  ! Receive dimensions of the ice grid that we're coupled to.
+  if (my_task == 0) then
+
+    tag = MPI_ANY_TAG
+    call MPI_recv(buf_int, 2, MPI_INTEGER, 0, tag, il_commice,  stat, ierror)
+    nx_global_ice = buf_int(1)
+    ny_global_ice = buf_int(2)
+
+    allocate(ice_lats(nx_global_ice, ny_global_ice))
+    allocate(ice_lons(nx_global_ice, ny_global_ice))
+    allocate(ice_mask(nx_global_ice, ny_global_ice))
+    allocate(buf_real(nx_global_ice*ny_global_ice))
+
+    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
+                  MPI_DOUBLE, 0, tag, il_commice,  stat, ierror)
+    ice_lats(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
+
+    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
+                  MPI_DOUBLE, 0, tag, il_commice,  stat, ierror)
+    ice_lons(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
+
+    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
+                  MPI_DOUBLE, 0, tag, il_commice,  stat, ierror)
+    ice_mask(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
+    deallocate(buf_real)
+  endif
+
+end subroutine recv_grid_from_ice
+
   !=======================================================================
   subroutine from_cpl(istep1)
   !--------------------------------------------------------------
@@ -320,10 +351,9 @@ subroutine into_cpl(istep1)
   integer(kind=int_kind) :: buf(1)
   real(kind=dbl_kind), dimension(:, :), allocatable :: remapped_runoff
 
-  allocate(remapped_runoff(nx_global_cice, ny_global_cice))
+  allocate(remapped_runoff(nx_global_ice, ny_global_ice))
 
   write(il_out,*) '(into_cpl) sending coupling fields at stime= ',istep1
-  print*, 'swfld'
 
   call prism_put_proto(il_var_id_out(1), istep1, swfld, ierror)
   call prism_put_proto(il_var_id_out(2), istep1, lwfld, ierror)
@@ -334,8 +364,7 @@ subroutine into_cpl(istep1)
   if (maxval(runof) < 0.0) then
     call prism_abort_proto(il_comp_id, 'matm into_cpl', 'negative runoff')
   endif
-  call remap_runoff(runof, 'INPUT/rmp_jrar_to_cict_CONSERV.nc', &
-                    remapped_runoff)
+  call remap_runoff_do(remap_runoff, runof, remapped_runoff, ice_mask)
   call prism_put_proto(il_var_id_out(6), istep1, remapped_runoff, ierror)
 
   call prism_put_proto(il_var_id_out(7), istep1, tair, ierror)
