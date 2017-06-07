@@ -100,7 +100,7 @@ contains
 
     total_runoff_outof_kd = sum(runoff_out(:, :) * areas(:, :))
 
-    ! Check that no runoff is conserving
+    ! Check that runoff is conserving
     rel_err = abs(total_runoff_into_kd - total_runoff_outof_kd) /  &
                 total_runoff_outof_kd
     if (rel_err > MAX_RELATIVE_ERROR) then
