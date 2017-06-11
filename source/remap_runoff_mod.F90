@@ -18,7 +18,8 @@ module remap_runoff_mod
     type(kdrunoff_class) :: kdrunoff
   end type remap_runoff_class
 
-  real, parameter :: MAX_RELATIVE_ERROR = 1e-12
+  ! FIXME: would like to make this smaller
+  real, parameter :: MAX_RELATIVE_ERROR = 1e-09
 
   public :: remap_runoff_class, remap_runoff_new, remap_runoff_del
   public :: remap_runoff_do

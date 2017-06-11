@@ -208,7 +208,6 @@ subroutine get_field_dims(nx, ny, time, filename, varname)
   time = 0
   do i = 1,ndims
     call ncheck(nf90_inquire_dimension(ncid, dimids(i), name=dimname, len=len))
-    print*, 'nf90_inquire_dimension: ', trim(dimname), len
     if (trim(dimname) == 'time') then
       time = len
     elseif (trim(dimname) == 'latitude') then
