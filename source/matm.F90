@@ -357,12 +357,11 @@ PROGRAM datm
           if ( jf /= 8 ) then
             nrec = nt_read
           else
-            nrec = (nt_read+1)/2
+            nrec = ((nt_read - 1)/8) + 1
           endif
 
           write(il_out,*) '(main) reading forcing data no: ', jf, ' ',trim(cfield(jf))
           write(il_out,*) '       record no: ', nrec
-
 
           if ( jf==8 ) then
             if ( runtype == 'IA' ) then
@@ -391,7 +390,7 @@ PROGRAM datm
           endif
 
           enddo
-        
+
         else !if (trim(dataset) == 'era40' .or. trim(dataset) == 'ncep2') then
 
           do jf = 1, nfields  

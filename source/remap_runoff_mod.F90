@@ -4,6 +4,8 @@ module remap_runoff_mod
   use netcdf
   use kdrunoff_mod, only : kdrunoff_class, kdrunoff_new, kdrunoff_del
   use kdrunoff_mod, only : kdrunoff_remap
+  use, intrinsic :: iso_fortran_env, only : stdout=>output_unit, &
+                                            stderr=>error_unit
 
   implicit none
   private
@@ -210,6 +212,8 @@ contains
 
   end subroutine read_weight_dims
 
+  ! See http://www.earthsystemmodeling.org/esmf_releases/non_public/ESMF_5_3_0/ESMC_crefdoc/node3.html
+  ! for explanation of the code below.
   subroutine apply_weights(this, src_field, dst_field)
     type(remap_runoff_class), intent(in) :: this
     real, dimension(:), intent(in) :: src_field
@@ -241,12 +245,14 @@ contains
     ! Calculate destination integral
     dst_total= 0.0
     do i=1, size(dst_field)
-      dst_total = dst_total + dst_field(i)*this%area_b(i)*this%frac_b(i)
+      dst_total = dst_total + dst_field(i)*this%area_b(i)
     enddo
 
     ! Compare the above.
     rel_err = abs(src_total - dst_total) / src_total
     if (rel_err > MAX_RELATIVE_ERROR) then
+      write(stderr, *) &
+        "rel_err > MAX_RELATIVE_ERROR (", rel_err, ">", MAX_RELATIVE_ERROR, ")"
       stop 'Error: apply_weights not conserving.'
     endif
 
