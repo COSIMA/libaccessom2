@@ -1,10 +1,20 @@
 #! /bin/csh -f
 
-if ( $1 == '') then
-  set platform = nci
-else
-  set platform = $1
+set grid = $1
+if ( $grid == '' ) then
+    setenv GRID nt62
+    setenv RES 192x94
 endif
+if ( $grid == 'core' ) then
+    setenv GRID nt62
+    setenv RES 192x94
+endif
+if ( $grid == 'jra55' ) then
+    setenv GRID jra55
+    setenv RES 640x320
+endif
+
+set platform = nci
 
 set debug = $2
 if ($debug == 'debug') then
@@ -25,13 +35,6 @@ setenv CPLLIBS '-L$(CPLLIBDIR) -lpsmile.MPI1 -lmct -lmpeu -lscrip'
 ### Location of coupling inclusions
 setenv CPLINCDIR $OASIS_ROOT/Linux/build/lib
 setenv CPL_INCS '-I$(CPLINCDIR)/psmile.MPI1 -I$(CPLINCDIR)/pio -I$(CPLINCDIR)/mct'
-
-### Grid resolution
-setenv GRID jra55
-setenv RES 640x320
-
-#setenv GRID nt62
-#setenv RES 192x94
 
 ### Location and name of the generated exectuable 
 setenv EXE matm_${GRID}.exe
