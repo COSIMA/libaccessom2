@@ -353,7 +353,9 @@ subroutine into_cpl(istep1)
 
   allocate(remapped_runoff(nx_global_ice, ny_global_ice))
 
-  write(il_out,*) '(into_cpl) sending coupling fields at stime= ',istep1
+  if (.true.) then
+    call write_boundary_chksums(istep1)
+  endif
 
   call prism_put_proto(il_var_id_out(1), istep1, swfld, ierror)
   call prism_put_proto(il_var_id_out(2), istep1, lwfld, ierror)
@@ -389,6 +391,24 @@ subroutine into_cpl(istep1)
   deallocate(remapped_runoff)
 
 end subroutine into_cpl
+
+subroutine write_boundary_chksums(timestamp)
+
+    integer, intent(in) :: timestamp
+
+    print*, '[atm chksum] time:', timestamp
+    print*, '[atm chksum] swfld:', sum(swfld)
+    print*, '[atm chksum] lwfld:', sum(lwfld)
+    print*, '[atm chksum] rain:', sum(rain)
+    print*, '[atm chksum] snow:', sum(snow)
+    print*, '[atm chksum] press:', sum(press)
+    print*, '[atm chksum] runof:', sum(runof)
+    print*, '[atm chksum] tair:', sum(tair)
+    print*, '[atm chksum] qair:', sum(qair)
+    print*, '[atm chksum] uwnd:', sum(uwnd)
+    print*, '[atm chksum] vwnd:', sum(vwnd)
+
+end subroutine
 
 subroutine coupler_termination()
 

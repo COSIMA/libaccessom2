@@ -178,8 +178,6 @@ PROGRAM datm
 ! --- *** BE CAREFUL WITH the timestamp for coupling operation: *** ---
 !       (here rtimestamp for receiving and stimestamp for sending)
 
-  nt_read = 1
-
   do icpl = 1, num_cpl
 
     icpl_sec = dt_cpl * (icpl - 1)        !runtime for this run segment! 
@@ -224,7 +222,7 @@ PROGRAM datm
         ! coupling interval! 
 
         ! Note the 'position' of the record in the yearly data (yruntime0 counted in)!
-        nt_read = nt_read + 1
+        nt_read = itap_sec/dt_cpl + 2
 
         write(il_out,*)
         write(il_out,*) 'idate, iday, imonth, iyear: ', idate, iday, imonth, iyear
