@@ -33,7 +33,8 @@ integer(kind=int_kind) :: &
    dt_cpl = 21600,        &
    init_date = 00010101,  &  ! initial date of this EXP !  
    inidate = 01010101,    &  ! initial date of this RUN segment !
-   days_per_year = 365
+   days_per_year = 365,   &
+   debug_output = .false.
    !yruntime0 is the 'accumulated' time in seconds, at the beginning of a run segment,
    !   for a certain year in the experiment.  it's calculated in main program.
    !runtime the time length for this run segment, and 
@@ -63,7 +64,8 @@ namelist/coupling/ &
    days_per_year, &
    chk_a2i_fields, &   
    chk_i2a_fields, &
-   chk_fields_period 
+   chk_fields_period, &
+   debug_output
 
 !====================================================================================
 end module cpl_parameters

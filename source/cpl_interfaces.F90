@@ -356,7 +356,7 @@ subroutine into_cpl(istep1)
   integer(kind=int_kind) :: stat(MPI_STATUS_SIZE)
   integer(kind=int_kind) :: buf(1)
 
-  if (.true.) then
+  if (debug_output) then
     call write_boundary_chksums(istep1)
   endif
 
