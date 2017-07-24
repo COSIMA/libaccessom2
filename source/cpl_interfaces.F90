@@ -43,6 +43,8 @@ real(kind=dbl_kind),dimension(nx_global,ny_global,4) :: dla_lonb, dla_latb
 integer(kind=int_kind) :: nx_global_ice, ny_global_ice
 real(kind=dbl_kind), dimension(:, :), allocatable :: ice_lats, ice_lons
 real(kind=dbl_kind), dimension(:, :), allocatable :: ice_mask
+real(kind=dbl_kind), dimension(:, :), allocatable :: runof_save
+real(kind=dbl_kind), dimension(:, :), allocatable :: remapped_runoff
 
 type(remap_runoff_class) :: remap_runoff
 
@@ -198,7 +200,11 @@ contains
     allocate(rain(nx_global,ny_global))  ; rain(:,:) = 0
     allocate(snow(nx_global,ny_global))  ; snow(:,:) = 0
     allocate(press(nx_global,ny_global)) ; press(:,:) = 0
+    ! The following two arrays need to have different initial values.
     allocate(runof(nx_global_runoff,ny_global_runoff)) ; runof(:,:) = 0
+    allocate(runof_save(nx_global_runoff,ny_global_runoff)) ; runof_save(:,:) = 1
+
+    allocate(remapped_runoff(nx_global_ice,ny_global_ice)) ; remapped_runoff(:,:) = 0
     
     allocate(vwork(nx_global,ny_global)) ; vwork(:,:) = 0
     
@@ -349,12 +355,15 @@ subroutine into_cpl(istep1)
   integer(kind=int_kind) :: i, jf, tag
   integer(kind=int_kind) :: stat(MPI_STATUS_SIZE)
   integer(kind=int_kind) :: buf(1)
-  real(kind=dbl_kind), dimension(:, :), allocatable :: remapped_runoff
-
-  allocate(remapped_runoff(nx_global_ice, ny_global_ice))
 
   if (.true.) then
     call write_boundary_chksums(istep1)
+  endif
+
+  ! Check whether runoff has changed before remapping.
+  if (.not. all(runof(:, :) == runof_save(:, :))) then
+    call remap_runoff_do(remap_runoff, runof, remapped_runoff, ice_mask)
+    runof_save(:, :) = runof(:, :)
   endif
 
   call prism_put_proto(il_var_id_out(1), istep1, swfld, ierror)
@@ -362,13 +371,7 @@ subroutine into_cpl(istep1)
   call prism_put_proto(il_var_id_out(3), istep1, rain, ierror)
   call prism_put_proto(il_var_id_out(4), istep1, snow, ierror)
   call prism_put_proto(il_var_id_out(5), istep1, press, ierror)
-
-  if (maxval(runof) < 0.0) then
-    call prism_abort_proto(il_comp_id, 'matm into_cpl', 'negative runoff')
-  endif
-  call remap_runoff_do(remap_runoff, runof, remapped_runoff, ice_mask)
   call prism_put_proto(il_var_id_out(6), istep1, remapped_runoff, ierror)
-
   call prism_put_proto(il_var_id_out(7), istep1, tair, ierror)
   call prism_put_proto(il_var_id_out(8), istep1, qair, ierror)
   call prism_put_proto(il_var_id_out(9), istep1, uwnd, ierror)
@@ -387,8 +390,6 @@ subroutine into_cpl(istep1)
 
   ! This is pointless since we're required to be on only one PE.
   call MPI_Barrier(il_commlocal, ierror)
-
-  deallocate(remapped_runoff)
 
 end subroutine into_cpl
 
@@ -427,8 +428,15 @@ subroutine coupler_termination()
     deallocate(rain) 
     deallocate(press) 
     deallocate(runof)
+    deallocate(runof_save)
     deallocate(snow)
     deallocate(vwork)
+
+    deallocate(remapped_runoff)
+    deallocate(ice_lats)
+    deallocate(ice_lons)
+    deallocate(ice_mask)
+
 
     call prism_terminate_proto(ierror)
     if (ierror /= PRISM_Ok) then
