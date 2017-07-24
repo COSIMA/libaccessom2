@@ -451,8 +451,6 @@ PROGRAM datm
 
         endif   !if (trim(dataset) == 'core')
 
-        runof = runof/dt_accum   
-
       endif  !if (mod(itap_sec, dt_cpl) == 0) 
 
     enddo      !itap = 1, npas
