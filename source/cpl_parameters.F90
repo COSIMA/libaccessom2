@@ -33,8 +33,7 @@ integer(kind=int_kind) :: &
    dt_cpl = 21600,        &
    init_date = 00010101,  &  ! initial date of this EXP !  
    inidate = 01010101,    &  ! initial date of this RUN segment !
-   days_per_year = 365,   &
-   debug_output = .false.
+   days_per_year = 365
    !yruntime0 is the 'accumulated' time in seconds, at the beginning of a run segment,
    !   for a certain year in the experiment.  it's calculated in main program.
    !runtime the time length for this run segment, and 
@@ -47,6 +46,7 @@ character(len=10) :: dataset = 'core'	! currently 'ncep2', 'era40', 'core', 'cor
 character(len=2)  :: runtype = 'IA'  	! 'IA' for inter-annual, 'NY' for normal year
 logical :: chk_a2i_fields = .false.
 logical :: chk_i2a_fields = .false.
+logical :: debug_output = .false.
 ! How often to dump the coupling fields if any of the chk_*_fields options are .true.
 ! The unit of time is seconds. By default fields are dumped every timestep.
 integer(kind=int_kind) :: chk_fields_period = 1
