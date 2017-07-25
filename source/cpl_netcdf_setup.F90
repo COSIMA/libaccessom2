@@ -193,7 +193,7 @@ subroutine get_field_dims(nx, ny, time, filename, varname)
   integer :: ndims, i, len
   character(len=nf90_max_name) :: dimname
 
-  call ncheck(nf90_open(filename, NF90_NOWRITE, ncid))
+  call ncheck(nf90_open(filename, NF90_NOWRITE, ncid), 'Opening '//trim(filename))
   call ncheck(nf90_inq_varid(ncid, varname, varid))
 
   ! Get dimensions used by this var.
