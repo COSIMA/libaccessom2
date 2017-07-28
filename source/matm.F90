@@ -353,10 +353,14 @@ PROGRAM datm
           endif
 
           if ( jf /= 8 ) then
-            nrec = nt_read
+            ! Take the modulo in case we are doing a multi-year run.
+            nrec = mod(nt_read, num_cpl_in_year)
           else
-            nrec = ((nt_read - 1)/8) + 1
+            nrec = mod(((nt_read - 1)/8) + 1, 365)
           endif
+
+          ! The mod() above may set nrec = 0, minimum is 1.
+          nrec = max(nrec, 1)
 
           write(il_out,*) '(main) reading forcing data no: ', jf, ' ',trim(cfield(jf))
           write(il_out,*) '       record no: ', nrec
