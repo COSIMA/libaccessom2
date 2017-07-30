@@ -1,4 +1,8 @@
 
+! This module uses KDTREE2 from https://github.com/jmhodges/kdtree2.git (see
+! file kdtree2_module.F90) to move runoff from land points to the nearest ocean
+! point. See file remap_runoff_mod.F90 for example usage.
+
 module kdrunoff_mod
 
   use kdtree2_module
