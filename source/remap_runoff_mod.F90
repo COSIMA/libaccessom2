@@ -37,11 +37,12 @@ module remap_runoff_mod
 
 contains
 
-  subroutine remap_runoff_new(this, weights, lats, lons, mask)
+  subroutine remap_runoff_new(this, weights, lats, lons, mask, max_runoff)
     type(remap_runoff_class), intent(inout) :: this
 
     character(len=*), intent(in) :: weights
     real, dimension(:, :), intent(in) :: lats, lons, mask
+    real, optional, intent(in) :: max_runoff
 
     integer :: ncid
     integer :: n_s, n_a, n_b
@@ -61,8 +62,13 @@ contains
     this%n_a = n_a
     this%n_b = n_b
 
-    call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
-                      this%num_land_pts, this%num_ocean_pts)
+    if (present(max_runoff)) then
+      call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
+                        this%num_land_pts, this%num_ocean_pts, max_runoff)
+    else
+      call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
+                        this%num_land_pts, this%num_ocean_pts)
+    endif
 
   end subroutine remap_runoff_new
 
@@ -76,19 +82,30 @@ contains
 
   end subroutine remap_runoff_del
 
-  subroutine remap_runoff_do(this, runoff_in, runoff_out, mask)
+  subroutine remap_runoff_do(this, runoff_in, runoff_out, mask, debug)
     type(remap_runoff_class), intent(inout) :: this
 
     real, dimension(:, :), intent(in) :: runoff_in
     real, dimension(:, :), intent(inout) :: runoff_out
     real, dimension(:, :), intent(in) :: mask
+    logical, optional, intent(in) :: debug
 
     real, dimension(size(runoff_out)) :: dst_field
     real, dimension(size(runoff_in)) :: src_field
     real, dimension(size(runoff_out, 1), size(runoff_out, 2)) :: areas
     real :: total_runoff_into_kd, total_runoff_outof_kd
-    real :: rel_err
+    real :: rel_err, start_time, end_time
     integer :: i, j
+    logical :: dbg
+
+    dbg = .false.
+    if (present(debug)) then
+      dbg = debug
+    endif
+
+    if (dbg) then
+      call cpu_time(start_time)
+    endif
 
     ! Do interpolation.
     src_field = reshape(runoff_in, (/ size(runoff_in) /))
@@ -110,7 +127,7 @@ contains
     endif
 
     call kdrunoff_remap(this%kdrunoff, runoff_out, &
-                        reshape(this%area_b, shape(runoff_out)), 1)
+                        reshape(this%area_b, shape(runoff_out)))
 
     total_runoff_outof_kd = sum(runoff_out(:, :) * areas(:, :))
 
@@ -130,6 +147,14 @@ contains
         endif
       enddo
     enddo
+
+    ! Output the remapped field to a netcdf file.
+    if (dbg) then
+      call cpu_time(end_time)
+      write(*,*) 'remap_runoff_do runtime (s): ', (end_time - start_time)
+      write(*,*) 'remap_runoff_do rel_err: ', rel_err
+      call write_to_netcdf(runoff_out, 'remap_runoff_debug.nc')
+    endif
 
   end subroutine remap_runoff_do
 
@@ -269,6 +294,83 @@ contains
     endif
 
   end subroutine apply_weights
+
+  subroutine create_netcdf(file_name, nx, ny)
+    character(len=*), intent(in) :: file_name
+    integer, intent(in) :: nx, ny
+
+    integer :: ncid, xdim_id, ydim_id, tdim_id
+    integer, dimension(3) :: arrdims
+    integer :: array_id
+
+    integer :: ierr
+
+    ! create the file
+    call ncheck(nf90_create(path=trim(file_name), cmode=NF90_CLOBBER, ncid=ncid), &
+                trim(file_name)//' create')
+
+    ! define the dimensions
+    call ncheck(nf90_def_dim(ncid, 'X', nx, xdim_id), &
+                trim(file_name)//' def_dim x')
+    call ncheck(nf90_def_dim(ncid, 'Y', ny, ydim_id), &
+                trim(file_name)//' def_dim y')
+    call ncheck(nf90_def_dim(ncid, 'time', NF90_UNLIMITED, tdim_id), &
+                trim(file_name)//' def_dim t')
+
+    ! define variabls on dimensions
+    arrdims = (/ xdim_id, ydim_id, tdim_id /)
+    call ncheck(nf90_def_var(ncid, 'runoff',  NF90_DOUBLE, arrdims, array_id), &
+                trim(file_name)//' def_var')
+
+    ! and assign units
+    call ncheck(nf90_put_att(ncid, array_id, 'units', 'kg/m^2/s'), &
+                trim(file_name)//' put_att')
+
+    ! done defining
+    call ncheck(nf90_enddef(ncid), trim(file_name)//' enddef')
+
+  end subroutine create_netcdf
+
+  subroutine write_to_netcdf(array, file_name)
+    real, intent(in), dimension(:,:) :: array
+    character(len=*), intent(in) :: file_name
+
+    integer :: ierr, nx, ny, t
+    integer :: ncid, time_id, array_id
+    logical :: file_exists
+
+    nx = size(array, 1)
+    ny = size(array, 2)
+
+    ! See whether file exists, if not create.
+    inquire(file=trim(file_name), exist=file_exists)
+    if (file_exists) then
+      call ncheck(nf90_open(trim(file_name), NF90_WRITE, ncid), &
+                  trim(file_name)//' open')
+      ! Get the next time dimension
+      call ncheck(nf90_inq_dimid(ncid, "time", time_id), &
+                  trim(file_name)//' inq_dimid')
+      call ncheck(nf90_inquire_dimension(ncid, time_id, len=t), &
+                  trim(file_name)//' inquire_dimension')
+      t = t+1
+    else
+      call create_netcdf(file_name, nx, ny)
+      call ncheck(nf90_open(trim(file_name), NF90_WRITE, ncid), &
+                  trim(file_name)//' open')
+      t = 1
+    endif
+
+    call ncheck(nf90_inq_varid(ncid, "runoff", array_id), & 
+                       trim(file_name)//' inq_varid')
+
+    ! Write out the values
+    call ncheck(nf90_put_var(ncid, array_id, array, start=(/1, 1, t/), &
+                             count=(/nx, ny, 1/)), &
+                trim(file_name)//' put_var')
+
+    ! close; done
+    call ncheck(nf90_close(ncid), trim(file_name)//' close')
+  end subroutine write_to_netcdf
 
   subroutine ncheck(status, error_str)
     integer, intent(in) :: status

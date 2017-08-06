@@ -131,7 +131,7 @@ contains
   ! Initialise module level variables with details about the ice grid.
   call recv_grid_from_ice()
   call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
-                        ice_lats, ice_lons, ice_mask)
+                        ice_lats, ice_lons, ice_mask, max_runoff=0.03)
 
   ! Compare the total number of processes and the number of processes
   ! involved in the coupling.
