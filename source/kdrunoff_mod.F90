@@ -99,7 +99,7 @@ contains
     real, dimension(:, :), intent(inout) :: runoff
     real, dimension(:, :), intent(in) :: areas
 
-    integer :: n, i, j, nni, nnj, nn
+    integer :: n, i, j, nni, nnj, nn, nn_accum
     real :: val, val_per_nbr, area_ratio
     real :: redist, redist_mass, avail_mass
     type(kdtree2_result), allocatable :: results(:)
@@ -137,35 +137,38 @@ contains
         i = this%ocean_indices(1, n)
         j = this%ocean_indices(2, n)
         redist = runoff(i, j) - this%max_runoff
+
         if (redist > 0.0) then
           ! Remove 'redist' to bring down to max_runoff
           runoff(i, j) = runoff(i, j) - redist
-          ! Guess how many nearest neighbours are needed
-          ! to redistribute 'redist'. See error below.
-          nn = ceiling(redist / this%max_runoff) * 100
-          allocate(results(nn))
-          call kdtree2_n_nearest(tp=this%tree, qv=this%ocean_points(:, n), &
-                                 nn=nn, results=results)
           redist_mass = redist * areas(i, j)
-          do nn=1, size(results)
-            nni = this%ocean_indices(1, results(nn)%idx)
-            nnj = this%ocean_indices(2, results(nn)%idx)
-            ! How much of redist can this neighbour accommodate?
-            avail_mass = (this%max_runoff - runoff(nni, nnj)) * areas(nni, nnj)
-            if (avail_mass > 0.0) then
-              avail_mass = min(avail_mass, redist_mass)
-              runoff(nni, nnj) = runoff(nni, nnj) + &
-                                (avail_mass / areas(nni, nnj))
-              redist_mass = redist_mass - avail_mass
-            endif
-            if (redist_mass <= 0.0) then
-              exit
-            endif
+
+          ! Try to redistribute all in several passes because we don't know how
+          ! many nearest neighbours are going to be needed.
+          nn_accum = 1
+          do while (redist_mass > 0.0)
+            ! Guess how many nearest neighbours are needed
+            ! to redistribute 'redist'. This is big to begin with and grows
+            ! linearly.
+            nn = (ceiling(redist / this%max_runoff) * 100) + nn_accum
+            allocate(results(nn))
+            call kdtree2_n_nearest(tp=this%tree, qv=this%ocean_points(:, n), &
+                                   nn=nn, results=results)
+            do nn=nn_accum, size(results)
+              nni = this%ocean_indices(1, results(nn)%idx)
+              nnj = this%ocean_indices(2, results(nn)%idx)
+              ! How much of redist can this neighbour accommodate?
+              avail_mass = (this%max_runoff - runoff(nni, nnj)) * areas(nni, nnj)
+              if (avail_mass > 0.0) then
+                avail_mass = min(avail_mass, redist_mass)
+                runoff(nni, nnj) = runoff(nni, nnj) + &
+                                  (avail_mass / areas(nni, nnj))
+                redist_mass = redist_mass - avail_mass
+              endif
+            enddo
+            nn_accum = size(results)
+            deallocate(results)
           enddo
-          deallocate(results)
-          if (redist_mass > 0.0) then
-            stop "Error in kdrunoff_remap: increase NN for redistribution."
-          endif
         endif
       enddo
     endif
