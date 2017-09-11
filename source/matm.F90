@@ -92,13 +92,6 @@ PROGRAM datm
   !allocate (rain(nx_global,ny_global)); rain = 0.
   !allocate (snow(nx_global,ny_global)); snow = 0.
 
-  call prism_init
-
-  call get_field_dims(nx_global_runoff, ny_global_runoff, unused, &
-                      cfile(8), cfield(8))
-  
-  call init_cpl(nx_global_runoff, ny_global_runoff)
-
   !B: All processors read the namelist--
   !   get runtime0, runtime, dt_cpl, dt_atm in seconds, and 
   !   get inidate (the initial date for this run). 
@@ -106,8 +99,14 @@ PROGRAM datm
   open(unit=99,file="input_atm.nml",form="formatted",status="old")
   read (99, coupling)
   close(unit=99)
-
   write(*, coupling)
+
+  call prism_init
+
+  call get_field_dims(nx_global_runoff, ny_global_runoff, unused, &
+                      cfile(8), cfield(8))
+  
+  call init_cpl(nx_global_runoff, ny_global_runoff, dataset)
 
   num_cpl = runtime/dt_cpl
   num_cpl_in_year = (365*86400) / dt_cpl

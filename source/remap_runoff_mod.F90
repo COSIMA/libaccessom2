@@ -380,7 +380,7 @@ contains
       write(*,'(a)') 'Error'
       write(*,'(a)') error_str
       write(*,'(a/)') trim(nf90_strerror(status))
-      stop 'Error in remap module'
+      stop 'Error: remap_runoff_mod, ncheck failed.'
     endif
   end subroutine ncheck
 

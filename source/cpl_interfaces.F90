@@ -106,11 +106,12 @@ contains
   end subroutine prism_init
 
   !=======================================================================
-  subroutine init_cpl(nx_global_runoff, ny_global_runoff)
+  subroutine init_cpl(nx_global_runoff, ny_global_runoff, dataset)
   !----------------------------------------------
   ! To initialize/setup the coupling environment
   !----------------------------------------------
   integer(kind=int_kind), intent(in) :: nx_global_runoff, ny_global_runoff
+  character(len=*), intent(in) :: dataset
 
   integer(kind=int_kind) :: jf
 
@@ -130,8 +131,13 @@ contains
 
   ! Initialise module level variables with details about the ice grid.
   call recv_grid_from_ice()
-  call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
-                        ice_lats, ice_lons, ice_mask, max_runoff=0.03)
+  if (trim(dataset) == 'jra55') then
+    call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
+                          ice_lats, ice_lons, ice_mask, max_runoff=0.03)
+  else
+    call remap_runoff_new(remap_runoff, 'rmp_corer_to_cict_CONSERV.nc', &
+                          ice_lats, ice_lons, ice_mask, max_runoff=0.03)
+  endif
 
   ! Compare the total number of processes and the number of processes
   ! involved in the coupling.
