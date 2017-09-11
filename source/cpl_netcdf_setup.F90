@@ -208,21 +208,21 @@ subroutine get_field_dims(nx, ny, time, filename, varname)
   time = 0
   do i = 1,ndims
     call ncheck(nf90_inquire_dimension(ncid, dimids(i), name=dimname, len=len))
-    if (trim(dimname) == 'time') then
+    if (trim(dimname) == 'time' .or. trim(dimname) == 'AT') then
       time = len
-    elseif (trim(dimname) == 'latitude') then
+    elseif (trim(dimname) == 'latitude' .or. trim(dimname) == 'AY') then
       ny = len
-    elseif (trim(dimname) == 'longitude') then
+    elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX') then
       nx = len
     else
-      stop 'get_field_dim_lens: Unsupported dimension name'
+      stop 'MATM get_field_dims: Unsupported dimension name'
     endif
   enddo
 
   deallocate(dimids)
 
   if (nx == 0 .or. ny == 0 .or. time == 0) then
-    stop "get_field_dim_lens: couldn't get all dimensions"
+    stop "MATM get_field_dims: couldn't get all dimensions"
   endif
 
 end subroutine get_field_dims
