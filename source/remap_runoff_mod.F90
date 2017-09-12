@@ -249,7 +249,7 @@ contains
 
   end subroutine read_weight_dims
 
-  ! See http://www.earthsystemmodeling.org/esmf_releases/non_public/ESMF_5_3_0/ESMC_crefdoc/node3.html
+  ! See http://www.earthsystemmodeling.org/esmf_releases/public/last/ESMF_refdoc/node3.html
   ! for explanation of the code below.
   subroutine apply_weights(this, src_field, dst_field)
     type(remap_runoff_class), intent(in) :: this

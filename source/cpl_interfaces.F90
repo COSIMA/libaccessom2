@@ -135,7 +135,7 @@ contains
     call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
                           ice_lats, ice_lons, ice_mask, max_runoff=0.03)
   else
-    call remap_runoff_new(remap_runoff, 'rmp_corer_to_cict_CONSERV.nc', &
+    call remap_runoff_new(remap_runoff, 'rmp_corr_to_cict_CONSERV.nc', &
                           ice_lats, ice_lons, ice_mask, max_runoff=0.03)
   endif
 

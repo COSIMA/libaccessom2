@@ -151,6 +151,9 @@ contains
             ! to redistribute 'redist'. This is big to begin with and grows
             ! linearly.
             nn = (ceiling(redist / this%max_runoff) * 100) + nn_accum
+            if (nn > size(this%ocean_points) / 10.0) then
+                stop 'Error in kdrunoff_remap: runoff too large to redistribute.'
+            endif
             allocate(results(nn))
             call kdtree2_n_nearest(tp=this%tree, qv=this%ocean_points(:, n), &
                                    nn=nn, results=results)
