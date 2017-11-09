@@ -76,7 +76,8 @@ contains
     type(remap_runoff_class), intent(inout) :: this
 
     deallocate(this%row, this%col, this%s)
-    deallocate(this%frac_a, this%frac_b, this%area_a, this%area_b)
+    deallocate(this%frac_a, this%frac_b)
+    deallocate(this%area_a, this%area_b)
 
     call kdrunoff_del(this%kdrunoff)
 

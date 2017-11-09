@@ -471,6 +471,10 @@ PROGRAM datm
 
   call coupler_termination
 
+  deallocate(cfile)
+  deallocate(cfield) 
+  deallocate(dewpt)
+
   !--------------------------------------------------------------------------!
   
   contains

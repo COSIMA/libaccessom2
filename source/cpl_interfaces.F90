@@ -192,11 +192,6 @@ contains
     call prism_def_partition_proto (il_part_runoff_id, il_paral_runoff, ierror)
  
     allocate(isst(nx_global,ny_global))   ; isst(:,:) = 0
-!!!    allocate(albvdr(nx_global,ny_global)) ; albvdr(:,:) = 0
-!!!    allocate(albidr(nx_global,ny_global)) ; albidr(:,:) = 0
-!!!    allocate(albvdf(nx_global,ny_global)) ; albvdf(:,:) = 0
-!!!    allocate(albidf(nx_global,ny_global)) ; albidf(:,:) = 0
-    
     allocate(tair(nx_global,ny_global))  ; tair(:,:) = 0
     allocate(qair(nx_global,ny_global))  ; qair(:,:) = 0
     allocate(swfld(nx_global,ny_global)) ; swfld(:,:) = 0
@@ -432,13 +427,13 @@ subroutine coupler_termination()
     deallocate(uwnd) 
     deallocate(vwnd) 
     deallocate(rain) 
+    deallocate(snow)
     deallocate(press) 
     deallocate(runof)
     deallocate(runof_save)
-    deallocate(snow)
-    deallocate(vwork)
 
     deallocate(remapped_runoff)
+    deallocate(vwork)
     deallocate(ice_lats)
     deallocate(ice_lons)
     deallocate(ice_mask)

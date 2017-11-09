@@ -90,6 +90,7 @@ contains
   end if
   call ncheck(nf_get_vara_real(ncid, varid, start, count, data), &
               'Get var '//varname)
+  deallocate(count, start)
   ! Get attribues
   status = nf_inq_att(ncid, varid, "add_offset", atype, alen)
   if (status == 0) then
@@ -204,6 +205,7 @@ contains
   end if
   call ncheck(nf_get_vara_real(ncid, varid, start, count, data), &
               'Get var '//varname)
+  deallocate (count, start)
   ! Get attribues
   status = nf_inq_att(ncid, varid, "add_offset", atype, alen)
   if (status == 0) then
@@ -326,6 +328,7 @@ contains
   end if
   call ncheck(nf_get_vara_int2(ncid, varid, start, count, data), &
               'Get var '//varname)
+  deallocate (count, start)
 
   ! Get attribues
 
