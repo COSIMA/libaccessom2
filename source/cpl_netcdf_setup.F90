@@ -193,7 +193,8 @@ subroutine get_field_dims(nx, ny, time, filename, varname)
   integer :: ndims, i, len
   character(len=nf90_max_name) :: dimname
 
-  call ncheck(nf90_open(filename, NF90_NOWRITE, ncid), 'Opening '//trim(filename))
+  call ncheck(nf90_open(filename, NF90_NOWRITE, ncid), &
+              'get_field_dims opening '//trim(filename))
   call ncheck(nf90_inq_varid(ncid, varname, varid))
 
   ! Get dimensions used by this var.
@@ -220,6 +221,7 @@ subroutine get_field_dims(nx, ny, time, filename, varname)
   enddo
 
   deallocate(dimids)
+  call ncheck(nf90_close(ncid))
 
   if (nx == 0 .or. ny == 0 .or. time == 0) then
     stop "MATM get_field_dims: couldn't get all dimensions"
