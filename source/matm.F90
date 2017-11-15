@@ -146,12 +146,9 @@ PROGRAM datm
   write(il_out, *)'(main) iday, imonth, iyear, yruntime0: ',iday, imonth, iyear, yruntime0
 
 !  print *, 'MATM: Atmospheric forcing dataset: ', trim(dataset)
-  if (trim(dataset) /= 'ncep2' .and. &
-      trim(dataset) /= 'era40' .and. &
-      trim(dataset) /= 'core'  .and. &
+  if (trim(dataset) /= 'core'  .and. &
       trim(dataset) /= 'core2' .and. &
-      trim(dataset) /= 'jra55' .and. &
-      trim(dataset) /= 'hadgem3' ) then
+      trim(dataset) /= 'jra55' ) then
       print *, 'MATM: Wrong forcing data-- ', trim(dataset)
       stop 'MATM: FATAL ERROR--unrecognised atmospheric forcing!' 
   endif
@@ -165,7 +162,6 @@ PROGRAM datm
   write(il_out,*) 'num of cpl int, num cpl in year,  and matm-iner loop: ',num_cpl, num_cpl_in_year, npas
 
   dt_accum = real(dt_cpl)
-
 
   !=========================================================!
   ! Component model coupling and internal timestepping      !
@@ -265,68 +261,17 @@ PROGRAM datm
             nrec = nt_read56
           else
             nrec = nt_read
-          endif               
+          endif
 
           write(il_out,*) '(main) reading core data no: ', jf, ' ', trim(cfield(jf))  
           write(il_out,*) '       recond no: ', nrec
-          
-          if ( jf==8 .and. runtype == 'IA' ) then  
-            ! runoff is unavailable from core, we thus read it from the ncep2 data,
-            call read_ncep2(vwork, nx_global,ny_global, nrec, trim(cfield(jf)), cfile(jf))
-            ! BUT for spinup run (runtype == 'NY', ie., normal year run), we've generated
-            ! multi-year mean (1979-2006) runof from ncep2 IA data, and its format is the
-            ! same as the real core data, thus use read_core below.
-          else
-            call read_core(vwork, nx_global,ny_global, nrec, trim(cfield(jf)), cfile(jf))
-          endif
+
+          call read_core(vwork, nx_global,ny_global, nrec, trim(cfield(jf)), cfile(jf))
 
           if (jf == 1) swfld = vwork
           if (jf == 2) lwfld = vwork
           if (jf == 3) uwnd  = vwork
           if (jf == 4) vwnd  = vwork
-          if (jf == 5) rain  = vwork
-          if (jf == 6) snow  = vwork
-          if (jf == 7) press = vwork
-          if (jf == 8) runof = vwork
-          if (jf == 9) tair  = vwork
-          if (jf ==10) qair  = vwork
-
-          enddo
-
-        else if (trim(dataset) == 'hadgem3' ) then
-
-          do jf = 1, nfields
-
-          ! need read in the First record from next year dataset
-          !-------------------------------------------------------!
-          if (imonth == 12) then
-            if (icpl == num_cpl) then           !the last cpl interval
-              call nextyear_forcing(cfile(jf))
-              nt_read = 1
-            endif
-          endif
-
-          nrec = nt_read          
-
-          write(il_out,*) '(main) reading hadgem3 data no: ', jf, ' ', trim(cfield(jf))
-          write(il_out,*) '       recond no: ', nrec
-          !read_core also works for reading hadgem3 data 
-          call read_core(vwork, nx_global,ny_global, nrec, trim(cfield(jf)), cfile(jf))
- 
-          if (jf == 1) swfld = vwork
-          if (jf == 2) lwfld = vwork
-          !note hadgem3 u,v are missing at two rows (j=1 and ny_global) when interpolated
-          !from B-U cells (144 rows) onto C-T cells (145 rows).  
-          if (jf == 3) then 
-            uwnd  = vwork
-            uwnd(:,1) = vwork(:,2)
-            uwnd(:,ny_global) = vwork(:,ny_global-1)
-          endif
-          if (jf == 4) then 
-            vwnd  = vwork
-            vwnd(:,1) = vwork(:,2)
-            vwnd(:,ny_global) = vwork(:,ny_global-1)
-          endif
           if (jf == 5) rain  = vwork
           if (jf == 6) snow  = vwork
           if (jf == 7) press = vwork
@@ -365,18 +310,7 @@ PROGRAM datm
           write(il_out,*) '       record no: ', nrec
 
           if ( jf==8 ) then
-            if ( runtype == 'IA' ) then
-              ! runoff is unavailable from core, we thus read it from the ncep2
-              ! data,
-                call read_ncep2(runof, nx_global_runoff, ny_global_runoff, nrec, trim(cfield(jf)),cfile(jf))
-              ! BUT for spinup run (runtype == 'NY', ie., normal year run), we've
-              ! generated
-              ! multi-year mean (1979-2006) runof from ncep2 IA data, and its format
-              ! is the
-              ! same as the real core data, thus use read_core below.
-            else
-              call read_core(runof, nx_global_runoff , ny_global_runoff, nrec, trim(cfield(jf)),cfile(jf))
-            endif
+            call read_core(runof, nx_global_runoff , ny_global_runoff, nrec, trim(cfield(jf)),cfile(jf))
           else
             call read_core(vwork, nx_global,ny_global, nrec, trim(cfield(jf)),cfile(jf))
             if (jf == 1) swfld = vwork
@@ -391,69 +325,7 @@ PROGRAM datm
           endif
 
           enddo
-
-        else !if (trim(dataset) == 'era40' .or. trim(dataset) == 'ncep2') then
-
-          do jf = 1, nfields  
-          ! need read in the First record from next year dataset
-          !-------------------------------------------------------!
-          if (imonth == 12) then
-            if (icpl == num_cpl) then           !the last cpl interval
-              call nextyear_forcing(cfile(jf))  
-              nt_read = 1
-            endif
-          endif
-
-          nrec = nt_read
-
-          write(il_out,*) '(main) reading forcing data no: ', jf, ' ', trim(cfield(jf))  
-          write(il_out,*) '       record no: ', nrec
-
-          if (trim(dataset) == 'era40' .and. jf /= 7) then
-            call read_era40(vwork, nx_global,ny_global, nrec, trim(cfield(jf)), cfile(jf))
-          else
-            call read_ncep2(vwork, nx_global,ny_global, nrec, trim(cfield(jf)), cfile(jf))
-          endif
-
-          if (jf == 1) then
-            swfld = vwork
-            if (trim(dataset) == 'era40') swfld = vwork/dt_accum
-          endif 
-          if (jf == 2) then
-            lwfld = vwork
-            if (trim(dataset) == 'era40') lwfld = vwork/dt_accum
-          endif
-          if (jf == 3) uwnd  = vwork
-          if (jf == 4) vwnd  = vwork
-          if (jf == 5) then 
-            rain = vwork
-            if (trim(dataset) == 'era40') rain = vwork*1000./dt_accum  !m==>kg/m^2/s
-          endif
-          if (jf == 6) press = vwork
-          if (jf == 7) runof = vwork
-          if (jf == 8) tair  = vwork
-          if (jf == 9) then
-            if (trim(dataset) == 'ncep2') then
-              qair = vwork
-            else
-              dewpt = vwork
-              !convert dewpoint into specfic humidity:
-              vwork = press/100.    !Pa ==> hPa
-              call dewpt2sh(nx_global, ny_global, dewpt, tair, vwork, qair)
-            endif
-          endif
-
-          enddo
-
-          ! determine, very roughly, whether precip is rain or snow
-          snow = 0.
-          where (tair < Tffresh) 
-            snow = rain
-            rain = 0.
-          endwhere 
-
         endif   !if (trim(dataset) == 'core')
-
       endif  !if (mod(itap_sec, dt_cpl) == 0) 
 
     enddo      !itap = 1, npas
