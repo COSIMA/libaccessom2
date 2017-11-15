@@ -68,14 +68,14 @@ contains
   !print *, 'MATM: (read_core)    from file: ',filename
 
   ! Open file for read access
-  call ncheck(nf_open(filename, nf_nowrite, ncid), 'Opening '//trim(filename))
+  call ncheck(nf_open(trim(filename), nf_nowrite, ncid), 'Opening '//trim(filename))
 
   ! Get variable ID
-  call ncheck(nf_inq_varid(ncid, varname, varid), 'Inquire: '//varname)
+  call ncheck(nf_inq_varid(ncid, trim(varname), varid), 'Inquire: '//trim(varname))
 
   ! Get number of dimensions, and allocate count and start accordingly
   call ncheck(nf_inq_varndims(ncid, varid, dimensions), &
-              'Inquire dims: '//varname)
+              'Inquire dims: '//trim(varname))
 
   allocate (count(dimensions), start(dimensions))
 
@@ -89,13 +89,13 @@ contains
     count = (/ nx, ny, 1, 1 /)
   end if
   call ncheck(nf_get_vara_real(ncid, varid, start, count, data), &
-              'Get var '//varname)
+              'Get var '//trim(varname))
   deallocate(count, start)
   ! Get attribues
   status = nf_inq_att(ncid, varid, "add_offset", atype, alen)
   if (status == 0) then
     call ncheck(nf_get_att_real(ncid, varid, "add_offset", add_offset), &
-                'Get attr add_offset from '//varname)
+                'Get attr add_offset from '//trim(varname))
 !    print *, 'MATM: (read_core) read in add_offset = ',add_offset
   else
 !   print *, 'MATM: Attribute "add_offset" unavailable in the dataset!'
@@ -103,7 +103,7 @@ contains
   status = nf_inq_att(ncid, varid, "scale_factor", atype, alen)
   if (status == 0) then
     call ncheck(nf_get_att_real(ncid, varid, "scale_factor", scale_factor), &
-                'Get attr scale_factor from '//varname)
+                'Get attr scale_factor from '//trim(varname))
 !    print *, 'MATM: (read_core) read in scale_factor = ',scale_factor
   else
 !    print *, 'MATM: Attribute "scale_factor" unavailable in the dataset!'
@@ -114,7 +114,7 @@ contains
   status = nf_inq_att(ncid, varid, "missing_value", atype, alen)
   if (status == 0) then
     call ncheck(nf_get_att_real(ncid, varid, "missing_value", missing_value), &
-                'Get attr missing_value from '//varname) 
+                'Get attr missing_value from '//trim(varname))
     !status =  nf_get_att_int2(ncid, varid, "missing_value", missing_value)
   else
 !    print *, 'MATM: Attribute "missing_value" unavailable in the dataset!'
@@ -124,7 +124,7 @@ contains
   status = nf_inq_att(ncid, varid, "_FillValue", atype, alen)
   if (status == 0) then
     call ncheck(nf_get_att_real(ncid, varid, "_FillValue", FillValue), &
-                'Get attr _FillValue from '//varname) 
+                'Get attr _FillValue from '//trim(varname))
     !status =  nf_get_att_int2(ncid, varid, "_FillValue", FillValue)
   else 
 !    print *, 'MATM: Attribute "_FillValue" unavailable in the dataset!'
