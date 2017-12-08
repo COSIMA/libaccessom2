@@ -50,6 +50,8 @@ logical :: debug_output = .false.
 ! How often to dump the coupling fields if any of the chk_*_fields options are .true.
 ! The unit of time is seconds. By default fields are dumped every timestep.
 integer(kind=int_kind) :: chk_fields_period = 1
+real(kind=dbl_kind) :: runoff_cap = 0.03  ! kg/m^2/s
+! conservatively spread runoff exceeding runoff_cap; set to runoff_cap=0.0 to have no limit to runoff
 
 namelist/coupling/ &
    init_date, &
@@ -65,6 +67,7 @@ namelist/coupling/ &
    chk_a2i_fields, &   
    chk_i2a_fields, &
    chk_fields_period, &
+   runoff_cap, &
    debug_output
 
 !====================================================================================
