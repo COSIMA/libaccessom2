@@ -129,6 +129,92 @@ contains
     enddo
 
     deallocate(results)
+    
+    call kdrunoff_cap(this, runoff, areas)
+
+    ! ! Now apply a limit to runoff. Runoff is evenly distributed
+    ! ! to a number of neighbours.
+    ! if (this%max_runoff > 0.0) then
+    !   do n=1, size(this%ocean_points, 2)
+    !     i = this%ocean_indices(1, n)
+    !     j = this%ocean_indices(2, n)
+    !     redist = runoff(i, j) - this%max_runoff
+    ! 
+    !     if (redist > 0.0) then
+    !       ! Remove 'redist' to bring down to max_runoff
+    !       runoff(i, j) = runoff(i, j) - redist
+    !       redist_mass = redist * areas(i, j)
+    ! 
+    !       ! Try to redistribute all in several passes because we don't know how
+    !       ! many nearest neighbours are going to be needed.
+    !       nn_accum = 1
+    !       do while (redist_mass > 0.0)
+    !         ! Guess how many nearest neighbours are needed
+    !         ! to redistribute 'redist'. This is big to begin with and grows
+    !         ! linearly.
+    !         nn = (ceiling(redist / this%max_runoff) * 100) + nn_accum
+    !         if (nn > size(this%ocean_points) / 10.0) then
+    !             stop 'Error in kdrunoff_remap: runoff too large to redistribute.'
+    !         endif
+    !         allocate(results(nn))
+    !         call kdtree2_n_nearest(tp=this%tree, qv=this%ocean_points(:, n), &
+    !                                nn=nn, results=results)
+    !         do nn=nn_accum, size(results)
+    !           nni = this%ocean_indices(1, results(nn)%idx)
+    !           nnj = this%ocean_indices(2, results(nn)%idx)
+    !           ! How much of redist can this neighbour accommodate?
+    !           avail_mass = (this%max_runoff - runoff(nni, nnj)) * areas(nni, nnj)
+    !           if (avail_mass > 0.0) then
+    !             avail_mass = min(avail_mass, redist_mass)
+    !             runoff(nni, nnj) = runoff(nni, nnj) + &
+    !                               (avail_mass / areas(nni, nnj))
+    !             redist_mass = redist_mass - avail_mass
+    !           endif
+    !         enddo
+    !         nn_accum = size(results)
+    !         deallocate(results)
+    !       enddo
+    !     endif
+    !   enddo
+    ! endif
+
+  end subroutine kdrunoff_remap
+  
+  subroutine kdrunoff_cap(this, runoff, areas)
+    type(kdrunoff_class), intent(inout) :: this
+    real, dimension(:, :), intent(inout) :: runoff
+    real, dimension(:, :), intent(in) :: areas
+
+    integer :: n, i, j, nni, nnj, nn, nn_accum
+    real :: val, val_per_nbr, area_ratio
+    real :: redist, redist_mass, avail_mass
+    type(kdtree2_result), allocatable :: results(:)
+
+    if (this%num_ocean_points == 0) then
+      return
+    endif
+
+    ! allocate(results(1))
+    ! 
+    ! ! Move any runoff that occurs on land nearest ocean point
+    ! do n=1, size(this%land_points, 2)
+    !   i = this%land_indices(1, n)
+    !   j = this%land_indices(2, n)
+    !   val = runoff(i, j)
+    !   if (val > 0.0) then
+    !     call kdtree2_n_nearest(tp=this%tree, qv=this%land_points(:, n), &
+    !                            nn=1, results=results)
+    !     ! Remove runoff from land
+    !     runoff(i, j) = runoff(i, j) - val
+    !     nni = this%ocean_indices(1, results(1)%idx)
+    !     nnj = this%ocean_indices(2, results(1)%idx)
+    !     ! Add runoff to ocean point
+    !     runoff(nni, nnj) = runoff(nni, nnj) + &
+    !                        ((val * areas(i, j)) / areas(nni, nnj))
+    !   endif
+    ! enddo
+    ! 
+    ! deallocate(results)
 
     ! Now apply a limit to runoff. Runoff is evenly distributed
     ! to a number of neighbours.
@@ -176,7 +262,7 @@ contains
       enddo
     endif
 
-  end subroutine kdrunoff_remap
+  end subroutine kdrunoff_cap
 
   subroutine kdrunoff_del(this)
     type(kdrunoff_class), intent(inout) :: this
