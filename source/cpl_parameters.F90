@@ -53,13 +53,13 @@ integer(kind=int_kind) :: chk_fields_period = 1
 
 real(kind=dbl_kind) :: global_runoff_cap = 0.03  ! kg/m^2/s
 ! conservatively spread runoff exceeding global_runoff_cap; set to global_runoff_cap=0.0 to have no global limit to runoff
-integer, parameter :: max_caps = 4 ! maximum number of runoff cap regions in addition to global (increase if want more)
+integer, parameter :: max_caps = 4 ! maximum number of runoff cap regions in addition to global (increase if want more; also make the arrays below match)
 integer :: num_runoff_caps = 0 ! number of runoff cap regions actually used, in addition to global; anything more than max_caps is ignored
 real(kind=dbl_kind), dimension(max_caps) :: runoff_caps = (/ 0.0, 0.0, 0.0, 0.0 /) ! kg/m^2/s  runoff cap applied in each region (0.0 = no cap)
-(max_caps) :: runoff_caps_is = (/ 0, 0, 0, 0 /) ! starting i index for each runoff region
-integer, dimension(max_caps) :: runoff_caps_ie = (/ 0, 0, 0, 0 /) ! ending i index for each runoff region
+integer, dimension(max_caps) :: runoff_caps_is = (/ 0, 0, 0, 0 /) ! starting i index for each runoff region
+integer, dimension(max_caps) :: runoff_caps_ie = (/ -1, -1, -1, -1 /) ! ending i index for each runoff region
 integer, dimension(max_caps) :: runoff_caps_js = (/ 0, 0, 0, 0 /) ! starting j index for each runoff region
-integer, dimension(max_caps) :: runoff_caps_je = (/ 0, 0, 0, 0 /) ! ending j index for each runoff region
+integer, dimension(max_caps) :: runoff_caps_je = (/ -1, -1, -1, -1 /) ! ending j index for each runoff region
 
 namelist/coupling/ &
    init_date, &

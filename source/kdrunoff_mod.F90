@@ -19,6 +19,12 @@ module kdrunoff_mod
     ! Maximum runoff (kg/m^2/s) desired. Beyond this and
     ! runoff is redistributed.
     real :: max_runoff
+    ! integer :: num_runoff_caps = 0
+    ! real, dimension(:) :: runoff_caps
+    ! integer, dimension(:) :: runoff_caps_is
+    ! integer, dimension(:) :: runoff_caps_ie
+    ! integer, dimension(:) :: runoff_caps_js
+    ! integer, dimension(:) :: runoff_caps_je
     integer :: num_ocean_points
   end type kdrunoff_class
 
@@ -31,21 +37,30 @@ contains
 
   subroutine kdrunoff_new(this, land_sea_mask, x_t, y_t, &
                           num_land_pts, num_ocean_pts, &
-                          max_runoff)
+                          max_runoff, num_runoff_caps, runoff_caps, &
+                          runoff_caps_is, runoff_caps_ie, &
+                          runoff_caps_js, runoff_caps_je)
     type(kdrunoff_class), intent(inout) :: this
     real, dimension(:, :), intent(in) :: land_sea_mask
     real, dimension(:, :), intent(in) :: x_t, y_t
     integer, intent(out) :: num_land_pts, num_ocean_pts
-    real, optional, intent(in) :: max_runoff
+    real, intent(in) :: max_runoff
+    integer, intent(in) :: num_runoff_caps
+    real, dimension(:), intent(in) :: runoff_caps
+    integer, dimension(:), intent(in) :: runoff_caps_is
+    integer, dimension(:), intent(in) :: runoff_caps_ie
+    integer, dimension(:), intent(in) :: runoff_caps_js
+    integer, dimension(:), intent(in) :: runoff_caps_je
 
     integer :: nx, ny, i, j, n_ocn, n_land
 
-    if (present(max_runoff)) then
-      this%max_runoff = max_runoff
-    else
-      ! No limit to runoff.
-      this%max_runoff = 0.0
-    endif
+    ! if (present(max_runoff)) then
+    !   this%max_runoff = max_runoff
+    ! else
+    !   ! No limit to runoff.
+    !   this%max_runoff = 0.0
+    ! endif
+    this%max_runoff = max_runoff
 
     ! Total number of ocean points.
     this%num_ocean_points = sum(land_sea_mask)
