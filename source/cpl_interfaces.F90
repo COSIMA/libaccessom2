@@ -133,10 +133,10 @@ contains
   call recv_grid_from_ice()
   if (trim(dataset) == 'jra55') then
     call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
-                          ice_lats, ice_lons, ice_mask, max_runoff=runoff_cap)
+                          ice_lats, ice_lons, ice_mask, max_runoff=global_runoff_cap)
   else
     call remap_runoff_new(remap_runoff, 'rmp_corr_to_cict_CONSERV.nc', &
-                          ice_lats, ice_lons, ice_mask, max_runoff=runoff_cap)
+                          ice_lats, ice_lons, ice_mask, max_runoff=global_runoff_cap)
   endif
 
   ! Compare the total number of processes and the number of processes
