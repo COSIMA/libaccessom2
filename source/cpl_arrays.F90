@@ -48,7 +48,7 @@ module cpl_arrays
       !----------------------------------------------------------------
   
   ! Fields received
-  real(kind=dbl_kind),dimension(:,:),allocatable :: &
+  real(kind=dbl_kind), dimension(:,:), allocatable :: &
 !!!!      isst, albvdr, albidr, albvdf, albidf
      isst
   
