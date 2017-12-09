@@ -19,12 +19,12 @@ module kdrunoff_mod
     ! Maximum runoff (kg/m^2/s) desired. Beyond this and
     ! runoff is redistributed.
     real :: max_runoff
-    ! integer :: num_runoff_caps = 0
-    ! real, dimension(:) :: runoff_caps
-    ! integer, dimension(:) :: runoff_caps_is
-    ! integer, dimension(:) :: runoff_caps_ie
-    ! integer, dimension(:) :: runoff_caps_js
-    ! integer, dimension(:) :: runoff_caps_je
+    integer :: num_runoff_caps
+    real, dimension(:), allocatable :: runoff_caps
+    integer, dimension(:), allocatable :: runoff_caps_is
+    integer, dimension(:), allocatable :: runoff_caps_ie
+    integer, dimension(:), allocatable :: runoff_caps_js
+    integer, dimension(:), allocatable :: runoff_caps_je
     integer :: num_ocean_points
   end type kdrunoff_class
 
@@ -60,7 +60,18 @@ contains
     !   ! No limit to runoff.
     !   this%max_runoff = 0.0
     ! endif
-    this%max_runoff = max_runoff
+    allocate(this%runoff_caps(num_runoff_caps))
+    allocate(this%runoff_caps_is(num_runoff_caps))
+    allocate(this%runoff_caps_ie(num_runoff_caps))
+    allocate(this%runoff_caps_js(num_runoff_caps))
+    allocate(this%runoff_caps_je(num_runoff_caps))
+    this%max_runoff = max_runoff    
+    this%num_runoff_caps = num_runoff_caps
+    this%runoff_caps = runoff_caps
+    this%runoff_caps_is = runoff_caps_is
+    this%runoff_caps_ie = runoff_caps_ie
+    this%runoff_caps_js = runoff_caps_js
+    this%runoff_caps_je = runoff_caps_je
 
     ! Total number of ocean points.
     this%num_ocean_points = sum(land_sea_mask)
@@ -145,14 +156,26 @@ contains
 
     deallocate(results)
     
-    call kdrunoff_cap(this, runoff, areas)
+    ! first do regional caps
+    do n=1,this%num_runoff_caps
+      call kdrunoff_cap(this, runoff, areas, this%runoff_caps(n), &
+                  this%runoff_caps_is(n), this%runoff_caps_ie(n), &
+                  this%runoff_caps_js(n), this%runoff_caps_je(n))
+    enddo
+    ! then do global cap
+    call kdrunoff_cap(this, runoff, areas, this%max_runoff, 0,0,0,0)
 
   end subroutine kdrunoff_remap
   
-  subroutine kdrunoff_cap(this, runoff, areas)
+  subroutine kdrunoff_cap(this, runoff, areas, cap, is, ie, js, je)
     type(kdrunoff_class), intent(inout) :: this
     real, dimension(:, :), intent(inout) :: runoff
     real, dimension(:, :), intent(in) :: areas
+    real, intent(in) :: cap
+    integer, intent(in) :: is
+    integer, intent(in) :: ie
+    integer, intent(in) :: js
+    integer, intent(in) :: je
 
     integer :: n, i, j, nni, nnj, nn, nn_accum
     real :: val
@@ -165,46 +188,48 @@ contains
 
     ! Now apply a limit to runoff. Runoff is evenly distributed
     ! to a number of neighbours.
-    if (this%max_runoff > 0.0) then
+    if (cap > 0.0) then
       do n=1, size(this%ocean_points, 2)
         i = this%ocean_indices(1, n)
         j = this%ocean_indices(2, n)
-        redist = runoff(i, j) - this%max_runoff
+        if (i >= is .and. i <= ie .and. j >=js .and. j <= je) then
+            redist = runoff(i, j) - cap
 
-        if (redist > 0.0) then
-          ! Remove 'redist' to bring down to max_runoff
-          runoff(i, j) = runoff(i, j) - redist
-          redist_mass = redist * areas(i, j)
+            if (redist > 0.0) then
+              ! Remove 'redist' to bring down to max_runoff
+              runoff(i, j) = runoff(i, j) - redist
+              redist_mass = redist * areas(i, j)
 
-          ! Try to redistribute all in several passes because we don't know how
-          ! many nearest neighbours are going to be needed.
-          nn_accum = 1
-          do while (redist_mass > 0.0)
-            ! Guess how many nearest neighbours are needed
-            ! to redistribute 'redist'. This is big to begin with and grows
-            ! linearly.
-            nn = (ceiling(redist / this%max_runoff) * 100) + nn_accum
-            if (nn > size(this%ocean_points) / 10.0) then
-                stop 'Error in kdrunoff_remap: runoff too large to redistribute.'
+              ! Try to redistribute all in several passes because we don't know how
+              ! many nearest neighbours are going to be needed.
+              nn_accum = 1
+              do while (redist_mass > 0.0)
+                ! Guess how many nearest neighbours are needed
+                ! to redistribute 'redist'. This is big to begin with and grows
+                ! linearly.
+                nn = (ceiling(redist / cap) * 100) + nn_accum
+                if (nn > size(this%ocean_points) / 10.0) then
+                    stop 'Error in kdrunoff_remap: runoff too large to redistribute.'
+                endif
+                allocate(results(nn))
+                call kdtree2_n_nearest(tp=this%tree, qv=this%ocean_points(:, n), &
+                                       nn=nn, results=results)
+                do nn=nn_accum, size(results)
+                  nni = this%ocean_indices(1, results(nn)%idx)
+                  nnj = this%ocean_indices(2, results(nn)%idx)
+                  ! How much of redist can this neighbour accommodate?
+                  avail_mass = (cap - runoff(nni, nnj)) * areas(nni, nnj)
+                  if (avail_mass > 0.0) then
+                    avail_mass = min(avail_mass, redist_mass)
+                    runoff(nni, nnj) = runoff(nni, nnj) + &
+                                      (avail_mass / areas(nni, nnj))
+                    redist_mass = redist_mass - avail_mass
+                  endif
+                enddo
+                nn_accum = size(results)
+                deallocate(results)
+              enddo
             endif
-            allocate(results(nn))
-            call kdtree2_n_nearest(tp=this%tree, qv=this%ocean_points(:, n), &
-                                   nn=nn, results=results)
-            do nn=nn_accum, size(results)
-              nni = this%ocean_indices(1, results(nn)%idx)
-              nnj = this%ocean_indices(2, results(nn)%idx)
-              ! How much of redist can this neighbour accommodate?
-              avail_mass = (this%max_runoff - runoff(nni, nnj)) * areas(nni, nnj)
-              if (avail_mass > 0.0) then
-                avail_mass = min(avail_mass, redist_mass)
-                runoff(nni, nnj) = runoff(nni, nnj) + &
-                                  (avail_mass / areas(nni, nnj))
-                redist_mass = redist_mass - avail_mass
-              endif
-            enddo
-            nn_accum = size(results)
-            deallocate(results)
-          enddo
         endif
       enddo
     endif

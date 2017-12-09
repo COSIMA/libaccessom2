@@ -70,14 +70,6 @@ contains
     this%n_s = n_s
     this%n_a = n_a
     this%n_b = n_b
-
-    ! if (present(max_runoff)) then
-    !   call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
-    !                     this%num_land_pts, this%num_ocean_pts, max_runoff)
-    ! else
-    !   call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
-    !                     this%num_land_pts, this%num_ocean_pts)
-    ! endif
     
     call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
                       this%num_land_pts, this%num_ocean_pts, &
