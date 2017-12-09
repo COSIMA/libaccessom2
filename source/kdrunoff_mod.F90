@@ -18,7 +18,6 @@ module kdrunoff_mod
     type(kdtree2), pointer :: tree
     ! Maximum runoff (kg/m^2/s) desired. Beyond this and
     ! runoff is redistributed.
-    real :: max_runoff
     integer :: num_runoff_caps
     real, dimension(:), allocatable :: runoff_caps
     integer, dimension(:), allocatable :: runoff_caps_is
@@ -37,14 +36,13 @@ contains
 
   subroutine kdrunoff_new(this, land_sea_mask, x_t, y_t, &
                           num_land_pts, num_ocean_pts, &
-                          max_runoff, num_runoff_caps, runoff_caps, &
+                          num_runoff_caps, runoff_caps, &
                           runoff_caps_is, runoff_caps_ie, &
                           runoff_caps_js, runoff_caps_je)
     type(kdrunoff_class), intent(inout) :: this
     real, dimension(:, :), intent(in) :: land_sea_mask
     real, dimension(:, :), intent(in) :: x_t, y_t
     integer, intent(out) :: num_land_pts, num_ocean_pts
-    real, intent(in) :: max_runoff
     integer, intent(in) :: num_runoff_caps
     real, dimension(:), intent(in) :: runoff_caps
     integer, dimension(:), intent(in) :: runoff_caps_is
@@ -54,18 +52,11 @@ contains
 
     integer :: nx, ny, i, j, n_ocn, n_land
 
-    ! if (present(max_runoff)) then
-    !   this%max_runoff = max_runoff
-    ! else
-    !   ! No limit to runoff.
-    !   this%max_runoff = 0.0
-    ! endif
     allocate(this%runoff_caps(num_runoff_caps))
     allocate(this%runoff_caps_is(num_runoff_caps))
     allocate(this%runoff_caps_ie(num_runoff_caps))
     allocate(this%runoff_caps_js(num_runoff_caps))
     allocate(this%runoff_caps_je(num_runoff_caps))
-    this%max_runoff = max_runoff    
     this%num_runoff_caps = num_runoff_caps
     this%runoff_caps = runoff_caps
     this%runoff_caps_is = runoff_caps_is
@@ -156,14 +147,11 @@ contains
 
     deallocate(results)
     
-    ! first do regional caps
     do n=1,this%num_runoff_caps
       call kdrunoff_cap(this, runoff, areas, this%runoff_caps(n), &
                   this%runoff_caps_is(n), this%runoff_caps_ie(n), &
                   this%runoff_caps_js(n), this%runoff_caps_je(n))
     enddo
-    ! then do global cap
-    call kdrunoff_cap(this, runoff, areas, this%max_runoff, 0,0,0,0)
 
   end subroutine kdrunoff_remap
   
@@ -196,7 +184,7 @@ contains
             redist = runoff(i, j) - cap
 
             if (redist > 0.0) then
-              ! Remove 'redist' to bring down to max_runoff
+              ! Remove 'redist' to bring down to cap
               runoff(i, j) = runoff(i, j) - redist
               redist_mass = redist * areas(i, j)
 

@@ -51,15 +51,15 @@ logical :: debug_output = .false.
 ! The unit of time is seconds. By default fields are dumped every timestep.
 integer(kind=int_kind) :: chk_fields_period = 1
 
-real(kind=dbl_kind) :: global_runoff_cap = 0.03  ! kg/m^2/s
 ! conservatively spread runoff exceeding global_runoff_cap; set to global_runoff_cap=0.0 to have no global limit to runoff
 integer, parameter :: max_caps = 4 ! maximum number of runoff cap regions in addition to global (increase if want more; also make the arrays below match)
-integer :: num_runoff_caps = 0 ! number of runoff cap regions actually used, in addition to global; anything more than max_caps is ignored
-real(kind=dbl_kind), dimension(max_caps) :: runoff_caps = (/ 0.0, 0.0, 0.0, 0.0 /) ! kg/m^2/s  runoff cap applied in each region (0.0 = no cap)
-integer, dimension(max_caps) :: runoff_caps_is = (/ 0, 0, 0, 0 /) ! starting i index for each runoff region
-integer, dimension(max_caps) :: runoff_caps_ie = (/ -1, -1, -1, -1 /) ! ending i index for each runoff region
-integer, dimension(max_caps) :: runoff_caps_js = (/ 0, 0, 0, 0 /) ! starting j index for each runoff region
-integer, dimension(max_caps) :: runoff_caps_je = (/ -1, -1, -1, -1 /) ! ending j index for each runoff region
+integer :: num_runoff_caps = 1 ! number of runoff cap regions actually used; anything more than max_caps is ignored
+real(kind=dbl_kind), dimension(max_caps) :: runoff_caps = (/ 0.03, 0.0, 0.0, 0.0 /) ! kg/m^2/s  runoff cap applied in each region (0.0 = no cap)
+! runoff cap is applied to all points between or including these index limits
+integer, dimension(max_caps) :: runoff_caps_is = (/ 0, 0, 0, 0 /) ! starting i index for each runoff region (count from 1)
+integer, dimension(max_caps) :: runoff_caps_ie = (/ 1000000, -1, -1, -1 /) ! ending i index for each runoff region (count from 1)
+integer, dimension(max_caps) :: runoff_caps_js = (/ 0, 0, 0, 0 /) ! starting j index for each runoff region (count from 1)
+integer, dimension(max_caps) :: runoff_caps_je = (/ 1000000, -1, -1, -1 /) ! ending j index for each runoff region (count from 1)
 
 namelist/coupling/ &
    init_date, &
@@ -75,7 +75,6 @@ namelist/coupling/ &
    chk_a2i_fields, &   
    chk_i2a_fields, &
    chk_fields_period, &
-   global_runoff_cap, &
    num_runoff_caps, &
    runoff_caps, &
    runoff_caps_is, &

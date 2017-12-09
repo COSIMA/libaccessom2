@@ -37,7 +37,7 @@ module remap_runoff_mod
 
 contains
 
-  subroutine remap_runoff_new(this, weights, lats, lons, mask, max_runoff, &
+  subroutine remap_runoff_new(this, weights, lats, lons, mask, &
       num_runoff_caps, runoff_caps, &
       runoff_caps_is, runoff_caps_ie, &
       runoff_caps_js, runoff_caps_je)
@@ -45,8 +45,7 @@ contains
 
     character(len=*), intent(in) :: weights
     real, dimension(:, :), intent(in) :: lats, lons, mask
-    real, optional, intent(in) :: max_runoff
-    integer, optional, intent(in) :: num_runoff_caps
+    integer, intent(in) :: num_runoff_caps
     real, dimension(:), intent(in) :: runoff_caps
     integer, dimension(:), intent(in) :: runoff_caps_is
     integer, dimension(:), intent(in) :: runoff_caps_ie
@@ -73,7 +72,7 @@ contains
     
     call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
                       this%num_land_pts, this%num_ocean_pts, &
-                      max_runoff, num_runoff_caps, runoff_caps, &
+                      num_runoff_caps, runoff_caps, &
                       runoff_caps_is, runoff_caps_ie, &
                       runoff_caps_js, runoff_caps_je)
 

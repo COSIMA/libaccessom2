@@ -134,14 +134,12 @@ contains
   if (trim(dataset) == 'jra55') then
     call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
                           ice_lats, ice_lons, ice_mask, &
-                          global_runoff_cap, &
                           num_runoff_caps, runoff_caps, &
                           runoff_caps_is, runoff_caps_ie, &
                           runoff_caps_js, runoff_caps_je)
   else
     call remap_runoff_new(remap_runoff, 'rmp_corr_to_cict_CONSERV.nc', &
                           ice_lats, ice_lons, ice_mask, &
-                          global_runoff_cap, &
                           num_runoff_caps, runoff_caps, &
                           runoff_caps_is, runoff_caps_ie, &
                           runoff_caps_js, runoff_caps_je)
