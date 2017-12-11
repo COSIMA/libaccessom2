@@ -132,7 +132,7 @@ contains
 
     ! Now apply a limit to runoff. Runoff is evenly distributed
     ! to a number of neighbours.
-    if (this%max_runoff /= 0.0) then
+    if (this%max_runoff > 0.0) then
       do n=1, size(this%ocean_points, 2)
         i = this%ocean_indices(1, n)
         j = this%ocean_indices(2, n)
