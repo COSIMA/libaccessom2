@@ -48,7 +48,7 @@ PROGRAM datm
   integer :: jf, icpl, itap, itap_sec, icpl_sec, rtimestamp, stimestamp
 
   integer :: num_cpl              ! = runtime/dt_cpl !
-  integer :: num_cpl_in_year      ! = runtime/dt_cpl !
+  integer :: num_cpl_in_year      ! = number of coupling steps in one year
   integer :: npas                 ! = dt_cpl/dt_atm !
   
   character(len=80), dimension(:), allocatable :: cfile
@@ -112,10 +112,6 @@ PROGRAM datm
   num_cpl = runtime/dt_cpl
   num_cpl_in_year = (365*86400) / dt_cpl
   npas = dt_cpl/dt_atm 
-
-  if (num_cpl < num_cpl_in_year) then
-    num_cpl_in_year = num_cpl
-  endif
 
   iniday  = mod(inidate, 100)
   inimon  = mod( (inidate - iniday)/100, 100)
