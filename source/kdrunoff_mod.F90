@@ -147,7 +147,8 @@ contains
 
     deallocate(results)
     
-    do n=1,this%num_runoff_caps
+    ! counting down is more efficient if more relaxed global cap is first in array
+    do n=this%num_runoff_caps, 1, -1
       call kdrunoff_cap(this, runoff, areas, this%runoff_caps(n), &
                   this%runoff_caps_is(n), this%runoff_caps_ie(n), &
                   this%runoff_caps_js(n), this%runoff_caps_je(n))
