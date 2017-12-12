@@ -36,9 +36,9 @@ integer(kind=int_kind) :: il_commice, my_commice_task
 integer(kind=int_kind) :: il_flag        ! Flag for grid writing
 integer(kind=int_kind) :: il_status, il_fileid, il_varid 
 integer(kind=int_kind), dimension(2) :: icnt   !,ist ==> what is it?
-real(kind=dbl_kind),dimension(nx_global,ny_global) :: dla_lon, dla_lat, dla_srf
-integer(kind=int_kind),dimension(nx_global,ny_global) :: ila_msk 
-real(kind=dbl_kind),dimension(nx_global,ny_global,4) :: dla_lonb, dla_latb
+real(kind=dbl_kind), dimension(nx_global,ny_global) :: dla_lon, dla_lat, dla_srf
+integer(kind=int_kind), dimension(nx_global,ny_global) :: ila_msk 
+real(kind=dbl_kind), dimension(nx_global,ny_global,4) :: dla_lonb, dla_latb
 
 integer(kind=int_kind) :: nx_global_ice, ny_global_ice
 real(kind=dbl_kind), dimension(:, :), allocatable :: ice_lats, ice_lons
@@ -133,10 +133,16 @@ contains
   call recv_grid_from_ice()
   if (trim(dataset) == 'jra55') then
     call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
-                          ice_lats, ice_lons, ice_mask, max_runoff=runoff_cap)
+                          ice_lats, ice_lons, ice_mask, &
+                          num_runoff_caps, runoff_caps, &
+                          runoff_caps_is, runoff_caps_ie, &
+                          runoff_caps_js, runoff_caps_je)
   else
     call remap_runoff_new(remap_runoff, 'rmp_corr_to_cict_CONSERV.nc', &
-                          ice_lats, ice_lons, ice_mask, max_runoff=runoff_cap)
+                          ice_lats, ice_lons, ice_mask, &
+                          num_runoff_caps, runoff_caps, &
+                          runoff_caps_is, runoff_caps_ie, &
+                          runoff_caps_js, runoff_caps_je)
   endif
 
   ! Compare the total number of processes and the number of processes

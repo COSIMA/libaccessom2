@@ -37,12 +37,20 @@ module remap_runoff_mod
 
 contains
 
-  subroutine remap_runoff_new(this, weights, lats, lons, mask, max_runoff)
+  subroutine remap_runoff_new(this, weights, lats, lons, mask, &
+      num_runoff_caps, runoff_caps, &
+      runoff_caps_is, runoff_caps_ie, &
+      runoff_caps_js, runoff_caps_je)
     type(remap_runoff_class), intent(inout) :: this
 
     character(len=*), intent(in) :: weights
     real, dimension(:, :), intent(in) :: lats, lons, mask
-    real, optional, intent(in) :: max_runoff
+    integer, intent(in) :: num_runoff_caps
+    real, dimension(:), intent(in) :: runoff_caps
+    integer, dimension(:), intent(in) :: runoff_caps_is
+    integer, dimension(:), intent(in) :: runoff_caps_ie
+    integer, dimension(:), intent(in) :: runoff_caps_js
+    integer, dimension(:), intent(in) :: runoff_caps_je
 
     integer :: ncid
     integer :: n_s, n_a, n_b
@@ -61,14 +69,12 @@ contains
     this%n_s = n_s
     this%n_a = n_a
     this%n_b = n_b
-
-    if (present(max_runoff)) then
-      call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
-                        this%num_land_pts, this%num_ocean_pts, max_runoff)
-    else
-      call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
-                        this%num_land_pts, this%num_ocean_pts)
-    endif
+    
+    call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
+                      this%num_land_pts, this%num_ocean_pts, &
+                      num_runoff_caps, runoff_caps, &
+                      runoff_caps_is, runoff_caps_ie, &
+                      runoff_caps_js, runoff_caps_je)
 
   end subroutine remap_runoff_new
 

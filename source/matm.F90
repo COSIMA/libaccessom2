@@ -100,6 +100,7 @@ PROGRAM datm
   read (99, coupling)
   close(unit=99)
   write(*, coupling)
+  num_runoff_caps = max(0, min(num_runoff_caps, max_caps))
 
   call prism_init
 
