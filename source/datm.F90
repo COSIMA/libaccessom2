@@ -60,12 +60,7 @@ PROGRAM datm
 
   integer :: nx_global_runoff, ny_global_runoff
 
-  real, dimension(:,:), allocatable :: dewpt
-  ! era40 has only dewpoint temperature (K), which needs be converted into 
-  ! specific humidity as required by cice model.
-
   real :: dt_accum                    !sec. for the time accumulated data
-  !real, parameter :: hlv = 2.500e6   !J/kg. for latent heatflux<==>evaporation
   real, parameter :: Tffresh = 273.15 
   !============================================================================
 
@@ -75,27 +70,16 @@ PROGRAM datm
   allocate (cfile(nfields))
   allocate (cfield(nfields))
 
-!  print *, 'MATM: nfields= ',nfields, ' and jpfldout= ',jpfldout
   write(il_out,*) ' nfields= ',nfields, ' and jpfldout= ',jpfldout
-  
+
   do i = 1,nfields
     read(1,'(a)')cfile(i)
     read(1,'(a)')cfield(i)
-!    print *, 'MATM: forcing data to be read in: ',i, '  ',trim(cfile(i))
-!    print *, '        which contains field: ', cfield(i)
     write(il_out,*) 'forcing dataset to be read in: ',i, '  ',trim(cfile(i))
     write(il_out,*) '      for field: ', cfield(i)
-  enddo 
+  enddo
   close(1)
 
-  allocate (dewpt(nx_global,ny_global)); dewpt = 0.
-  !allocate (rain(nx_global,ny_global)); rain = 0.
-  !allocate (snow(nx_global,ny_global)); snow = 0.
-
-  !B: All processors read the namelist--
-  !   get runtime0, runtime, dt_cpl, dt_atm in seconds, and 
-  !   get inidate (the initial date for this run). 
-  !   get dataset name "dataset" 
   open(unit=99,file="input_atm.nml",form="formatted",status="old")
   read (99, coupling)
   close(unit=99)
@@ -106,31 +90,27 @@ PROGRAM datm
 
   call get_field_dims(nx_global_runoff, ny_global_runoff, unused, &
                       cfile(8), cfield(8))
-  
+
   call init_cpl(nx_global_runoff, ny_global_runoff, dataset)
 
   num_cpl = runtime/dt_cpl
   num_cpl_in_year = (365*86400) / dt_cpl
-  npas = dt_cpl/dt_atm 
+  npas = dt_cpl/dt_atm
 
   iniday  = mod(inidate, 100)
   inimon  = mod( (inidate - iniday)/100, 100)
   iniyear = inidate / 10000
 
-!  write(*, *)'MATM: (main) iniday, inimod, iniyear: ',iniday, inimon, iniyear
   write(il_out, *)'(main) iniday, inimod, iniyear: ',iniday, inimon, iniyear
 
   write(il_out, *)'(main) calling init_calendar ...'
-!  write(*, *)'MATM: (main) calling init_calendar ...'
   call init_calendar
   write(il_out, *)'(main) called init_calendar !'
-!  write(*, *)'MATM: (main) called init_calendar !'
-  
+
   write(il_out, *)'(main) calling calendar with time, truntime0 = ', time, truntime0
   call calendar(time-truntime0)       !time is assigned as truntime0 in init_calendar
   write(il_out, *)'(main) called calendar!'
 
-!  print *, 'MATM (main) time, truntime0, idate = ',time, truntime0, idate
   write(il_out, *)'(main) time, truntime0, idate = ',time, truntime0, idate
 
   iday = mod(idate, 100)
@@ -139,19 +119,14 @@ PROGRAM datm
 
   yruntime0 = (daycal(imonth) + iday - 1) * 86400
 
-!  write(*, *)'MATM: (main) iday, imonth, iyear, yruntime0: ',iday, imonth, iyear, yruntime0
   write(il_out, *)'(main) iday, imonth, iyear, yruntime0: ',iday, imonth, iyear, yruntime0
 
-!  print *, 'MATM: Atmospheric forcing dataset: ', trim(dataset)
   if (trim(dataset) /= 'core'  .and. &
       trim(dataset) /= 'core2' .and. &
       trim(dataset) /= 'jra55' ) then
       print *, 'MATM: Wrong forcing data-- ', trim(dataset)
       stop 'MATM: FATAL ERROR--unrecognised atmospheric forcing!' 
   endif
-!  print *, 'MATM: Runtime for this integration  (s): ',runtime
-!  print *, 'MATM: dt_cpl, dt_atm : ',dt_cpl, dt_atm
-!  print *, 'MATM: num of cpl int and matm-iner loop: ',num_cpl,npas
 
   write(il_out,*) 'Atmospheric forcing dataset: ', trim(dataset) 
   write(il_out,*) 'Runtime for this integration  (s): ',runtime
@@ -175,16 +150,6 @@ PROGRAM datm
     icpl_sec = dt_cpl * (icpl - 1)        !runtime for this run segment! 
     rtimestamp = icpl_sec                 !recv timestamp
 
-!    write(il_out,*)
-!    write(il_out,*) '(main) calling from_cpl at icpl, rtime= ',icpl,rtimestamp
-!    print *, 'MATM: (main) calling from_cpl at icpl, rtime= ',icpl,rtimestamp
-
-    !call from_cpl(rtimestamp)
-
-!    write(il_out,*)
-!    write(il_out,*) '(main) called from_cpl at icpl, rtime= ',icpl,rtimestamp
-!    print *, 'MATM: (main) called from_cpl at icpl, rtime= ',icpl,rtimestamp
-
     !=== matm internal time loop ===!
 
     do itap = 1, npas
@@ -193,7 +158,6 @@ PROGRAM datm
       istep1 = istep1 + 1
       time = time + dt_atm   ! determine the time and date
       call calendar(time-truntime0) 
-      !call calendar(time)    !get idate for the current step in the whole exp
 
       iday = mod(idate, 100)
       imonth = mod( (idate - iday)/100, 100)
@@ -228,8 +192,7 @@ PROGRAM datm
         !-------------------------------------------------!
 
         if (trim(dataset) == 'core' .or. trim(dataset) == 'core2') then
- 
-          !nt_read12 = itap_sec/86400 + 1  ! radiation daily data
+
           nt_read12 = daycal365(imonth) + iday   ! radiation daily data
           nt_read56 = imonth                     ! precipitation monthly data
 
@@ -328,13 +291,11 @@ PROGRAM datm
     enddo      !itap = 1, npas
     write(il_out,*)
     write(il_out,*) '(main) calling into_cpl at icpl, stime= ',icpl, stimestamp
-!    print *, 'MATM: (main) calling into_cpl at icpl, stime= ',icpl, stimestamp
 
     call into_cpl(stimestamp) 	! stimestamp updated in the itap loop above.
 
     write(il_out,*)
     write(il_out,*) '(main) called into_cpl at icpl, stime= ',icpl,stimestamp
-!    print *, 'MATM: (main) called into_cpl at icpl, stime= ',icpl,stimestamp 
 
   enddo        !icpl = 1, num_cpl
 
@@ -342,7 +303,6 @@ PROGRAM datm
 
   deallocate(cfile)
   deallocate(cfield) 
-  deallocate(dewpt)
 
   !--------------------------------------------------------------------------!
   
