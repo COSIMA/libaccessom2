@@ -51,11 +51,16 @@ type(remap_runoff_class) :: remap_runoff
 contains
 
   !======================================================================
-  subroutine prism_init
+  subroutine init_coupler(nx_global_runoff, ny_global_runoff)
+
+  integer(kind=int_kind), intent(in) :: nx_global_runoff, ny_global_runoff
+
+  integer(kind=int_kind) :: jf
+
+
   !-------------------
   ! Initialize PSMILe.
   !-------------------
-
   
   ! Initialise MPI
   mpiflag = .FALSE.
@@ -102,18 +107,6 @@ contains
   ! Get an intercommunicator with the ice.
   call prism_get_intercomm(il_commice, 'cicexx', ierror)
   call MPI_Comm_Rank(il_commice, my_commice_task, ierror)
-
-  end subroutine prism_init
-
-  !=======================================================================
-  subroutine init_cpl(nx_global_runoff, ny_global_runoff, dataset)
-  !----------------------------------------------
-  ! To initialize/setup the coupling environment
-  !----------------------------------------------
-  integer(kind=int_kind), intent(in) :: nx_global_runoff, ny_global_runoff
-  character(len=*), intent(in) :: dataset
-
-  integer(kind=int_kind) :: jf
 
   ! Inquire if atm is parallel or not and open the process log file
   
@@ -262,7 +255,7 @@ contains
   endif
 
 
-  end subroutine init_cpl
+  end subroutine init_coupler
 
 subroutine recv_grid_from_ice()
 

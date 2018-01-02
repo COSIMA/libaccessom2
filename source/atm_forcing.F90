@@ -8,24 +8,30 @@ use, intrinsic :: iso_fortran_env , only: error_unit
 
 implicit none
 
-public parse_forcing, get_forcing
+public init_atm_forcing, get_atm_forcing
 
 private
 
 type(dict) :: filename_dict
 type(dict) :: fieldname_dict
+type(dict) :: fieldshape_dict
 integer :: nc_index_guess
+
+type(datetime) :: start_date
 
 contains
 
 !> Parse forcing file into a dictionary.
-subroutine initialize(json_fname)
+subroutine init_atm_forcing(json_fname, run_start_date)
 
     character(len=*), intent(in) :: json_fname
 
     type(json_file) :: json
     type(json_core) :: core
     type(json_value), pointer :: root, inputs
+
+    ! The run start date it needed to find information about the forcing.
+    start_date = run_start_date
 
     call json%initialize()
     call json%load_file(filename=json_fname)
@@ -45,7 +51,7 @@ subroutine initialize(json_fname)
 
     nc_index_guess = 1
 
-end subroutine initialize
+end subroutine init_atm_forcing
 
 subroutine traverse_inputs(json, p, finished)
 
@@ -55,6 +61,7 @@ subroutine traverse_inputs(json, p, finished)
 
     character(len=:), allocatable :: filename, fieldname, cname
     logical :: found
+    integer :: ncid, varid, nx, ny, unused
 
     finished = .false.
 
@@ -65,20 +72,45 @@ subroutine traverse_inputs(json, p, finished)
     if (found) then
         filename_dict = filename_dict // (trim(cname) .kv. trim(filename))
         fieldname_dict = fieldname_dict // (trim(cname) .kv. trim(fieldname))
+
+        ! Open each forcing file and get the shape of field.
+        fname  = filename_for_year(filename, start_date.getYear())
+        call ncheck(nf90_open(trim(fname), NF90_NOWRITE, ncid), &
+                    'Opening '//trim(fname))
+        call ncheck(nf90_inq_varid(ncid, trim(fieldname), varid), &
+                    'Inquire: '//trim(fieldname))
+
+        call get_var_dims(ncid, varid, unused, nx, ny, unused)
+        fieldshape_dict = fieldshape_dict // (trim(cname) .kv. (/ nx, ny /))
+
+        call ncheck(nf90_close(ncid), 'Closing '//trim(fname))
     endif
 
 end subroutine traverse_inputs
 
-subroutine get_forcing(key, start_date, cur_date, period_in_years, data)
+!> Get information about an atmospherice forcing. 
+subroutine get_atm_forcing_info(key, nx, ny)
+
+    character(len=*), intent(in) :: key
+    integer, intent(out) :: nx, ny
+
+    integer, dimension(2) :: fieldshape
+
+	call assign(fieldshape, fieldshape_dict, trim(key))
+    nx = fieldshape(1)
+    ny = fieldshape(2)
+
+end subroutine get_atm_forcing_info(key, nx, ny)
+
+subroutine get_atm_forcing(key, start_date, cur_date, period_in_years, data)
 
     character(len=*), intent(in) :: key
     type(datetime), intent(in) :: start_date, cur_date
     integer, intent(in) :: period_in_years
-    real, dimension(:,:), intent(inout) :: data
+    real, dimension(:,:), allocatable, intent(inout) :: data
 
     character(len=256) :: filename, fieldname
     type(datetime) :: forcing_date
-    character(len=4) :: year
     integer :: forcing_year
 
     if (.not. (trim(key) .in. filename_dict)) then
@@ -90,10 +122,7 @@ subroutine get_forcing(key, start_date, cur_date, period_in_years, data)
 
     ! Find the correct file. First select the year.
     forcing_year = mod(cur_date%getYear() - start_date%getYear(), period)
-
-    write(year, "I4") forcing_year
-	filename = replace_text(filename, "{{ year }}", year)
-	filename = replace_text(filename, "{{year}}", year)
+    filename = filename_for_year(filename, forcing_year)
 
     ! Find the correct timeslice in the file.
     call ncheck(nf90_open(trim(filename), NF90_NOWRITE, ncid), &
@@ -119,8 +148,21 @@ subroutine get_forcing(key, start_date, cur_date, period_in_years, data)
 
     call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
 
-end subroutine get_forcing
+end subroutine get_atm_forcing
 
+
+function filename_for_year(filename, year) result(new_filename)
+
+    character(len=*), intent(in) :: filename
+    integer, intent(in) :: year
+
+    character(len=4) :: year_str
+
+    write(year_str, "I4") year
+	new_filename = replace_text(filename, "{{ year }}", year_str)
+	new_filename = replace_text(filename, "{{year}}", year_str)
+
+end function filename_for_year
 
 !> Return the time index of a particular date.
 ! Starts looking from a guess index.
@@ -206,19 +248,15 @@ subroutine read_data(ncid, varid, varname, indx, data)
 
     integer, intent(in) :: ncid, varid, indx
     character(len=*), intent(in) :: varname
-    real, dimension(:, :), intent(out) :: data
+    real, dimension(:, :), allocatable, intent(out) :: data
 
     integer, dimension(:), allocatable :: count, start
-    integer :: nx, ny
+    integer :: ndims, nx, ny, time
 
-    nx = size(data, 1)
-    ny = size(data, 2)
+    call get_var_dims(ncid, varid, ndims, nx, ny, time)
 
-    ! Get number of dimensions, and allocate count and start accordingly
-    call ncheck(nf90_inquire_variable(ncid, varid, ndims=ndims), &
-                'Inquire dims: '//trim(varname))
-
-    allocate (count(ndims), start(ndims))
+    allocate(count(ndims), start(ndims))
+    allocate(data(nx, ny))
 
     ! Get data, we select a specfic time-point of data to read
     if (ndims == 3) then
@@ -228,12 +266,53 @@ subroutine read_data(ncid, varid, varname, indx, data)
         start = (/ 1, 1, 1, indx /)
         count = (/ nx, ny, 1, 1 /)
     end if
-    call ncheck(nf90_get_var(ncid, varid, dataout, start=start, count=count), &
+    call ncheck(nf90_get_var(ncid, varid, data, start=start, count=count), &
                 'Get var '//trim(varname))
     deallocate(count, start)
 
 end subroutine read_data
 
+! Return the spatial and time dimensions of a field.
+subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
+    
+    integer, intent(in) :: ncid, varid
+    character(len=*), intent(in) :: varname
+    integer, intent(out) :: ndims, nx, ny, time
+
+    integer, dimension(:), allocatable :: dimids
+    integer :: ndims, i, len
+    character(len=nf90_max_name) :: dimname
+
+    ! Get dimensions used by this var.
+    call ncheck(nf90_inquire_variable(ncid, varid, ndims=ndims))
+    allocate(dimids(ndims))
+    call ncheck(nf90_inquire_variable(ncid, varid, dimids=dimids))
+
+    ! Only support dimension names: time, latitude, longitude for now.
+    nx = 0
+    ny = 0
+    time = 0
+    do i = 1,ndims
+      call ncheck(nf90_inquire_dimension(ncid, dimids(i), name=dimname, len=len))
+      if (trim(dimname) == 'time' .or. trim(dimname) == 'AT') then
+        time = len
+      elseif (trim(dimname) == 'latitude' .or. trim(dimname) == 'AY') then
+        ny = len
+      elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX') then
+        nx = len
+      else
+        stop 'MATM get_field_dims: Unsupported dimension name'
+      endif
+    enddo
+
+    deallocate(dimids)
+    call ncheck(nf90_close(ncid))
+
+    if (nx == 0 .or. ny == 0 .or. time == 0) then
+      stop "MATM get_field_dims: couldn't get all dimensions"
+    endif
+
+end subroutine get_var_dims
 
 subroutine ncheck(status, error_str)
 

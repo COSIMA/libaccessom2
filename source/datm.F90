@@ -1,136 +1,78 @@
-program datm
-!
-!============================================================================
-!* This data model currently supports reading in 3 atmospheric forcing data *
-!* sets, namely, NCEP-r2 6 hourly, ERA40 6 hourly, and CORE 6 hourly except *
-!* for daily radiation fluxes and monthly precipitation. These 3 datasets   * 
-!* are all of netcdf format but with different layouts and thus need be read*
-!* and handle in different ways, as done in module read_forcing_mod......   *
-!
-!* It runs with mom4 and cice in the AusCOM coupled model under the OASIS3  *
-!* prism 2-5 framework (oasis325). Attention must be paid to the time flow  *
-!* and control in the context of matching that within cice and/or mom4.     *
-!									    !	
-!* Taking the era40 data as an example for the 6 hourly forcing reading:    *
-!									    !	
-!* At the very beginning of a run, cice receives from oasis the very first  !
-!* package of forcing data (read from the pre-processed coupling restart    !
-!* file a2i.nc), which is of time 00:00, the FIRST record of the era40 data,!
-!* which will be used for the first A<==>I coupling interval (00:00--06:00) !
-!* in cice. For the second coupling interval (06:00--12:00), new forcing    !
-!* data rcvd from oasis (MUST BE of time 6:00, the SECOND record) will be   !
-!* used ...... and so on.  						    !
-!									    !	
-!* Therefore, in matm, the first cpl-interval should read in the SECOND     *
-!* record (time 6:00) from era40 because it will be sent to cice/mom4 for   *
-!* their use in the second cpl-interval (06:00-12:00)! 		            *
-!									    *
-!* This is why, in the code below, we set 				    *
-!									    !
-!* nt_read = itap_sec/dt_cpl + 2 					    *
-!									    !
-!* Note there itap_sec/dt_cpl = 0 for the first coupling interval!	    *
-!                                                                           !
-! Modified by Fabio Dias (21/02/2016) to accept JRA-55 forcing.             !
-!============================================================================
+program atm
 
-  use atm_kinds
-  use atm_domain
-  use atm_read
-  use cpl_parameters
-  use cpl_arrays
-  use cpl_interfaces   
-  use atm_calendar
-  use cpl_netcdf_setup, only : get_field_dims
+    !
+    !============================================================================
+    !* This data model currently supports reading in 3 atmospheric forcing data *
+    !* sets, namely, NCEP-r2 6 hourly, ERA40 6 hourly, and CORE 6 hourly except *
+    !* for daily radiation fluxes and monthly precipitation. These 3 datasets   * 
+    !* are all of netcdf format but with different layouts and thus need be read*
+    !* and handle in different ways, as done in module read_forcing_mod......   *
+    !
+    !* It runs with mom4 and cice in the AusCOM coupled model under the OASIS3  *
+    !* prism 2-5 framework (oasis325). Attention must be paid to the time flow  *
+    !* and control in the context of matching that within cice and/or mom4.     *
+    !									    !	
+    !* Taking the era40 data as an example for the 6 hourly forcing reading:    *
+    !									    !	
+    !* At the very beginning of a run, cice receives from oasis the very first  !
+    !* package of forcing data (read from the pre-processed coupling restart    !
+    !* file a2i.nc), which is of time 00:00, the FIRST record of the era40 data,!
+    !* which will be used for the first A<==>I coupling interval (00:00--06:00) !
+    !* in cice. For the second coupling interval (06:00--12:00), new forcing    !
+    !* data rcvd from oasis (MUST BE of time 6:00, the SECOND record) will be   !
+    !* used ...... and so on.  						    !
+    !									    !	
+    !* Therefore, in matm, the first cpl-interval should read in the SECOND     *
+    !* record (time 6:00) from era40 because it will be sent to cice/mom4 for   *
+    !* their use in the second cpl-interval (06:00-12:00)! 		            *
+    !									    *
+    !* This is why, in the code below, we set 				    *
+    !									    !
+    !* nt_read = itap_sec/dt_cpl + 2 					    *
+    !									    !
+    !* Note there itap_sec/dt_cpl = 0 for the first coupling interval!	    *
+    !                                                                           !
+    ! Modified by Fabio Dias (21/02/2016) to accept JRA-55 forcing.             !
+    !============================================================================
 
-  implicit none
+    use atm_kinds
+    use atm_domain
+    use atm_forcing, only : init_atm_forcing, get_atm_forcing
+    use atm_params, only : init_atm_params, start_date
+    use cpl_arrays
+    use cpl_interfaces   
+    use atm_calendar
+    use cpl_netcdf_setup, only : get_field_dims
 
-  integer :: jf, icpl, itap, itap_sec, icpl_sec, rtimestamp, stimestamp
+    implicit none
 
-  integer :: num_cpl              ! = runtime/dt_cpl !
-  integer :: num_cpl_in_year      ! = number of coupling steps in one year
-  integer :: npas                 ! = dt_cpl/dt_atm !
-  
-  character(len=80), dimension(:), allocatable :: cfile
-  character(len=8),  dimension(:), allocatable :: cfield
-  integer :: nt_read, nfields, nrec 
-  integer :: nt_read12, nt_read56  !for core data special handling
-  integer :: iday, imonth, iyear
-  integer :: i, unused
+    integer :: jf, icpl, itap, itap_sec, icpl_sec, rtimestamp, stimestamp
 
-  type(fson_value), pointer :: data
+    integer :: num_cpl              ! = runtime/dt_cpl !
+    integer :: num_cpl_in_year      ! = number of coupling steps in one year
+    integer :: npas                 ! = dt_cpl/dt_atm !
 
-  integer :: nx_global_runoff, ny_global_runoff
+    character(len=80), dimension(:), allocatable :: cfile
+    character(len=8),  dimension(:), allocatable :: cfield
+    integer :: nt_read, nfields, nrec 
+    integer :: nt_read12, nt_read56  !for core data special handling
+    integer :: iday, imonth, iyear
+    integer :: i, unused
 
-  real :: dt_accum                    !sec. for the time accumulated data
-  real, parameter :: Tffresh = 273.15 
+    integer :: nx_global_runoff, ny_global_runoff
 
-  ! Parse forcing data config
-  data => fson_parse("atm_forcing.json")
 
-  ! Rean input namelist
-  open(unit=99,file="input_atm.nml",form="formatted",status="old")
-  read (99, coupling)
-  close(unit=99)
-  write(*, coupling)
-  num_runoff_caps = max(0, min(num_runoff_caps, max_caps))
+    real :: dt_accum                    !sec. for the time accumulated data
 
-  call prism_init
+    real, dimension(:, :), allocatable :: work
 
-  call get_field_dims(nx_global_runoff, ny_global_runoff, unused, &
-                      cfile(8), cfield(8))
+    call init_atm_params()
+    call init_atm_forcing("atm_forcing.json", start_date)
 
-  call init_cpl(nx_global_runoff, ny_global_runoff, dataset)
-
-  num_cpl = runtime/dt_cpl
-  num_cpl_in_year = (365*86400) / dt_cpl
-  npas = dt_cpl/dt_atm
-
-  iniday  = mod(inidate, 100)
-  inimon  = mod( (inidate - iniday)/100, 100)
-  iniyear = inidate / 10000
-
-  write(il_out, *)'(main) iniday, inimod, iniyear: ',iniday, inimon, iniyear
-
-  write(il_out, *)'(main) calling init_calendar ...'
-  call init_calendar
-  write(il_out, *)'(main) called init_calendar !'
-
-  write(il_out, *)'(main) calling calendar with time, truntime0 = ', time, truntime0
-  call calendar(time-truntime0)       !time is assigned as truntime0 in init_calendar
-  write(il_out, *)'(main) called calendar!'
-
-  write(il_out, *)'(main) time, truntime0, idate = ',time, truntime0, idate
-
-  iday = mod(idate, 100)
-  imonth = mod( (idate - iday)/100, 100)
-  iyear = idate / 10000
-
-  yruntime0 = (daycal(imonth) + iday - 1) * 86400
-
-  write(il_out, *)'(main) iday, imonth, iyear, yruntime0: ',iday, imonth, iyear, yruntime0
-
-  if (trim(dataset) /= 'core'  .and. &
-      trim(dataset) /= 'core2' .and. &
-      trim(dataset) /= 'jra55' ) then
-      print *, 'MATM: Wrong forcing data-- ', trim(dataset)
-      stop 'MATM: FATAL ERROR--unrecognised atmospheric forcing!' 
-  endif
-
-  write(il_out,*) 'Atmospheric forcing dataset: ', trim(dataset) 
-  write(il_out,*) 'Runtime for this integration  (s): ',runtime
-  write(il_out,*) 'dt_cpl, dt_atm : ',dt_cpl, dt_atm
-  write(il_out,*) 'num of cpl int, num cpl in year,  and matm-iner loop: ',num_cpl, num_cpl_in_year, npas
-
-  dt_accum = real(dt_cpl)
-
-  !=========================================================!
-  ! Component model coupling and internal timestepping      !
-  !=========================================================!
-
-  !=== coupling time loop ===!
-
-!
+    call get_atm_forcing_info('runof', nx_global_runoff, ny_global_runoff)
+    ! We need the runoff shape to coupler initialisation.
+    call init_coupler(nx_global_runoff, ny_global_runoff)
+    
 ! --- *** BE CAREFUL WITH the timestamp for coupling operation: *** ---
 !       (here rtimestamp for receiving and stimestamp for sending)
 
@@ -293,25 +235,4 @@ program datm
   deallocate(cfile)
   deallocate(cfield) 
 
-contains
-
-subroutine nextyear_forcing(fname)
-
-  implicit none 
-
-  character*(*), intent(inout) :: fname
-  character*4 :: cyear
-  integer :: i  !, length
-
-  write(cyear,'(i4.4)')iyear+1          !or cyear = char(iyear+1) ?!    
-  !length = len(trim(fname))       	!WHY function 'len' does NOT work!            
-  do i = 1,100
-    if (fname(i:i) == ' ') then
-      fname(i-7:i-4) = cyear            !for fname like '.....xxxxx.1991.nc'
-      exit
-    endif 
-  enddo
-
-end subroutine nextyear_forcing
-
-end program datm
+end program atm
