@@ -3,6 +3,7 @@ module atm_forcing
 use json_module
 use dictionary
 use variable
+use datetime_module, only: datetime
 use, intrinsic :: iso_fortran_env , only: error_unit
 
 implicit none
@@ -66,13 +67,14 @@ subroutine traverse_inputs(json, p, finished)
 end subroutine traverse_inputs
 
 
-subroutine get_forcing(key, date_str, data)
+subroutine get_forcing(key, date, data)
 
     character(len=*), intent(in) :: key
-    character(len=*), intent(in) :: date_str
+    type(datetime), intent(in) :: date
     real, dimension(:,:), intent(inout) :: data
 
     character(len=256) :: filename, fieldname
+    character(len=4) :: year
 
     if (.not. (trim(key) .in. filename_dict)) then
         print*, 'key not found'
@@ -84,7 +86,29 @@ subroutine get_forcing(key, date_str, data)
 	call assign(fieldname, fieldname_dict, trim(key))
 	print*, 'val: ', trim(fieldname)
 
+    ! Find the correct file. First select the year.
+    write(year,'(i4)') date%getYear()
+	filename = replace_text(filename, "{{ year }}", year)
+	filename = replace_text(filename, "{{year}}", year)
+
+    ! Find the correct timeslice in the file.
+
 end subroutine get_forcing
 
+!> Replace all occurrences of 'pattern' with 'replace' in string.
+! Based on: http://fortranwiki.org/fortran/show/String_Functions
+function replace_text(string, pattern, replace)  result(outs)
+
+	character(len=*), intent(in) :: s,text,rep
+	character(len(string)) :: outs
+	integer             :: i, nt, nr
+
+	outs = string ; nt = len_trim(pattern) ; nr = len_trim(replace)
+	do
+	   i = index(outs,pattern(:nt)) ; if (i == 0) exit
+	   outs = outs(:i-1) // replace(:nr) // outs(i+nt:)
+	end do
+
+end function replace_text
 
 end module atm_forcing

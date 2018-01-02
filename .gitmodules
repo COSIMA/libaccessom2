@@ -4,3 +4,6 @@
 [submodule "lib/json-fortran"]
 	path = lib/json-fortran
 	url = https://github.com/jacobwilliams/json-fortran.git
+[submodule "lib/datetime-fortran"]
+	path = lib/datetime-fortran
+	url = https://github.com/wavebitscientific/datetime-fortran.git
