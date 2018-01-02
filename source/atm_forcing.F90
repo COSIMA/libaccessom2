@@ -14,11 +14,12 @@ private
 
 type(dict) :: filename_dict
 type(dict) :: fieldname_dict
+integer :: nc_index_guess
 
 contains
 
 !> Parse forcing file into a dictionary.
-subroutine parse_forcing(json_fname)
+subroutine initialize(json_fname)
 
     character(len=*), intent(in) :: json_fname
 
@@ -42,7 +43,9 @@ subroutine parse_forcing(json_fname)
     call core%destroy()
     call json%destroy()
 
-end subroutine parse_forcing
+    nc_index_guess = 1
+
+end subroutine initialize
 
 subroutine traverse_inputs(json, p, finished)
 
@@ -66,81 +69,78 @@ subroutine traverse_inputs(json, p, finished)
 
 end subroutine traverse_inputs
 
-
-subroutine get_forcing(key, date, data)
+subroutine get_forcing(key, start_date, cur_date, period_in_years, data)
 
     character(len=*), intent(in) :: key
-    type(datetime), intent(in) :: date
-    integer, intent(in) :: forcing_year
+    type(datetime), intent(in) :: start_date, cur_date
+    integer, intent(in) :: period_in_years
     real, dimension(:,:), intent(inout) :: data
 
-    character(len=256) :: filename, fieldname, time_str
-    type(datetime), intent(in) :: start_date, start_date_w_hours
+    character(len=256) :: filename, fieldname
+    type(datetime) :: forcing_date
     character(len=4) :: year
+    integer :: forcing_year
 
     if (.not. (trim(key) .in. filename_dict)) then
         print*, 'key not found'
     endif
 
 	call assign(filename, filename_dict, trim(key))
-	print*, 'val: ', trim(filename)
-
 	call assign(fieldname, fieldname_dict, trim(key))
-	print*, 'val: ', trim(fieldname)
 
     ! Find the correct file. First select the year.
-	filename = replace_text(filename, "{{ year }}", forcing_year)
-	filename = replace_text(filename, "{{year}}", forcing_year)
+    forcing_year = mod(cur_date%getYear() - start_date%getYear(), period)
 
-    ! Check that the file exists.
+    write(year, "I4") forcing_year
+	filename = replace_text(filename, "{{ year }}", year)
+	filename = replace_text(filename, "{{year}}", year)
 
     ! Find the correct timeslice in the file.
     call ncheck(nf90_open(trim(filename), NF90_NOWRITE, ncid), &
                 'Opening '//trim(filename))
 
+    forcing_date = datetime(forcing_year, cur_date%getMonth(), &
+                            cur_date%getDay(), cur_date%getHour(), &
+                            cur_date%getMinute(), cur_date%getSecond())
+    indx = forcing_index(ncid, forcing_date, nc_index_guess)
+    if (indx == -1) then
+        print*, 'Could not find forcing index'
+        stop
+    endif
+
+    ! Update the guess for next time.
+    nc_index_guess = indx
+
     ! Get variable ID
     call ncheck(nf90_inq_varid(ncid, trim(varname), varid), &
                 'Inquire: '//trim(varname))
 
-    ! Get start date
-    call ncheck(nf90_get_att(ncid, varid, "units", time_str)
+    call read_data(ncid, varid, indx, varname, data)
 
-    time_str = replace_text(time_str, "days since ", "")
-    start_date_w_hours = strptime(trim(time_str), "%Y-%m-%d %H:%M:%S")
-    start_date = strptime(trim(time_str), "%Y-%m-%d")
-
-    indx = forcing_index(ncid, start_date, date, guess)
-
-    call read_data()
-
+    call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
 
 end subroutine get_forcing
 
-!> Take a netcdf time attribute and return a date.
-subroutine get_start_date(time_str, date)
-
-    character(len=*), intent(in) :: time_str
-    type(datetime), intent(out) :: date
-
-    date = strptime
-
-end subroutine
 
 !> Return the time index of a particular date.
 ! Starts looking from a guess index.
-function forcing_index(ncid, start_date, target_date, guess)  result(indx)
+function forcing_index(ncid, target_date, guess)  result(indx)
 
     integer, intent(in) :: ncid, varid
-    type(datetime), intent(in) :: start_date, target_date, tmp_date
+    type(datetime), intent(in) :: target_date
     integer, intent(in) :: guess
     integer, intent(out) :: indx
 
     integer :: varid, num_times
+    type(datetime) :: nc_start_date
+    type(timedelta) :: td
     real, dimension(:), allocatable :: times
 
-    ! Get variable ID
+    ! Get time variable ID
     call ncheck(nf90_inq_varid(ncid, "time", varid), 
                 'Inquire: '//trim(varname))
+
+    call get_nc_start_date(ncid, varid, nc_start_date)
 
     call ncheck(nf90_inquire_dimension(ncid, varid, len = num_times))
     allocate(times(num_times))
@@ -148,24 +148,42 @@ function forcing_index(ncid, start_date, target_date, guess)  result(indx)
 
     ! First start searching using 'guess'
     do indx=guess, num_times
-        tmp_date = start_date + times(indx)
-        if (tmp_date == target_date) then
+        td = timedelta(seconds=int(times(indx)*86400))
+        if ((nc_start_date + td) == target_date) then
             return
         endif
     enddo
 
     ! Searching from the beginning
     do indx=1, num_times
-        tmp_date = start_date + times(indx)
-        if (tmp_date == target_date) then
+        td = timedelta(seconds=int(times(indx)*86400))
+        if ((nc_start_date + td) == target_date) then
             return
         endif
     enddo
 
-    ! The date was not found.
+    ! The index was not found.
     indx = -1
 
-end function forcing_index()
+end function forcing_index
+
+subroutine get_nc_start_date(ncid, varid, nc_start_date)
+
+    integer, intent(in) :: ncid, varid
+    type(datetime), intent(out) :: nc_start_date
+
+    integer :: varid
+    type(datetime) :: nc_start_date_w_hours
+    character(len=256) :: time_str
+
+    ! Get start date
+    call ncheck(nf90_get_att(ncid, varid, "units", time_str)
+
+    time_str = replace_text(time_str, "days since ", "")
+    nc_start_date_w_hours = strptime(trim(time_str), "%Y-%m-%d %H:%M:%S")
+    nc_start_date = strptime(trim(time_str), "%Y-%m-%d")
+
+end subroutine get_nc_start_date
 
 
 !> Replace all occurrences of 'pattern' with 'replace' in string.
@@ -184,6 +202,39 @@ function replace_text(string, pattern, replace)  result(outs)
 
 end function replace_text
 
+subroutine read_data(ncid, varid, varname, indx, data)
+
+    integer, intent(in) :: ncid, varid, indx
+    character(len=*), intent(in) :: varname
+    real, dimension(:, :), intent(out) :: data
+
+    integer, dimension(:), allocatable :: count, start
+    integer :: nx, ny
+
+    nx = size(data, 1)
+    ny = size(data, 2)
+
+    ! Get number of dimensions, and allocate count and start accordingly
+    call ncheck(nf90_inquire_variable(ncid, varid, ndims=ndims), &
+                'Inquire dims: '//trim(varname))
+
+    allocate (count(ndims), start(ndims))
+
+    ! Get data, we select a specfic time-point of data to read
+    if (ndims == 3) then
+        start = (/ 1, 1, indx /)
+        count = (/ nx, ny, 1 /)
+    else
+        start = (/ 1, 1, 1, indx /)
+        count = (/ nx, ny, 1, 1 /)
+    end if
+    call ncheck(nf90_get_var(ncid, varid, dataout, start=start, count=count), &
+                'Get var '//trim(varname))
+    deallocate(count, start)
+
+end subroutine read_data
+
+
 subroutine ncheck(status, error_str)
 
     implicit none
@@ -201,6 +252,5 @@ subroutine ncheck(status, error_str)
     end if
 
 end subroutine ncheck
-
 
 end module atm_forcing
