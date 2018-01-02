@@ -1,0 +1,6 @@
+[submodule "lib/fdict"]
+	path = lib/fdict
+	url = https://github.com/zerothi/fdict.git
+[submodule "lib/json-fortran"]
+	path = lib/json-fortran
+	url = https://github.com/jacobwilliams/json-fortran.git

@@ -1,4 +1,4 @@
-PROGRAM datm
+program datm
 !
 !============================================================================
 !* This data model currently supports reading in 3 atmospheric forcing data *
@@ -58,28 +58,17 @@ PROGRAM datm
   integer :: iday, imonth, iyear
   integer :: i, unused
 
+  type(fson_value), pointer :: data
+
   integer :: nx_global_runoff, ny_global_runoff
 
   real :: dt_accum                    !sec. for the time accumulated data
   real, parameter :: Tffresh = 273.15 
-  !============================================================================
 
-  open(1,file='data_4_matm.table',form='formatted',status='old')
-  read(1,*)nfields
+  ! Parse forcing data config
+  data => fson_parse("atm_forcing.json")
 
-  allocate (cfile(nfields))
-  allocate (cfield(nfields))
-
-  write(il_out,*) ' nfields= ',nfields, ' and jpfldout= ',jpfldout
-
-  do i = 1,nfields
-    read(1,'(a)')cfile(i)
-    read(1,'(a)')cfield(i)
-    write(il_out,*) 'forcing dataset to be read in: ',i, '  ',trim(cfile(i))
-    write(il_out,*) '      for field: ', cfield(i)
-  enddo
-  close(1)
-
+  ! Rean input namelist
   open(unit=99,file="input_atm.nml",form="formatted",status="old")
   read (99, coupling)
   close(unit=99)
@@ -304,13 +293,10 @@ PROGRAM datm
   deallocate(cfile)
   deallocate(cfield) 
 
-  !--------------------------------------------------------------------------!
-  
-  contains
+contains
 
-  !--------------------------------------------------------------------------!
-  subroutine nextyear_forcing(fname)
- 
+subroutine nextyear_forcing(fname)
+
   implicit none 
 
   character*(*), intent(inout) :: fname
@@ -326,8 +312,6 @@ PROGRAM datm
     endif 
   enddo
 
-  return
-  end subroutine nextyear_forcing
+end subroutine nextyear_forcing
 
-  !=================
-  END PROGRAM datm
+end program datm
