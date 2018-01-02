@@ -2,29 +2,11 @@ module atm_params
 
 implicit none
 
-integer, parameter :: jpfldout = 10  ! Number of fields sent
-integer, parameter :: jpfldin  = 0
-
-character(len=8), dimension(jpfldout) :: cl_writ ! Symb names fields sent
-character(len=8), dimension(jpfldin)  :: cl_read ! Symb names fields rcvd
-
-integer, dimension(jpfldout) :: il_var_id_out ! ID for fields sent 
-integer, dimension(jpfldin)  :: il_var_id_in  ! ID for fields rcvd
-
 ! Component model name
 character(len=6), parameter :: cp_modnam='matmxx' 
-
 integer(kind=int_kind) :: dt = 3600
-
 character(len=10) :: calendar = 'NOLEAP'
-
-logical :: chk_a2i_fields = .false.
-logical :: chk_i2a_fields = .false.
 logical :: debug_output = .false.
-
-! How often to dump the coupling fields if any of the chk_*_fields options are .true.
-! The unit of time is seconds. By default fields are dumped every timestep.
-integer(kind=int_kind) :: chk_fields_period = 1
 
 ! Conservatively redistribute runoff exceeding runoff_cap in specified regions.
 ! Regions specify grid points that will be checked for whether they exceed the cap;
@@ -45,9 +27,7 @@ namelist/datm_nml/ &
    calendar,   &
    dt,         &
    restart_dir, &
-   debug_output, &
-   chk_a2i_fields, &   
-   chk_i2a_fields
+   debug_output
 
 namelist/runoff_nml/ &
     remap_weights, & 

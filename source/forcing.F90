@@ -8,21 +8,22 @@ use, intrinsic :: iso_fortran_env , only: error_unit
 
 implicit none
 
-public init_atm_forcing, get_atm_forcing
+public init_atm_forcing, get_atm_forcing, field_dict
 
 private
 
 type(dict) :: filename_dict
 type(dict) :: fieldname_dict
-type(dict) :: fieldshape_dict
+type(dict) :: field_dict
 integer :: nc_index_guess
 
 type(datetime) :: start_date
+integer :: period_in_years
 
 contains
 
 !> Parse forcing file into a dictionary.
-subroutine init_atm_forcing(json_fname, run_start_date)
+subroutine init_atm_forcing(json_fname, run_start_date, run_period)
 
     character(len=*), intent(in) :: json_fname
 
@@ -30,8 +31,8 @@ subroutine init_atm_forcing(json_fname, run_start_date)
     type(json_core) :: core
     type(json_value), pointer :: root, inputs
 
-    ! The run start date it needed to find information about the forcing.
     start_date = run_start_date
+    period_in_years = run_period
 
     call json%initialize()
     call json%load_file(filename=json_fname)
@@ -60,6 +61,7 @@ subroutine traverse_inputs(json, p, finished)
     logical, intent(out) :: finished
 
     character(len=:), allocatable :: filename, fieldname, cname
+    real, dimension(:, :), allocatable :: tmp
     logical :: found
     integer :: ncid, varid, nx, ny, unused
 
@@ -81,14 +83,13 @@ subroutine traverse_inputs(json, p, finished)
                     'Inquire: '//trim(fieldname))
 
         call get_var_dims(ncid, varid, unused, nx, ny, unused)
-        fieldshape_dict = fieldshape_dict // (trim(cname) .kv. (/ nx, ny /))
-
+        field_dict = field_dict // (trim(cname) .kv. (/ nx, ny /))
         call ncheck(nf90_close(ncid), 'Closing '//trim(fname))
     endif
 
 end subroutine traverse_inputs
 
-!> Get information about an atmospherice forcing. 
+!> Get information about an atmospherice forcing.
 subroutine get_atm_forcing_info(key, nx, ny)
 
     character(len=*), intent(in) :: key
@@ -96,18 +97,17 @@ subroutine get_atm_forcing_info(key, nx, ny)
 
     integer, dimension(2) :: fieldshape
 
-	call assign(fieldshape, fieldshape_dict, trim(key))
+	call assign(fieldshape, field_dict, trim(key))
     nx = fieldshape(1)
     ny = fieldshape(2)
 
 end subroutine get_atm_forcing_info(key, nx, ny)
 
-subroutine get_atm_forcing(key, start_date, cur_date, period_in_years, data)
+subroutine atm_forcing(key, cur_date, dataout)
 
     character(len=*), intent(in) :: key
-    type(datetime), intent(in) :: start_date, cur_date
-    integer, intent(in) :: period_in_years
-    real, dimension(:,:), allocatable, intent(inout) :: data
+    type(datetime), intent(in) :: cur_date
+    real, dimension(:,:), intent(out) :: dataout
 
     character(len=256) :: filename, fieldname
     type(datetime) :: forcing_date
@@ -121,7 +121,8 @@ subroutine get_atm_forcing(key, start_date, cur_date, period_in_years, data)
 	call assign(fieldname, fieldname_dict, trim(key))
 
     ! Find the correct file. First select the year.
-    forcing_year = mod(cur_date%getYear() - start_date%getYear(), period)
+    forcing_year = mod(cur_date%getYear() - start_date%getYear(),
+                       period_in_years)
     filename = filename_for_year(filename, forcing_year)
 
     ! Find the correct timeslice in the file.
@@ -144,11 +145,11 @@ subroutine get_atm_forcing(key, start_date, cur_date, period_in_years, data)
     call ncheck(nf90_inq_varid(ncid, trim(varname), varid), &
                 'Inquire: '//trim(varname))
 
-    call read_data(ncid, varid, indx, varname, data)
+    call read_data(ncid, varid, indx, varname, dataout)
 
     call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
 
-end subroutine get_atm_forcing
+end subroutine atm_forcing
 
 
 function filename_for_year(filename, year) result(new_filename)
@@ -179,7 +180,7 @@ function forcing_index(ncid, target_date, guess)  result(indx)
     real, dimension(:), allocatable :: times
 
     ! Get time variable ID
-    call ncheck(nf90_inq_varid(ncid, "time", varid), 
+    call ncheck(nf90_inq_varid(ncid, "time", varid), &
                 'Inquire: '//trim(varname))
 
     call get_nc_start_date(ncid, varid, nc_start_date)
@@ -244,11 +245,11 @@ function replace_text(string, pattern, replace)  result(outs)
 
 end function replace_text
 
-subroutine read_data(ncid, varid, varname, indx, data)
+subroutine read_data(ncid, varid, varname, indx, dataout)
 
     integer, intent(in) :: ncid, varid, indx
     character(len=*), intent(in) :: varname
-    real, dimension(:, :), allocatable, intent(out) :: data
+    real, dimension(:, :), intent(out) :: dataout
 
     integer, dimension(:), allocatable :: count, start
     integer :: ndims, nx, ny, time
@@ -256,7 +257,8 @@ subroutine read_data(ncid, varid, varname, indx, data)
     call get_var_dims(ncid, varid, ndims, nx, ny, time)
 
     allocate(count(ndims), start(ndims))
-    allocate(data(nx, ny))
+    nx = size(data, 1)
+    ny = size(data, 2)
 
     ! Get data, we select a specfic time-point of data to read
     if (ndims == 3) then
@@ -274,7 +276,7 @@ end subroutine read_data
 
 ! Return the spatial and time dimensions of a field.
 subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
-    
+
     integer, intent(in) :: ncid, varid
     character(len=*), intent(in) :: varname
     integer, intent(out) :: ndims, nx, ny, time
