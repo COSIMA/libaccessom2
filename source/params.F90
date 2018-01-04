@@ -1,4 +1,4 @@
-module atm_params
+module params_mod
 
 implicit none
 
@@ -40,7 +40,7 @@ namelist/runoff_nml/ &
 
 contains
 
-subroutine init_atm_params()
+subroutine params_init()
 
     ! Rean input namelist
     open(unit=99, file="input_atm.nml", form="formatted", status="old")
@@ -48,7 +48,7 @@ subroutine init_atm_params()
     close(unit=99)
     num_runoff_caps = max(0, min(num_runoff_caps, max_caps))
 
-end subroutine init_atm_params
+end subroutine params_init
 
-end module atm_params
+end module params_mod
 

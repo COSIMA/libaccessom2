@@ -1,54 +1,39 @@
 program atm
 
-    use atm_forcing, only : init_atm_forcing, get_atm_forcing, field_dict
-    use atm_params, only : init_atm_params, start_date
-    use dictionary
-    use cpl_arrays
-    use cpl_interfaces
+    use forcing_mod, only : forcing_type
+    use params_mod, only : params_type
+    use coupler_mod, only : coupler_type
 
     implicit none
 
-    integer :: timestamp, i, unused
-    real, dimension(:, :), allocatable :: work
-    real, dimension(2) :: fieldshape
-    type(dict) :: tmp
+    type(params_type) :: params  
+    type(forcing_type) :: forcing  
 
-    call init_params()
-    call init_atm_forcing("atm_forcing.json", start_date)
+    call params%init()
+    call forcing%init("atm_forcing.json", params%start_date, params%period)
 
-    call init_coupler(field_dict)
-
-    timestamp = 0
+    call coupler%init(forcing%get_fields())
+    do i=1, forcing%num_fields()
+        coupler%add_field(forcing%fields(i))
+    enddo
+    call coupler%enddef()
 
     do
-        ! Iterate over field_dict keys
-        tmp = .first. field_dict
-        do while(.not. .empty. tmp)
-            call assign(fieldshape, .val. tmp)
-
-            ! Read forcing
-            allocate(work(fieldshape(1), fieldshape(2)))
-            call get_atm_forcing(.key. tmp, cur_date, work)
-
-            ! Send forcing data
-            call coupler_send(work, timestamp, work)
-            deallocate(work)
-
-
-            tmp = .next. tmp
+        do i=1, forcing%num_fields()
+            forcing%fields(i)%update(cur_date)
+            coupler%put(forcing%fields(i))
         enddo
 
-        timestamp = timestamp + dt
         cur_date = cur_date + timedelta(seconds=dt)
 
         ! Block until we receive from ice. This prevents the atm from sending
         ! continuously.
-        call coupler_sync()
+        call coupler%sync()
 
-         if (); exit
+        if (cur_date > end_date); exit
     enddo
 
-    call coupler_write_restart()
-    call deinit_coupler()
+    call coupler%write_restart()
+    call coupler%deinit()
 
 end program atm
