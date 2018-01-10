@@ -1,65 +1,102 @@
-
-module field
+module forcing_mod
 
 use error_handler , only : assert
+use json_module
 use datetime_module, only: datetime
+use field, only: init, update
 
 implicit none
 
 private
-public init, update, set_id
+public init, get_atm_forcing
 
-type field_type
+type forcing_field_type
     private
-    integer :: oasis_id
     character(len=64) :: name
     character(len=64) :: ncname
     character(len=256) :: filename
-    type(datetime) :: timestamp
-    real, dimension(:,:), allocatable :: array
+    integer :: nx, ny
 contains
     public     
-    procedure :: init => field_init
-    procedure :: update => field_update
-    procedure :: set_id => field_set_id
-    procedure :: get_filename => field_get_filename
-end type field_type
+end type forcing_field_type
+
+type forcing_type
+    private
+    type(datetime) :: start_date
+    integer :: period
+    class(forcing_field_type), dimension(:), allocatable :: fields
+contains
+    private
+    procedure, public :: init => forcing_init
+    procedure, public :: update => forcing_update
+    procedure, public :: num_fields
+end type forcing_type
+
 
 contains
 
-subroutine field_init(this, name, filename, nc_name, nx, ny)
+!> Parse forcing file into a dictionary.
+subroutine forcing_init(this, config, start_date, period)
 
-    class(field_type), intent(inout) :: this
-    character(len=*), intent(in) :: name, filename, nc_name
-    integer, intent(in) :: nx, ny
+    class(forcing_type), intent(inout) :: this
+    character(len=*), intent(in) :: config
+    type(datetime), intent(in) :: start_date
+    integer, intent(in) :: period
 
-    this%name = trim(name)
-    this%nc_name = trim(nc_name)
-    this%filename = trim(filename)
+    type(json_file) :: json
+    type(json_core) :: core
+    type(json_value), pointer :: root, inputs, fp
+    integer :: i
 
-    call assert(.not. allocated(this%array), 'Field data already allocated')
-    allocate(this%array(nx, ny))
+    this%start_date = start_date
+    this%period = period
+    this%index_guess = 1
 
-end subroutine field_init
+    call json%initialize()
+    call json%load_file(filename=config)
+    if (json%failed()) then
+        call json%print_error_message(error_unit)
+        call assert(.false., 'forcing_init() failed')
+    endif
 
-subroutine field_update(this, date) 
+    call core%initialize()
+    call json%get(root)
+    call core%get_child(root, "inputs", inputs)
 
-    class(field_type), intent(inout) :: this
-    type(datetime), intent(in) :: date
+    n_inputs = core%count(inputs)
+    allocate(fields(n_inputs))
 
-    ! Update the data. 
-    this%timestamp = date
+    do i, n_inputs
+        call core%get_child(inputs, i, fp, found)
+        call assert(found, "Input not found in forcing config.")
 
-end subroutine field_update
+        call json%get(fp, "filename", filename, found)
+        call assert(found, "Entry 'filename' not found in forcing config.")
 
-subroutine field_set_id(this, id)
+        call json%get(fp, "fieldname", fieldname, found)
+        call assert(found, "Entry 'fieldname' not found in forcing config.")
 
-    class(field_type), intent(inout) :: this
-    integer, intent(in) :: id
+        call json%get(fp, "cname", cname, found)
+        call assert(found, "Entry 'cname' not found in forcing config.")
 
-    this%id = id
- 
-end subroutine field_set_id
+        ! Get the shape of forcing fields
+        fname  = filename_for_year(filename, start_date.getYear())
+        call ncheck(nf90_open(trim(fname), NF90_NOWRITE, ncid), &
+                    'Opening '//trim(fname))
+        call ncheck(nf90_inq_varid(ncid, trim(fieldname), varid), &
+                    'Inquire: '//trim(fieldname))
+
+        call get_var_dims(ncid, varid, unused, nx, ny, unused)
+        call ncheck(nf90_close(ncid), 'Closing '//trim(fname))
+
+        ! Initialise a new field object.
+        fields(i)%init(cname, filename, fieldname, nx, ny)
+    enddo
+
+    call core%destroy()
+    call json%destroy()
+
+end subroutine forcing_init
 
 function field_get_filename(this)
 end function field_get_filename
@@ -158,8 +195,10 @@ function forcing_index(ncid, target_date, guess)  result(indx)
 
 end function forcing_index
 
+function get_name()
+end function
 
+function get_shape()
+end function
 
-
-
-end module field
+end module forcing_mod

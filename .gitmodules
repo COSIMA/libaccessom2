@@ -1,9 +1,12 @@
-[submodule "lib/fdict"]
-	path = lib/fdict
+[submodule "contrib/fdict"]
+	path = contrib/fdict
 	url = https://github.com/zerothi/fdict.git
-[submodule "lib/json-fortran"]
-	path = lib/json-fortran
+[submodule "contrib/json-fortran"]
+	path = contrib/json-fortran
 	url = https://github.com/jacobwilliams/json-fortran.git
-[submodule "lib/datetime-fortran"]
-	path = lib/datetime-fortran
+[submodule "contrib/datetime-fortran"]
+	path = contrib/datetime-fortran
 	url = https://github.com/wavebitscientific/datetime-fortran.git
+[submodule "contrib/oasis3-mct"]
+	path = contrib/oasis3-mct
+	url = https://github.com/OceansAus/oasis3-mct.git

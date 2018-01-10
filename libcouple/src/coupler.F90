@@ -1,13 +1,19 @@
-module cpl_interfaces
+module coupler_mod
 
 use mpi
 use mod_prism
 use dictionary
 
-use remap_runoff_mod, only : remap_runoff_class, remap_runoff_do
-use remap_runoff_mod, only : remap_runoff_new, remap_runoff_del
-
 implicit none
+private
+public coupler_type
+
+type coupler_type
+    private
+contains
+    private
+    procedure, public :: init => coupler_init
+end type coupler_type
 
 integer :: ierror
 integer :: il_comp_id     ! Component ID
@@ -16,15 +22,15 @@ integer :: il_nbtotproc   ! Total number of processes
 
 integer, dimension(2) :: var_nodims
 integer, dimension(4) :: var_shape
-  
+
 ! Partition definition
-integer, dimension(3) :: part_def 
+integer, dimension(3) :: part_def
 integer, dimension(:), allocatable :: partid
 integer, dimension(:), allocatable :: varid
 
 type(dict) :: varid_dict
-  
-integer :: il_commice, my_commice_task   
+
+integer :: il_commice, my_commice_task
 
 integer :: nx_global_ice, ny_global_ice
 real, dimension(:, :), allocatable :: ice_lats, ice_lons
@@ -32,13 +38,12 @@ real, dimension(:, :), allocatable :: ice_mask
 real, dimension(:, :), allocatable :: runof_save
 real, dimension(:, :), allocatable :: remapped_runoff
 
-type(remap_runoff_class) :: remap_runoff
-
 contains
 
-subroutine init_coupler(field_dict)
+subroutine coupler_init(this, fields)
 
-    type(dict), intent(in) :: field_dict
+    class(coupler_type), intent(inout) :: this
+    type(field_type), dimension(:), intent(in) :: fields
 
     type(dict) :: tmp
     integer, dimension(2) :: fieldshape
@@ -109,58 +114,7 @@ subroutine init_oasis
 
 end subroutine init_oasis
 
-subroutine init_remap_runoff
-
-    integer :: tag
-    integer(kind=int_kind), dimension(2) :: buf_int
-    real(kind=dbl_kind), dimension(:), allocatable :: buf_real
-    integer(kind=int_kind) :: stat(MPI_STATUS_SIZE)
-
-    ! Receive dimensions of the ice grid that we're coupled to.
-
-    tag = MPI_ANY_TAG
-    call MPI_recv(buf_int, 2, MPI_INTEGER, 0, tag, il_commice,  stat, ierror)
-    nx_global_ice = buf_int(1)
-    ny_global_ice = buf_int(2)
-
-    allocate(ice_lats(nx_global_ice, ny_global_ice))
-    allocate(ice_lons(nx_global_ice, ny_global_ice))
-    allocate(ice_mask(nx_global_ice, ny_global_ice))
-    allocate(buf_real(nx_global_ice*ny_global_ice))
-
-    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
-                  MPI_DOUBLE, 0, tag, il_commice,  stat, ierror)
-    ice_lats(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
-
-    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
-                  MPI_DOUBLE, 0, tag, il_commice,  stat, ierror)
-    ice_lons(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
-
-    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
-                  MPI_DOUBLE, 0, tag, il_commice,  stat, ierror)
-    ice_mask(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
-    deallocate(buf_real)
-
-    ! Initialise module level variables with details about the ice grid.
-    call recv_grid_from_ice()
-    if (trim(dataset) == 'jra55') then
-      call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
-                            ice_lats, ice_lons, ice_mask, &
-                            num_runoff_caps, runoff_caps, &
-                            runoff_caps_is, runoff_caps_ie, &
-                            runoff_caps_js, runoff_caps_je)
-    else
-      call remap_runoff_new(remap_runoff, 'rmp_corr_to_cict_CONSERV.nc', &
-                            ice_lats, ice_lons, ice_mask, &
-                            num_runoff_caps, runoff_caps, &
-                            runoff_caps_is, runoff_caps_ie, &
-                            runoff_caps_js, runoff_caps_je)
-    endif
-
-end subroutine init_remap_runoff
-
-
-subroutine coupler_send(fieldname, timestamp)
+subroutine coupler_put(field, date)
 
   integer(kind=int_kind), intent(in) :: istep1
   integer(kind=int_kind) :: i, jf, tag
@@ -171,27 +125,20 @@ subroutine coupler_send(fieldname, timestamp)
     print*, '[atm chksum] filename:', sum(work)
   endif
 
-  ! Check whether runoff has changed before remapping.
-  if (.not. all(runof(:, :) == runof_save(:, :))) then
-    call remap_runoff_do(remap_runoff, runof, remapped_runoff, ice_mask)
-    runof_save(:, :) = runof(:, :)
-  endif
-
   call prism_put_proto(il_var_id_out(1), istep1, swfld, ierror)
 
 end subroutine coupler_send
 
 subroutine coupler_sync
 
-       if (my_commice_task == 0) then
-            tag = MPI_ANY_TAG
-            call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, il_commice,  stat, ierror)
-        endif
-
+   if (my_commice_task == 0) then
+        tag = MPI_ANY_TAG
+        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, il_commice,  stat, ierror)
+    endif
 
 end subroutine coupler_sync
 
-subroutine deinit_coupler()
+subroutine coupler_deinit()
 
     deallocate(part_id)
 
@@ -207,7 +154,7 @@ subroutine deinit_coupler()
 
     call MPI_Finalize(ierror)
 
-end subroutine coupler_termination
+end subroutine coupler_deinit
 
 ! Save the atmosphere <-> coupling fields. This will then be used as a restart
 ! for the ice model.
@@ -237,4 +184,4 @@ subroutine coupler_write_restart(fname)
 
 end subroutine write_restart
 
-end module cpl_interfaces
+end module coupler_mod

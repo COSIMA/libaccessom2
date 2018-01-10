@@ -1,3 +1,3 @@
 *.swp
-build_*
-build/Makefile
+build*
+building-errors.log

@@ -1,12 +1,9 @@
-module params_mod
+module runoff_mod
 
-implicit none
+use remap_runoff_mod, only : remap_runoff_class, remap_runoff_do
+use remap_runoff_mod, only : remap_runoff_new, remap_runoff_del
 
-! Component model name
-character(len=6), parameter :: cp_modnam='matmxx' 
-integer(kind=int_kind) :: dt = 3600
-character(len=10) :: calendar = 'NOLEAP'
-logical :: debug_output = .false.
+type(remap_runoff_class) :: remap_runoff
 
 ! Conservatively redistribute runoff exceeding runoff_cap in specified regions.
 ! Regions specify grid points that will be checked for whether they exceed the cap;
@@ -20,14 +17,6 @@ integer, dimension(max_caps) :: runoff_caps_ie = (/ 1000000, -1, -1, -1 /) ! end
 integer, dimension(max_caps) :: runoff_caps_js = (/ 0, 0, 0, 0 /) ! starting j index for each runoff region (count from 1)
 integer, dimension(max_caps) :: runoff_caps_je = (/ 1000000, -1, -1, -1 /) ! ending j index for each runoff region (count from 1)
 
-namelist/datm_nml/ &
-   start_date, &
-   runtime,   &
-   dataset,   &
-   calendar,   &
-   dt,         &
-   restart_dir, &
-   debug_output
 
 namelist/runoff_nml/ &
     remap_weights, & 
@@ -40,15 +29,41 @@ namelist/runoff_nml/ &
 
 contains
 
-subroutine params_init()
+subroutine runoff_init()
 
     ! Rean input namelist
     open(unit=99, file="input_atm.nml", form="formatted", status="old")
-    read(99, datm_nml)
+    read(99, runoff_nml)
     close(unit=99)
     num_runoff_caps = max(0, min(num_runoff_caps, max_caps))
 
-end subroutine params_init
+    ! Initialise module level variables with details about the ice grid.
+    call recv_grid_from_ice()
+    if (trim(dataset) == 'jra55') then
+      call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
+                            ice_lats, ice_lons, ice_mask, &
+                            num_runoff_caps, runoff_caps, &
+                            runoff_caps_is, runoff_caps_ie, &
+                            runoff_caps_js, runoff_caps_je)
+    else
+      call remap_runoff_new(remap_runoff, 'rmp_corr_to_cict_CONSERV.nc', &
+                            ice_lats, ice_lons, ice_mask, &
+                            num_runoff_caps, runoff_caps, &
+                            runoff_caps_is, runoff_caps_ie, &
+                            runoff_caps_js, runoff_caps_je)
+    endif
 
-end module params_mod
+end subroutine init_runoff
+
+subroutine remap_runoff
+
+end subroutine remap_runoff
+
+        ! Check whether runoff has changed before remapping.
+            if (.not. all(runof(:, :) == runof_save(:, :))) then
+                call remap_runoff_do(remap_runoff, runof, remapped_runoff, ice_mask)
+                runof_save(:, :) = runof(:, :)
+            endif
+
+end module runoff_mod
 
