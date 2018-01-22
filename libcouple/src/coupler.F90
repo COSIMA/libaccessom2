@@ -84,15 +84,12 @@ subroutine oasis_init(this, comp_name)
     call prism_init_comp_proto(this%comp_id, 'matmxx', ierror)
     call assert(ierrror == PRISM_Ok, 'prism_init_comm_proto')
 
-    call prism_get_localcomm_proto(il_commlocal, ierror)
+    call prism_get_localcomm_proto(local_comm, ierror)
     call assert(ierrror == PRISM_Ok, 'prism_get_localcomm_proto')
 
     ! Get an intercommunicator with the ice.
-    call prism_get_intercomm(ice_intercom, 'cicexx', ierror)
-    call MPI_Comm_Rank(ice_intercom, ice_task, ierror)
-
-    call MPI_Comm_Size(il_commlocal, il_nbtotproc, ierror)
-    call MPI_Comm_Rank(il_commlocal, my_task, ierror)
+    call prism_get_intercomm(this%ice_intercom, 'cicexx', ierror)
+    call MPI_Comm_Rank(this%ice_intercom, this%ice_task, ierror)
 
 end subroutine oasis_init
 

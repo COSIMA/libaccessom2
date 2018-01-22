@@ -25,16 +25,16 @@ end type field_type
 
 contains
 
-subroutine field_init(this, name, nx, ny)
+subroutine field_init(this, name, dims)
 
     class(field_type), intent(inout) :: this
     character(len=*), intent(in) :: name
-    integer, intent(in) :: nx, ny
+    integer, dimension(2), intent(in) :: dims
 
     this%name = trim(name)
 
     call assert(.not. allocated(this%array), 'Field data already allocated')
-    allocate(this%array(nx, ny))
+    allocate(this%array(nx(1), ny(2)))
 
 end subroutine field_init
 

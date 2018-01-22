@@ -24,7 +24,9 @@ type, public forcing_type
 contains
     procedure, public :: init => forcing_init
     procedure, public :: update => forcing_update
-    procedure, public :: num_fields
+    procedure, public :: get_shape
+    procedure, public :: get_name
+    procedure, public :: get_num_fields
 end type forcing_type
 
 contains
@@ -188,10 +190,34 @@ function forcing_index(ncid, target_date, guess)  result(indx)
 
 end function forcing_index
 
-function get_name()
+function get_num_fields(this)
+
+    class(forcing_type), intent(inout) :: this
+    integer, intent(out) :: get_num_fields
+
+    get_num_fields = size(this%fields)
+
 end function
 
-function get_shape()
+function get_name(this, idx)
+
+    class(forcing_type), intent(inout) :: this
+    integer, intent(in) :: idx
+    integer, character(len=64), intent(out) :: get_name
+
+    get_name = this%fields(idx)%name
+
+end function
+
+function get_shape(this, idx)
+
+    class(forcing_type), intent(inout) :: this
+    integer, intent(in) :: idx
+    integer, dimension(2), intent(out) :: get_shape
+
+    get_shape(1) = size(this%fields(idx), 1)
+    get_shape(2) = size(this%fields(idx), 2)
+
 end function
 
 end module forcing_mod

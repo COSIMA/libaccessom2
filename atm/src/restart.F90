@@ -2,7 +2,7 @@ module restart_mod
 
 implicit none
 
-use 
+use util_mod, only : get_nc_start_date
 
 private
 public restart_type
@@ -23,9 +23,9 @@ subroutine restart_init(this, start_date, restart_file)
 
 end subroutine
 
-!> 
+!>
 ! Read restart file and get current date
-subroutine restart_get_curr_date(this, curr_date)
+subroutine restart_get_cur_date(this, curr_date)
 
     class(restart_type), intent(inout) :: this
     type(datetime), intent(inout) :: curr_date
@@ -41,7 +41,7 @@ subroutine restart_get_curr_date(this, curr_date)
         call get_nc_start_date(ncid, varid, curr_date)
     endif
 
-end subroutine restart_get_curr_time
+end subroutine restart_get_cur_date
 
 
 ! Save the atmosphere <-> coupling fields. This will then be used as a restart
@@ -80,7 +80,7 @@ subroutine restart_write(this, cur_date, fields)
                     'Defining var '//trim(this%restart_file))
 
 
-    enddo 
+    enddo
     call ncheck(nf90_enddef(ncid), 'nf90_enddef for '//trim(this%restart_file))
 
     ! Load single time value
@@ -90,7 +90,7 @@ subroutine restart_write(this, cur_date, fields)
     ! Load field values.
     do i=1, size(fields)
         call ncheck(nf90_put_var(ncid, field_varid(i), fields(i)%array))
-    enddo 
+    enddo
 
     call ncheck(nf_close(ncid))
 

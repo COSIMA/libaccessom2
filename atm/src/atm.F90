@@ -12,8 +12,11 @@ program atm
     type(forcing_type) :: forcing
     type(ice_grid_type) :: ice_grid
     type(field_type), dimension(:), allocatable :: fields
+    type(datetime) :: cur_date
 
     call params%init()
+    call restart%init(params%start_date, 'a2i.nc')
+    call restart%get_cur_date(cur_date)
 
     call forcing%init("atm_forcing.json", params%start_date, &
                       params%forcing_period_years)
@@ -25,7 +28,7 @@ program atm
     call coupler%init('matmxx', params%start_date, fields)
 
     ! Get information about the ice grid needed for runoff remapping.
-    call ice_grid%init(ice_intercomm)
+    call ice_grid%init(coupler%get_ice_peer())
     call runoff%init(ice_grid)
 
     do
@@ -47,11 +50,10 @@ program atm
         ! continuously.
         call coupler%sync()
 
-        if (cur_date > end_date); exit
+        if (cur_date > params%end_date); exit
     enddo
 
-    call coupler%write_restart()
+    call restart%write(cur_date, fields)
     call coupler%deinit()
-
 
 end program atm
