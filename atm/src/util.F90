@@ -1,3 +1,8 @@
+module util_mod
+
+implicit none
+
+contains
 
 subroutine ncheck(status, error_str)
 
@@ -16,6 +21,7 @@ subroutine ncheck(status, error_str)
     end if
 
 end subroutine ncheck
+
 
 ! Return the spatial and time dimensions of a field.
 subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
@@ -124,3 +130,4 @@ function replace_text(string, pattern, replace)  result(outs)
 end function replace_text
 
 
+end module util_mod

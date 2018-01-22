@@ -1,6 +1,8 @@
-matm
-====
+# matm
 
-A data-driven atmosphere model. Uses OASIS coupler to deliver CORE2 fields to other models. 
+A data-driven atmosphere model. Uses OASIS coupler to deliver atmospheric forcing fields to other models.
 
-Originally developed by Russel Fiedler, Dave Bi and others. 
+# Build
+
+FoBiS.py
+

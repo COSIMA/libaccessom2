@@ -1,6 +1,6 @@
 module forcing_mod
 
-use error_handler , only : assert
+use error_handler, only : assert
 use json_module
 use datetime_module, only: datetime
 use field, only: init, update
@@ -8,30 +8,24 @@ use field, only: init, update
 implicit none
 
 private
-public init, get_atm_forcing
 
 type forcing_field_type
-    private
     character(len=64) :: name
     character(len=64) :: ncname
     character(len=256) :: filename
     integer :: nx, ny
-contains
-    public     
 end type forcing_field_type
 
-type forcing_type
+type, public forcing_type
     private
     type(datetime) :: start_date
     integer :: period
     class(forcing_field_type), dimension(:), allocatable :: fields
 contains
-    private
     procedure, public :: init => forcing_init
     procedure, public :: update => forcing_update
     procedure, public :: num_fields
 end type forcing_type
-
 
 contains
 
@@ -165,8 +159,7 @@ function forcing_index(ncid, target_date, guess)  result(indx)
     real, dimension(:), allocatable :: times
 
     ! Get time variable ID
-    call ncheck(nf90_inq_varid(ncid, "time", varid), &
-                'Inquire: '//trim(varname))
+    call ncheck(nf90_inq_varid(ncid, "time", varid), 'Inquire: time')
 
     call get_nc_start_date(ncid, varid, nc_start_date)
 

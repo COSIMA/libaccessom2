@@ -16,7 +16,7 @@ type field_type
     type(datetime) :: timestamp
     real, dimension(:,:), allocatable :: array
 contains
-    public     
+    public
     procedure :: init => field_init
     procedure :: update => field_update
     procedure :: set_id => field_set_id
@@ -38,12 +38,12 @@ subroutine field_init(this, name, nx, ny)
 
 end subroutine field_init
 
-subroutine field_update(this, date) 
+subroutine field_update(this, date)
 
     class(field_type), intent(inout) :: this
     type(datetime), intent(in) :: date
 
-    ! Update the data. 
+    ! Update the data.
     this%timestamp = date
 
 end subroutine field_update
@@ -54,7 +54,7 @@ subroutine field_set_id(this, id)
     integer, intent(in) :: id
 
     this%id = id
- 
+
 end subroutine field_set_id
 
 end module field

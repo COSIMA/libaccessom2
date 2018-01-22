@@ -15,13 +15,14 @@ program atm
 
     call params%init()
 
-    call forcing%init("atm_forcing.json", params%start_date, params%period)
+    call forcing%init("atm_forcing.json", params%start_date, &
+                      params%forcing_period_years)
     allocate(fields(forcing%get_num_fields()))
     do i=1, size(fields)
         call fields(i)%init(forcing%get_name(i), forcing%get_shape(i))
     enddo
 
-    call coupler%init(fields)
+    call coupler%init('matmxx', params%start_date, fields)
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(ice_intercomm)
@@ -34,11 +35,10 @@ program atm
 
             if (fields(i)%get_name() == 'runoff') then
                 runoff%remap(work, runoff)
-                coupler%put(runoff, cur_date)
-            else
-                coupler%put(work, cur_date)
+                fields(i)%update(cur_date, runoff)
             endif
 
+            coupler%put(fields(i), cur_date)
         enddo
 
         cur_date = cur_date + timedelta(seconds=dt)
@@ -52,5 +52,6 @@ program atm
 
     call coupler%write_restart()
     call coupler%deinit()
+
 
 end program atm

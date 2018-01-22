@@ -1,8 +1,0 @@
-&datm_nml
-    start_date = 0001,01,01,0,0,0
-    runtime = 0001,01,01,0,0,0
-    forcing_period = 1
-    calendar = 'NOLEAP'
-    dt = 10800
-    restart_dir = RESTART
-/

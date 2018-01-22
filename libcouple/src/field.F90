@@ -7,7 +7,7 @@ use datetime_module, only: datetime
 implicit none
 
 private
-public init, update, set_id
+public field_type
 
 type field_type
     private
@@ -19,7 +19,7 @@ contains
     public     
     procedure :: init => field_init
     procedure :: update => field_update
-    procedure :: set_id => field_set_id
+    procedure :: set_oasis_id => field_set_id
     procedure :: get_filename => field_get_filename
 end type field_type
 
@@ -38,22 +38,24 @@ subroutine field_init(this, name, nx, ny)
 
 end subroutine field_init
 
-subroutine field_update(this, date) 
+subroutine field_update(this, date, data) 
 
     class(field_type), intent(inout) :: this
     type(datetime), intent(in) :: date
+    real, dimension(:, :), intent(in) :: data
 
     ! Update the data. 
     this%timestamp = date
+    this%array(:, :) = data(:, :)
 
 end subroutine field_update
 
-subroutine field_set_id(this, id)
+subroutine field_set_oasis_id(this, id)
 
     class(field_type), intent(inout) :: this
     integer, intent(in) :: id
 
-    this%id = id
+    this%oasis_id = id
  
 end subroutine field_set_id
 
