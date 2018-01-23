@@ -2,39 +2,48 @@ module forcing_mod
 
 use error_handler, only : assert
 use json_module
-use datetime_module, only: datetime
-use field, only: init, update
+use datetime_module, only : datetime
+use field_mod, only : field
+use util, only : ncheck, get_var_dims, replace_text
+use netcdf
 
 implicit none
 
 private
 
-type forcing_field_type
+type field
+    private
+    integer :: oasis_id
     character(len=64) :: name
-    character(len=64) :: ncname
     character(len=256) :: filename
+    character(len=64) :: ncname
+    type(datetime) :: timestamp
     integer :: nx, ny
-end type forcing_field_type
+    real, dimension(:, :), allocatable :: array
+endtype field
 
-type, public forcing_type
+type, public forcing
     private
     type(datetime) :: start_date
     integer :: period
-    class(forcing_field_type), dimension(:), allocatable :: fields
+    integer :: index_guess
+    type(field), dimension(:), allocatable :: fields
 contains
-    procedure, public :: init => forcing_init
-    procedure, public :: update => forcing_update
-    procedure, public :: get_shape
-    procedure, public :: get_name
-    procedure, public :: get_num_fields
-end type forcing_type
+    procedure, pass(self), public :: init => forcing_init
+    procedure, pass(self), public :: read_field => forcing_read_field
+    procedure, pass(self), public :: get_name
+    procedure, pass(self), public :: get_data
+    procedure, pass(self), public :: set_oasis_id
+    procedure, pass(self), public :: get_oasis_id
+    procedure, pass(self), public :: get_num_fields
+endtype forcing
 
 contains
 
 !> Parse forcing file into a dictionary.
-subroutine forcing_init(this, config, start_date, period)
+subroutine forcing_init(self, config, start_date, period)
 
-    class(forcing_type), intent(inout) :: this
+    class(forcing), intent(inout) :: self
     character(len=*), intent(in) :: config
     type(datetime), intent(in) :: start_date
     integer, intent(in) :: period
@@ -44,9 +53,9 @@ subroutine forcing_init(this, config, start_date, period)
     type(json_value), pointer :: root, inputs, fp
     integer :: i
 
-    this%start_date = start_date
-    this%period = period
-    this%index_guess = 1
+    self%start_date = start_date
+    self%period = period
+    self%index_guess = 1
 
     call json%initialize()
     call json%load_file(filename=config)
@@ -60,7 +69,7 @@ subroutine forcing_init(this, config, start_date, period)
     call core%get_child(root, "inputs", inputs)
 
     n_inputs = core%count(inputs)
-    allocate(fields(n_inputs))
+    allocate(self%fields(n_inputs))
 
     do i, n_inputs
         call core%get_child(inputs, i, fp, found)
@@ -86,19 +95,99 @@ subroutine forcing_init(this, config, start_date, period)
         call ncheck(nf90_close(ncid), 'Closing '//trim(fname))
 
         ! Initialise a new field object.
-        fields(i)%init(cname, filename, fieldname, nx, ny)
+
+        self%fields(i)%name = trim(name)
+        self%fields(i)%filename = trim(filename)
+        self%fields(i)%ncname = trim(ncname)
+        self%fields(i)%nx = nx
+        self%fields(i)%ny = ny
+        allocate(self%fields(i)%array(nx, ny))
+        self%fields%timestamp = start_date
     enddo
 
     call core%destroy()
     call json%destroy()
 
-end subroutine forcing_init
+endsubroutine forcing_init
 
-function field_get_filename(this)
-end function field_get_filename
+subroutine forcing_update(self, cur_date)
 
-function filename_for_year(filename, year) result(new_filename)
+    class(forcing), intent(in) :: self
+    type(datetime), intent(in) :: cur_date
 
+    integer :: year, indx
+    character(len=256) :: filename
+
+    ! Check whether any work needs to be done
+    if (self%fields(i)%timestamp == cur_date) then
+        return
+    endif
+
+    do i, size(self%fields)
+        ! Find the correct file based on the current year.
+        year = mod(cur_date%getYear() - start_date%getYear(), self%period)
+        filename = filename_for_year(self%fields(i)%filename, year)
+
+        ! Find the correct timeslice in the file.
+        call ncheck(nf90_open(trim(filename), NF90_NOWRITE, ncid), &
+                    'Opening '//trim(filename))
+        forcing_date = datetime(year, cur_date%getMonth(), &
+                                cur_date%getDay(), cur_date%getHour(), &
+                                cur_date%getMinute(), cur_date%getSecond())
+        indx = forcing_index(ncid, forcing_date, self%index_guess)
+        call assert(indx /= -1, "Could not find forcing index")
+
+        ! Update the guess for next time.
+        self%index_guess = indx
+
+        ! Get variable ID
+        call ncheck(nf90_inq_varid(ncid, self%fields(i)%ncname, varid), &
+                    'Inquire: '//trim(varname))
+
+        call read_data(ncid, varid, indx, varname, self%fields(i)%array)
+
+        call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
+
+        self%fields(i)%timestamp = cur_date
+    enddo
+
+endsubroutine forcing_read_field
+
+pure function integer get_num_fields(self)
+    class(forcing_type), intent(in) :: self
+    get_num_fields = size(self%fields)
+endfunction
+
+pure function character(len=64) get_name(self, idx)
+    class(forcing), intent(in) :: self
+    integer, intent(in) :: idx
+
+    get_name = self%fields(idx)%name
+endfunction
+
+pure function get_data(self, idx) return(data)
+    class(forcing), intent(in) :: self
+    integer, intent(in) :: idx
+    real, dimension(:, :), intent(out) :: data
+
+    data = self%fields(idx)%array(:, :)
+endfunction
+
+subroutine set_oasis_id(self, id)
+    class(forcing), intent(inout) :: self
+    integer, intent(in) :: id
+
+    self%fields%oasis_id = id
+endsubroutine set_oasis_id
+
+pure function integer get_oasis_id(self, idx)
+    class(forcing), intent(in) :: self
+    integer, intent(in) :: idx
+
+    get_oasis_id = self%fields(idx)%oasis_id = id
+endfunction get_oasis_id
+
+pure function filename_for_year(filename, year) result(new_filename)
     character(len=*), intent(in) :: filename
     integer, intent(in) :: year
 
@@ -107,53 +196,15 @@ function filename_for_year(filename, year) result(new_filename)
     write(year_str, "I4") year
 	new_filename = replace_text(filename, "{{ year }}", year_str)
 	new_filename = replace_text(filename, "{{year}}", year_str)
-
-end function filename_for_year
-
-subroutine forcing_update(this, cur_date)
-
-    class(forcing_type), intent(inout) :: this
-    type(datetime), intent(in) :: cur_date
-
-    integer :: i
-
-    do i, size(this%fields)
-
-        ! Find the correct file based on the current year.
-        year = mod(cur_date%getYear() - start_date%getYear(), this%period)
-        filename = filename_for_year(this%fields(i)%get_filename(), year)
-
-        ! Find the correct timeslice in the file.
-        call ncheck(nf90_open(trim(filename), NF90_NOWRITE, ncid), &
-                    'Opening '//trim(filename))
-        forcing_date = datetime(year, cur_date%getMonth(), &
-                                cur_date%getDay(), cur_date%getHour(), &
-                                cur_date%getMinute(), cur_date%getSecond())
-        indx = forcing_index(ncid, forcing_date, this%index_guess)
-        call assert(indx /= -1, "Could not find forcing index")
-
-        ! Update the guess for next time.
-        this%index_guess = indx
-
-        ! Get variable ID
-        call ncheck(nf90_inq_varid(ncid, this%fields(i)%get_ncname()), varid), &
-                    'Inquire: '//trim(varname))
-
-        call read_data(ncid, varid, indx, varname, this%fields(i)%array)
-
-        call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
-    enddo
-
-end subroutine forcing_update
+endfunction filename_for_year
 
 !> Return the time index of a particular date.
 ! Starts looking from a guess index.
-function forcing_index(ncid, target_date, guess)  result(indx)
+pure function integer forcing_index(ncid, target_date, guess)  result(indx)
 
     integer, intent(in) :: ncid, varid
     type(datetime), intent(in) :: target_date
     integer, intent(in) :: guess
-    integer, intent(out) :: indx
 
     integer :: varid, num_times
     type(datetime) :: nc_start_date
@@ -188,36 +239,6 @@ function forcing_index(ncid, target_date, guess)  result(indx)
     ! The index was not found.
     indx = -1
 
-end function forcing_index
+endfunction forcing_index
 
-function get_num_fields(this)
-
-    class(forcing_type), intent(inout) :: this
-    integer, intent(out) :: get_num_fields
-
-    get_num_fields = size(this%fields)
-
-end function
-
-function get_name(this, idx)
-
-    class(forcing_type), intent(inout) :: this
-    integer, intent(in) :: idx
-    integer, character(len=64), intent(out) :: get_name
-
-    get_name = this%fields(idx)%name
-
-end function
-
-function get_shape(this, idx)
-
-    class(forcing_type), intent(inout) :: this
-    integer, intent(in) :: idx
-    integer, dimension(2), intent(out) :: get_shape
-
-    get_shape(1) = size(this%fields(idx), 1)
-    get_shape(2) = size(this%fields(idx), 2)
-
-end function
-
-end module forcing_mod
+endmodule forcing_mod

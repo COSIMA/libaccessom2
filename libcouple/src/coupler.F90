@@ -2,12 +2,15 @@ module coupler_mod
 
 use mpi
 use mod_prism
+use field
+
+use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
 
 implicit none
 private
-public coupler_type
+public coupler
 
-type coupler_type
+type coupler
     private
 
     integer :: comp_id  ! Component ID
@@ -17,20 +20,24 @@ type coupler_type
     integer :: ice_intercomm
     integer :: ice_task
 
+    type(datetime) :: start_date
+
 contains
     private
-    type(datetime) :: start_date
-    procedure, public :: init => coupler_init
-end type coupler_type
+    procedure, pass(self), public :: init => coupler_init
+    procedure, pass(self), public :: put => coupler_put
+    procedure, pass(self), public :: get_ice_intercomm
+    procedure, pass(self) :: oasis_init
+endtype coupler
 
 contains
 
-subroutine coupler_init(this, name, start_date, fields)
+subroutine coupler_init(self, name, start_date, fields)
 
-    class(coupler_type), intent(inout) :: this
+    class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: name
     type(datetime), intent(in) :: start_date
-    type(field_type), dimension(:), intent(in) :: fields
+    type(field), dimension(:), intent(in) :: fields
 
     integer, dimension(2) :: fieldshape
     integer, dimension(2) :: var_nodims
@@ -40,7 +47,7 @@ subroutine coupler_init(this, name, start_date, fields)
     integer :: nx, ny, varid, partid
     integer :: ierror
 
-    this%start_date = start_date
+    self%start_date = start_date
 
     call oasis_init()
 
@@ -71,65 +78,83 @@ subroutine coupler_init(this, name, start_date, fields)
     ! PSMILe end of declaration phase
     call prism_enddef_proto(ierror)
 
-end subroutine coupler_init
+endsubroutine coupler_init
 
-subroutine oasis_init(this, comp_name)
+subroutine oasis_init(self, comp_name)
 
+    class(coupler), intent(in) :: self
     character(len=6), intent(in) :: comp_name
-    class(coupler_type), intent(inout) :: this
 
-    integer :: ierror
+    integer :: err
 
-    call MPI_INIT(ierror)
-    call prism_init_comp_proto(this%comp_id, 'matmxx', ierror)
-    call assert(ierrror == PRISM_Ok, 'prism_init_comm_proto')
+    call MPI_INIT(err)
+    call prism_init_comp_proto(self%comp_id, 'matmxx', err)
+    call assert(err == PRISM_Ok, 'prism_init_comm_proto')
 
-    call prism_get_localcomm_proto(local_comm, ierror)
-    call assert(ierrror == PRISM_Ok, 'prism_get_localcomm_proto')
+    call prism_get_localcomm_proto(local_comm, err)
+    call assert(err == PRISM_Ok, 'prism_get_localcomm_proto')
 
     ! Get an intercommunicator with the ice.
-    call prism_get_intercomm(this%ice_intercom, 'cicexx', ierror)
-    call MPI_Comm_Rank(this%ice_intercom, this%ice_task, ierror)
+    call prism_get_intercomm(self%ice_intercomm, 'cicexx', err)
+    call MPI_Comm_Rank(self%ice_intercomm, self%ice_task, err)
 
-end subroutine oasis_init
+endsubroutine oasis_init
 
-subroutine coupler_put(this, field, date)
+subroutine coupler_put(self, name, data, oasis_varid, date, debug)
 
-    class(coupler_type), intent(inout) :: this
-    type(field_type), intent(in) :: field
+    class(coupler_type), intent(in) :: self
+    character(len=*), intent(in) :: name
+    real, dimension(:,:), intent(in) :: data
+    integer, intent(in) :: oasis_varid
     type(datetime), intent(in) :: date
-    integer :: ierror
+    logical, optional, intent(in) :: debug
 
-    ! Convert date to number of seconds since start
+    integer :: err
+    type(timedelta) :: td
 
-    call prism_put_proto(field%oasis_id, istep1, field%array(:,:), ierror)
-
-end subroutine coupler_send
-
-subroutine coupler_sync(this)
-
-    class(coupler_type), intent(inout) :: this
-
-    integer :: ierror
-
-    if (my_commice_task == 0) then
-        tag = MPI_ANY_TAG
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, il_commice,  stat, ierror)
+    if (present(debug)) the
+        if (debug) then
+            write(output_unit, *), 'chksum '//trim(name)//':', sum(data)
+        endif
     endif
 
-end subroutine coupler_sync
+    ! Convert date to number of seconds since start
+    td = date - self%start_date
 
-subroutine coupler_deinit(this)
+    call prism_put_proto(oasis_varid, td%getSeconds(), data, err)
+    call assert(err == PRISM_Ok, 'prism_put_proto')
 
-    class(coupler_type), intent(inout) :: this
+endsubroutine coupler_put
 
-    integer :: ierror
+subroutine coupler_sync(self)
 
-    call prism_terminate_proto(ierror)
-    call assert(ierror == PRISM_Ok, 'prism_terminate_proto')
+    class(coupler_type), intent(inout) :: self
 
-    call MPI_Finalize(ierror)
+    integer :: stat(MPI_STATUS_SIZE)
+    integer, dimension(1) :: buf
+    integer :: err, tag
 
-end subroutine coupler_deinit
+    tag = MPI_ANY_TAG
+    call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm,  stat, err)
 
-end module coupler_mod
+endsubroutine coupler_sync
+
+subroutine coupler_deinit(self)
+
+    class(coupler_type), intent(in) :: self
+
+    integer :: err
+
+    call prism_terminate_proto(err)
+    call assert(err == PRISM_Ok, 'prism_terminate_proto')
+
+    call MPI_Finalize(err)
+
+endsubroutine coupler_deinit
+
+function integer get_ice_intercomm(self)
+    class(coupler_type), intent(inout) :: self
+    get_ice_intercomm = self%ice_intercomm
+endfunction
+
+endmodule coupler_mod

@@ -1,53 +1,67 @@
 module ice_grid_mod
 
+use mpi
+
 implicit none
 private
-public ice_grid_type
+public ice_grid
 
-type ice_grid_type
+type ice_grid
     private
     real, dimension(:, :), allocatable :: lats, lons, mask
+    integer :: nx
+    integer :: ny
 contains
     private
-    procedure, public :: init
-end type ice_grid_type
+    procedure, pass(self), public :: init => ice_grid_init
+    procedure, pass(self), public :: get_shape => ice_grid_get_shape
+endtype ice_grid
 
 contains
 
-subroutine init(this, ice_intercomm)
+subroutine ice_grid_init(self, ice_intercomm)
 
-    type(ice_grid_type), intent(inout) :: this
+    type(ice_grid_type), intent(inout) :: self
     integer, intent(in) :: ice_intercomm
 
-    integer :: tag
+    integer :: tag, err
     integer, dimension(2) :: buf_int
     real, dimension(:), allocatable :: buf_real
     integer :: stat(MPI_STATUS_SIZE)
 
     ! Receive dimensions of the ice grid that we're coupled to.
     tag = MPI_ANY_TAG
-    call MPI_recv(buf_int, 2, MPI_INTEGER, 0, tag, ice_intercomm,  stat, ierror)
-    nx_global_ice = buf_int(1)
-    ny_global_ice = buf_int(2)
+    call MPI_recv(buf_int, 2, MPI_INTEGER, 0, tag, ice_intercomm,  stat, err)
+    self%nx = buf_int(1)
+    self%ny = buf_int(2)
 
-    allocate(this%lats(nx_global_ice, ny_global_ice))
-    allocate(this%lons(nx_global_ice, ny_global_ice))
-    allocate(this%mask(nx_global_ice, ny_global_ice))
-    allocate(buf_real(nx_global_ice*ny_global_ice))
+    allocate(self%lats(self%nx, self%ny))
+    allocate(self%lons(self%nx, self%ny))
+    allocate(self%mask(self%nx, self%ny))
+    allocate(buf_real(self%nx*self%ny))
 
-    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
-                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, ierror)
-    lats(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
+    call MPI_recv(buf_real, self%nx*self%ny, &
+                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, err)
+    self%lats(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
 
-    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
-                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, ierror)
-    lons(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
+    call MPI_recv(buf_real, self%nx*self%ny, &
+                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, err)
+    self%lons(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
 
-    call MPI_recv(buf_real, nx_global_ice*ny_global_ice, &
-                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, ierror)
-    mask(:, :) = reshape(buf_real, (/ nx_global_ice, ny_global_ice /))
+    call MPI_recv(buf_real, self%nx*self%ny, &
+                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, err)
+    self%mask(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
     deallocate(buf_real)
 
-end subroutine ice_grid_init
+endsubroutine ice_grid_init
 
-end module ice_grid_mod
+pure function get_shape(self)
+
+    type(ice_grid_type), intent(in) :: self
+    real, dimension(2), intent(out) :: get_shape
+
+    get_shape(1) = nx
+    get_shape(2) = ny
+endfunction
+
+endmodule ice_grid_mod

@@ -3,42 +3,45 @@ module restart_mod
 implicit none
 
 use util_mod, only : get_nc_start_date
+use field_mod, only : field
 
 private
-public restart_type
 
-type restart_type
+type, public restart
     type(datetime) :: restart_date
     character(len=256) :: restart_file
-end type restart_type
+contains
+    procedure, pass(self), public :: init => restart_init
+    procedure, pass(self), public :: get_cur_date => restart_get_cur_date
+    procedure, pass(self), public :: write => restart_write
+endtype restart
 
 contains
 
-subroutine restart_init(this, start_date, restart_file)
+subroutine restart_init(self, start_date, restart_file)
 
-    class(restart_type), intent(inout) :: this
+    class(restart), intent(inout) :: self
 
-    this%restart_date = start_date
-    this%restart_file = restart_file
+    self%restart_date = start_date
+    self%restart_file = restart_file
 
-end subroutine
+endsubroutine
 
 !>
 ! Read restart file and get current date
-subroutine restart_get_cur_date(this, curr_date)
+type(datetime) function restart_get_cur_date(self) result(cur_date)
 
-    class(restart_type), intent(inout) :: this
-    type(datetime), intent(inout) :: curr_date
+    class(restart), intent(in) :: self
 
     integer :: ncid, varid
 
-    curr_date = this%start_date
+    cur_date = self%start_date
 
     ! If restart file exists then read date
     status = nf90_open(trim(this%restart_file), NF90_NOWRITE, ncid)
     if (status == nf90_noerr) then
         call ncheck(nf90_inq_varid(ncid, "time", varid), 'Inquire: time')
-        call get_nc_start_date(ncid, varid, curr_date)
+        call get_nc_start_date(ncid, varid, cur_date)
     endif
 
 end subroutine restart_get_cur_date
@@ -46,10 +49,10 @@ end subroutine restart_get_cur_date
 
 ! Save the atmosphere <-> coupling fields. This will then be used as a restart
 ! for the ice model.
-subroutine restart_write(this, cur_date, fields)
+subroutine restart_write(self, cur_date, fields)
 
-    class(restart_type), intent(inout) :: this
-    type(field_type), dimension(:), intent(in) :: fields
+    class(restart), intent(inout) :: self
+    type(field), dimension(:), intent(in) :: fields
 
     integer :: ncid, time_dimid, time_varid, nx, ny
     integer, dimension(size(fields)) :: lat_dimid, lon_dimid, field_varid
@@ -94,6 +97,6 @@ subroutine restart_write(this, cur_date, fields)
 
     call ncheck(nf_close(ncid))
 
-subroutine restart_write
+endsubroutine restart_write
  
-end module restart_mod
+endmodule restart_mod

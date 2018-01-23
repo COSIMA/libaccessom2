@@ -1,47 +1,48 @@
 program atm
 
     use forcing_mod, only : forcing_type
-    use params_mod, only : params_type
-    use coupler_mod, only : coupler_type
-    use ice_grid_mod, only : ice_grid_type
+    use params_mod, only : params
+    use coupler_mod, only : coupler
+    use ice_grid_mod, only : ice_grid
 
     implicit none
 
-    type(params_type) :: params
-    type(coupler_type) :: coupler
-    type(forcing_type) :: forcing
-    type(ice_grid_type) :: ice_grid
-    type(field_type), dimension(:), allocatable :: fields
+    type(params) :: param
+    type(coupler) :: couple
+    type(atm_forcing) :: forcing
+    type(ice_grid) :: ice
     type(datetime) :: cur_date
+    character(len=64) :: field_name
+    real, dimension(2) :: field_shape
+    real, dimension(:, :), allocatable :: runoff_work
 
-    call params%init()
-    call restart%init(params%start_date, 'a2i.nc')
-    call restart%get_cur_date(cur_date)
+    call param%init()
+    call restart%init(param%start_date, 'a2i.nc')
+    cur_date = restart%get_cur_date()
 
-    call forcing%init("atm_forcing.json", params%start_date, &
-                      params%forcing_period_years)
-    allocate(fields(forcing%get_num_fields()))
-    do i=1, size(fields)
-        call fields(i)%init(forcing%get_name(i), forcing%get_shape(i))
-    enddo
-
-    call coupler%init('matmxx', params%start_date, fields)
+    call forcing%init("atm_forcing.json", param%start_date, &
+                      param%forcing_period_years)
+    call coupler%init('matmxx', param%start_date, fields)
 
     ! Get information about the ice grid needed for runoff remapping.
-    call ice_grid%init(coupler%get_ice_peer())
-    call runoff%init(ice_grid)
+    call ice_grid%init(coupler%get_ice_intercomm())
+    call runoff%init(ice_grid, param%runoff_remap_weights_file)
+    allocate(runoff_work(runoff%get_shape()(1), runoff%get_shape()(2))) 
 
     do
-        do i=1, size(fields)
-            forcing%get_data(fields(i)%get_name(), cur_date, work)
-            fields(i)%update(cur_date, work)
+        ! Update all forcing fields
+        forcing%update(cur_date)
 
-            if (fields(i)%get_name() == 'runoff') then
-                runoff%remap(work, runoff)
-                fields(i)%update(cur_date, runoff)
+        ! Send each forcing field
+        do i=1, forcing%get_num_fields()
+            if (forcing%get_name(i) == 'runoff') then
+                runoff%remap(forcing%get_data(i), runoff_work)
+                coupler%put(forcing%get_name(i), runoff_work, &
+                            forcing%get_oasis_id(i), cur_date, param%debug)
+            else
+                coupler%put(forcing%get_name(i), forcing%get_data(i), &
+                            forcing%get_oasis_id(i), cur_date, param%debug)
             endif
-
-            coupler%put(fields(i), cur_date)
         enddo
 
         cur_date = cur_date + timedelta(seconds=dt)
@@ -50,9 +51,10 @@ program atm
         ! continuously.
         call coupler%sync()
 
-        if (cur_date > params%end_date); exit
+        if (cur_date > param%end_date); exit
     enddo
 
+    deallocate(runoff_work)
     call restart%write(cur_date, fields)
     call coupler%deinit()
 

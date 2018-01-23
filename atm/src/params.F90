@@ -1,26 +1,33 @@
 module params_mod
 
+use datetime
+
 implicit none
 
 private
-public params_type
+public params
 
-type params_type
+type params
+    private
     type(datetime) :: start_date, end_date
     integer :: forcing_period_years
     logical :: debug_output
-end type params_type
+    character(len=256) :: runoff_remap_weights_file
+contains
+    procedure, pass(self), public :: init => params_init
+endtype params
 
 namelist /atm_nml/ start_date, end_date forcing_period_years, &
-                   debug_output
+                   debug_output, runoff_remap_weights
 
 contains
 
-subroutine params_init(this)
+subroutine params_init(self)
 
-    class(params_type), intent(inout) :: this
+    class(params), intent(inout) :: self
 
     character(len=19) :: start_date, end_date
+    character(len=256) :: runoff_remap_weights_file
     integer :: forcing_period_years
     logical :: debug_output
 
@@ -28,17 +35,19 @@ subroutine params_init(this)
     end_date = '1901-01-01 00:00:00'
     forcing_period_years = 1
     debug_output = .false.
+    runoff_remap_weights_file = 'rmp_jrar_to_cict_CONSERV.nc'
 
     ! Rean input namelist
     open(unit=99, file="atm.nml", form="formatted", status="old")
     read(99, nml=atm_nml)
     close(unit=99)
 
-    this%start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
-    this%end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
-    this%forcing_period_years = forcing_period_years
-    this%debug_output = debug_output
+    self%start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
+    self%end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
+    self%forcing_period_years = forcing_period_years
+    self%debug_output = debug_output
+    self%runoff_remap_weights_file = trim(runoff_remap_weights_file)
 
-end subroutine params_init
+endsubroutine params_init
 
-end module params_mod
+endmodule params_mod

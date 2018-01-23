@@ -5,15 +5,15 @@ use remap_runoff_mod, only : remap_runoff_new, remap_runoff_del
 
 implicit none
 private 
-public runoff_type
+public runoff
 
-type runoff_type
+type runoff
     private
 contains
     private
-    procedure, public :: init
-    procedure, public :: remap
-end type runoff_type
+    procedure, pass(self), public :: init
+    procedure, pass(self), public :: remap
+end type runoff
 
 type(remap_runoff_class) :: remap_runoff
 
@@ -29,7 +29,6 @@ integer, dimension(max_caps) :: runoff_caps_ie = (/ 1000000, -1, -1, -1 /) ! end
 integer, dimension(max_caps) :: runoff_caps_js = (/ 0, 0, 0, 0 /) ! starting j index for each runoff region (count from 1)
 integer, dimension(max_caps) :: runoff_caps_je = (/ 1000000, -1, -1, -1 /) ! ending j index for each runoff region (count from 1)
 
-
 namelist /runoff_nml/ &
     remap_weights, & 
     num_runoff_caps, &
@@ -41,10 +40,11 @@ namelist /runoff_nml/ &
 
 contains
 
-subroutine init(this, ice_grid)
+subroutine init(self, ice_grid, weights_file)
 
-    type(runoff_type), intent(inout) :: this
-    type(ice_grid_type), intent(in) :: ice_grid
+    type(runoff), intent(inout) :: self
+    type(ice_grid), intent(in) :: ice_grid
+    character(len=*), intent(in) :: weights_file
 
     ! Rean input namelist
     open(unit=99, file="atm.nml", form="formatted", status="old")
@@ -52,33 +52,22 @@ subroutine init(this, ice_grid)
     close(unit=99)
     num_runoff_caps = max(0, min(num_runoff_caps, max_caps))
 
-    ! Initialise module level variables with details about the ice grid.
-    if (trim(dataset) == 'jra55') then
-      call remap_runoff_new(remap_runoff, 'rmp_jrar_to_cict_CONSERV.nc', &
-                            ice_grid%lats, ice_grid%lons, ice_grid%mask, &
-                            num_runoff_caps, runoff_caps, &
-                            runoff_caps_is, runoff_caps_ie, &
-                            runoff_caps_js, runoff_caps_je)
-    else
-      call remap_runoff_new(remap_runoff, 'rmp_corr_to_cict_CONSERV.nc', &
-                            ice_grid%lats, ice_grid%lons, ice_grid%mask, &
-                            num_runoff_caps, runoff_caps, &
-                            runoff_caps_is, runoff_caps_ie, &
-                            runoff_caps_js, runoff_caps_je)
-    endif
-
-    allocate(this%runoff_save())
+    call remap_runoff_new(remap_runoff, trim(weight_file), &
+                          ice_grid%lats, ice_grid%lons, ice_grid%mask, &
+                          num_runoff_caps, runoff_caps, &
+                          runoff_caps_is, runoff_caps_ie, &
+                          runoff_caps_js, runoff_caps_je)
 
 end subroutine init
 
-subroutine remap(this, input, output)
+subroutine remap(self, input, output)
 
-    type(runoff_type), intent(inout) :: this
+    type(runoff_type), intent(inout) :: self
     real, dimension(:, :), intent(in) :: input
     real, dimension(:, :), intent(inout) :: output
 
     ! Check whether runoff has changed before remapping.
-    call remap_runoff_do(remap_runoff, input, output, this%mask)
+    call remap_runoff_do(remap_runoff, input, output, self%mask)
 
 end subroutine remap
 
