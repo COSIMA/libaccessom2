@@ -3,8 +3,7 @@ module forcing_mod
 use error_handler, only : assert
 use json_module
 use datetime_module, only : datetime
-use field_mod, only : field
-use util, only : ncheck, get_var_dims, replace_text
+use util_mod, only : ncheck, get_var_dims, replace_text
 use netcdf
 
 implicit none

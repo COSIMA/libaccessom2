@@ -1,23 +1,23 @@
 module util_mod
 
+use netcdf
+use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
 implicit none
 
 contains
 
 subroutine ncheck(status, error_str)
 
-    implicit none
-
-    integer(kind=int_kind), intent(in) :: status
+    integer, intent(in) :: status
     character(len=*), intent(in), optional :: error_str
 
     if (status /= nf90_noerr) then
-      write(*,'(/a)')   'MATM: error - from NetCDF library'
-    if (present(error_str)) then
-        write(*,'(a)')   error_str
-      endif
-      write(*,'(a/)')   trim(nf90_strerror(status))
-      stop
+        write(stdout, '(/a)') 'ATM: error - from NetCDF library'
+        if (present(error_str)) then
+            write(stdout, '(a)') error_str
+        endif
+        write(stdout, '(a/)')   trim(nf90_strerror(status))
+        stop
     end if
 
 end subroutine ncheck
@@ -31,7 +31,7 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
     integer, intent(out) :: ndims, nx, ny, time
 
     integer, dimension(:), allocatable :: dimids
-    integer :: ndims, i, len
+    integer :: i, len
     character(len=nf90_max_name) :: dimname
 
     ! Get dimensions used by this var.
@@ -59,9 +59,9 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
     deallocate(dimids)
     call ncheck(nf90_close(ncid))
 
-    if (nx == 0 .or. ny == 0 .or. time == 0) then
-      stop "MATM get_field_dims: couldn't get all dimensions"
-    endif
+    call assert(nx /= 0, "ATM get_field_dims: couldn't get nx")
+    call assert(ny /= 0, "ATM get_field_dims: couldn't get ny")
+    call assert(time /= 0, "ATM get_field_dims: couldn't get time")
 
 end subroutine get_var_dims
 
