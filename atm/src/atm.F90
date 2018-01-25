@@ -22,12 +22,18 @@ program atm
 
     call forcing%init("atm_forcing.json", param%start_date, &
                       param%forcing_period_years)
-    call coupler%init('matmxx', param%start_date, fields)
+
+    ! Initialise coupler, adding coupling fields
+    call coupler%init_begin('matmxx', param%start_date, forcing%get_num_fields())
+    do i=1, forcing%get_num_fields()
+        call coupler%add_field(forcing%get_name(i), forcing%get_shape(i))
+    enddo
+    call coupler%init_end()
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(coupler%get_ice_intercomm())
     call runoff%init(ice_grid, param%runoff_remap_weights_file)
-    allocate(runoff_work(runoff%get_shape()(1), runoff%get_shape()(2))) 
+    allocate(runoff_work(runoff%get_shape()(1), runoff%get_shape()(2)))
 
     do
         ! Update all forcing fields
@@ -38,14 +44,14 @@ program atm
             if (forcing%get_name(i) == 'runoff') then
                 runoff%remap(forcing%get_data(i), runoff_work)
                 coupler%put(forcing%get_name(i), runoff_work, &
-                            forcing%get_oasis_id(i), cur_date, param%debug)
+                            cur_date, param%debug)
             else
                 coupler%put(forcing%get_name(i), forcing%get_data(i), &
-                            forcing%get_oasis_id(i), cur_date, param%debug)
+                            cur_date, param%debug)
             endif
         enddo
 
-        cur_date = cur_date + timedelta(seconds=dt)
+        cur_date = cur_date + timedelta(seconds=param%dt)
 
         ! Block until we receive from ice. This prevents the atm from sending
         ! continuously.
@@ -55,7 +61,7 @@ program atm
     enddo
 
     deallocate(runoff_work)
-    call restart%write(cur_date, fields)
+    call forcing%write_restart(cur_date)
     call coupler%deinit()
 
 end program atm

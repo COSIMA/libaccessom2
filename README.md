@@ -4,5 +4,8 @@ A data-driven atmosphere model. Uses OASIS coupler to deliver atmospheric forcin
 
 # Build
 
-FoBiS.py
-
+```{bash}
+mkdir build
+cd build
+cmake ../
+```

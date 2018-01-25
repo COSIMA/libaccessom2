@@ -13,7 +13,6 @@ private
 
 type field
     private
-    integer :: oasis_id
     character(len=64) :: name
     character(len=256) :: filename
     character(len=64) :: ncname
@@ -33,8 +32,6 @@ contains
     procedure, pass(self), public :: read_field => forcing_read_field
     procedure, pass(self), public :: get_name
     procedure, pass(self), public :: get_data
-    procedure, pass(self), public :: set_oasis_id
-    procedure, pass(self), public :: get_oasis_id
     procedure, pass(self), public :: get_num_fields
 endtype forcing
 
@@ -172,20 +169,6 @@ pure function get_data(self, idx) return(data)
 
     data = self%fields(idx)%array(:, :)
 endfunction
-
-subroutine set_oasis_id(self, id)
-    class(forcing), intent(inout) :: self
-    integer, intent(in) :: id
-
-    self%fields%oasis_id = id
-endsubroutine set_oasis_id
-
-pure function integer get_oasis_id(self, idx)
-    class(forcing), intent(in) :: self
-    integer, intent(in) :: idx
-
-    get_oasis_id = self%fields(idx)%oasis_id = id
-endfunction get_oasis_id
 
 pure function filename_for_year(filename, year) result(new_filename)
     character(len=*), intent(in) :: filename
