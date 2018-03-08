@@ -1,6 +1,7 @@
 module util_mod
 
 use netcdf
+use datetime_module, only : datetime, strptime
 use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
 implicit none
 
@@ -27,7 +28,6 @@ end subroutine ncheck
 subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
 
     integer, intent(in) :: ncid, varid
-    character(len=*), intent(in) :: varname
     integer, intent(out) :: ndims, nx, ny, time
 
     integer, dimension(:), allocatable :: dimids
@@ -70,12 +70,11 @@ subroutine get_nc_start_date(ncid, varid, nc_start_date)
     integer, intent(in) :: ncid, varid
     type(datetime), intent(out) :: nc_start_date
 
-    integer :: varid
     type(datetime) :: nc_start_date_w_hours
     character(len=256) :: time_str
 
     ! Get start date
-    call ncheck(nf90_get_att(ncid, varid, "units", time_str)
+    call ncheck(nf90_get_att(ncid, varid, "units", time_str))
 
     time_str = replace_text(time_str, "days since ", "")
     nc_start_date_w_hours = strptime(trim(time_str), "%Y-%m-%d %H:%M:%S")
@@ -96,8 +95,8 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
     call get_var_dims(ncid, varid, ndims, nx, ny, time)
 
     allocate(count(ndims), start(ndims))
-    nx = size(data, 1)
-    ny = size(data, 2)
+    nx = size(dataout, 1)
+    ny = size(dataout, 2)
 
     ! Get data, we select a specfic time-point of data to read
     if (ndims == 3) then
@@ -107,7 +106,7 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
         start = (/ 1, 1, 1, indx /)
         count = (/ nx, ny, 1, 1 /)
     end if
-    call ncheck(nf90_get_var(ncid, varid, data, start=start, count=count), &
+    call ncheck(nf90_get_var(ncid, varid, dataout, start=start, count=count), &
                 'Get var '//trim(varname))
     deallocate(count, start)
 
@@ -117,15 +116,15 @@ end subroutine read_data
 ! Based on: http://fortranwiki.org/fortran/show/String_Functions
 function replace_text(string, pattern, replace)  result(outs)
 
-	character(len=*), intent(in) :: s,text,rep
-	character(len(string)) :: outs
-	integer             :: i, nt, nr
+    character(len=*), intent(in) :: string, pattern, replace
+    character(len(string)) :: outs
+    integer             :: i, nt, nr
 
-	outs = string ; nt = len_trim(pattern) ; nr = len_trim(replace)
-	do
-	   i = index(outs,pattern(:nt)) ; if (i == 0) exit
-	   outs = outs(:i-1) // replace(:nr) // outs(i+nt:)
-	end do
+    outs = string ; nt = len_trim(pattern) ; nr = len_trim(replace)
+    do
+        i = index(outs,pattern(:nt)) ; if (i == 0) exit
+        outs = outs(:i-1) // replace(:nr) // outs(i+nt:)
+    end do
 
 end function replace_text
 

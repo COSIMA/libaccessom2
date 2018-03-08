@@ -2,16 +2,17 @@ module forcing_mod
 
 use error_handler, only : assert
 use json_module
-use datetime_module, only : datetime
+use json_kinds
+use datetime_module, only : datetime, timedelta
 use util_mod, only : ncheck, get_var_dims, replace_text
 use netcdf
+use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
 implicit none
 
 private
 
-type field
-    private
+type, public :: field
     character(len=64) :: name
     character(len=256) :: filename
     character(len=64) :: ncname
@@ -20,17 +21,16 @@ type field
     real, dimension(:, :), allocatable :: array
 endtype field
 
-type, public forcing
-    private
+type, public :: forcing
     type(datetime) :: start_date
     integer :: period
     integer :: index_guess
     type(field), dimension(:), allocatable :: fields
 contains
     procedure, pass(self), public :: init => forcing_init
-    procedure, pass(self), public :: read_field => forcing_read_field
+    procedure, pass(self), public :: update => forcing_update
     procedure, pass(self), public :: get_name
-    procedure, pass(self), public :: get_data
+    procedure, pass(self), public :: get_shape
     procedure, pass(self), public :: get_num_fields
 endtype forcing
 
@@ -47,7 +47,12 @@ subroutine forcing_init(self, config, start_date, period)
     type(json_file) :: json
     type(json_core) :: core
     type(json_value), pointer :: root, inputs, fp
-    integer :: i
+    integer :: i, n_inputs
+    integer :: ncid, varid
+    integer :: nx, ny, unused
+    character(kind=CK, len=:), allocatable :: cname, fieldname, filename
+    character(len=64) :: fname
+    logical :: found
 
     self%start_date = start_date
     self%period = period
@@ -56,7 +61,7 @@ subroutine forcing_init(self, config, start_date, period)
     call json%initialize()
     call json%load_file(filename=config)
     if (json%failed()) then
-        call json%print_error_message(error_unit)
+        call json%print_error_message(stderr)
         call assert(.false., 'forcing_init() failed')
     endif
 
@@ -67,21 +72,21 @@ subroutine forcing_init(self, config, start_date, period)
     n_inputs = core%count(inputs)
     allocate(self%fields(n_inputs))
 
-    do i, n_inputs
+    do i=1, n_inputs
         call core%get_child(inputs, i, fp, found)
         call assert(found, "Input not found in forcing config.")
 
-        call json%get(fp, "filename", filename, found)
+        call core%get(fp, "filename", filename, found)
         call assert(found, "Entry 'filename' not found in forcing config.")
 
-        call json%get(fp, "fieldname", fieldname, found)
+        call core%get(fp, "fieldname", fieldname, found)
         call assert(found, "Entry 'fieldname' not found in forcing config.")
 
-        call json%get(fp, "cname", cname, found)
+        call core%get(fp, "cname", cname, found)
         call assert(found, "Entry 'cname' not found in forcing config.")
 
         ! Get the shape of forcing fields
-        fname  = filename_for_year(filename, start_date.getYear())
+        fname  = filename_for_year(filename, start_date%getYear())
         call ncheck(nf90_open(trim(fname), NF90_NOWRITE, ncid), &
                     'Opening '//trim(fname))
         call ncheck(nf90_inq_varid(ncid, trim(fieldname), varid), &
@@ -92,9 +97,9 @@ subroutine forcing_init(self, config, start_date, period)
 
         ! Initialise a new field object.
 
-        self%fields(i)%name = trim(name)
+        self%fields(i)%name = trim(cname)
         self%fields(i)%filename = trim(filename)
-        self%fields(i)%ncname = trim(ncname)
+        self%fields(i)%ncname = trim(fieldname)
         self%fields(i)%nx = nx
         self%fields(i)%ny = ny
         allocate(self%fields(i)%array(nx, ny))
@@ -108,20 +113,21 @@ endsubroutine forcing_init
 
 subroutine forcing_update(self, cur_date)
 
-    class(forcing), intent(in) :: self
+    class(forcing), intent(inout) :: self
     type(datetime), intent(in) :: cur_date
 
-    integer :: year, indx
-    character(len=256) :: filename
+    integer :: year, indx, i, ncid, varid
+    character(len=256) :: filename, varname
+    type(datetime) :: forcing_date
 
     ! Check whether any work needs to be done
     if (self%fields(i)%timestamp == cur_date) then
         return
     endif
 
-    do i, size(self%fields)
+    do i=1, size(self%fields)
         ! Find the correct file based on the current year.
-        year = mod(cur_date%getYear() - start_date%getYear(), self%period)
+        year = mod(cur_date%getYear() - self%start_date%getYear(), self%period)
         filename = filename_for_year(self%fields(i)%filename, year)
 
         ! Find the correct timeslice in the file.
@@ -147,46 +153,53 @@ subroutine forcing_update(self, cur_date)
         self%fields(i)%timestamp = cur_date
     enddo
 
-endsubroutine forcing_read_field
+endsubroutine forcing_update
 
-pure function integer get_num_fields(self)
-    class(forcing_type), intent(in) :: self
+function get_num_fields(self)
+    class(forcing), intent(in) :: self
+    integer :: get_num_fields
+
     get_num_fields = size(self%fields)
 endfunction
 
-pure function character(len=64) get_name(self, idx)
+function get_name(self, idx)
     class(forcing), intent(in) :: self
     integer, intent(in) :: idx
+    character(len=64) :: get_name
 
     get_name = self%fields(idx)%name
 endfunction
 
-pure function get_data(self, idx) return(data)
+function get_shape(self, idx)
     class(forcing), intent(in) :: self
     integer, intent(in) :: idx
-    real, dimension(:, :), intent(out) :: data
+    integer, dimension(2) :: get_shape
 
-    data = self%fields(idx)%array(:, :)
+    get_shape(1) = self%fields(idx)%nx
+    get_shape(2) = self%fields(idx)%ny
 endfunction
 
-pure function filename_for_year(filename, year) result(new_filename)
+
+function filename_for_year(filename, year)
     character(len=*), intent(in) :: filename
     integer, intent(in) :: year
+    character(len=len(filename)) :: filename_for_year
 
     character(len=4) :: year_str
 
-    write(year_str, "I4") year
-	new_filename = replace_text(filename, "{{ year }}", year_str)
-	new_filename = replace_text(filename, "{{year}}", year_str)
+    write(year_str, "(I4)") year
+    filename_for_year = replace_text(filename, "{{ year }}", year_str)
+    filename_for_year = replace_text(filename, "{{year}}", year_str)
 endfunction filename_for_year
 
 !> Return the time index of a particular date.
 ! Starts looking from a guess index.
-pure function integer forcing_index(ncid, target_date, guess)  result(indx)
+function forcing_index(ncid, target_date, guess)
 
-    integer, intent(in) :: ncid, varid
+    integer, intent(in) :: ncid
     type(datetime), intent(in) :: target_date
     integer, intent(in) :: guess
+    integer :: forcing_index
 
     integer :: varid, num_times
     type(datetime) :: nc_start_date
@@ -200,26 +213,26 @@ pure function integer forcing_index(ncid, target_date, guess)  result(indx)
 
     call ncheck(nf90_inquire_dimension(ncid, varid, len = num_times))
     allocate(times(num_times))
-    call ncheck(nf90_get_var(ncid, varid, times)
+    call ncheck(nf90_get_var(ncid, varid, times))
 
     ! First start searching using 'guess'
-    do indx=guess, num_times
-        td = timedelta(seconds=int(times(indx)*86400))
+    do forcing_index=guess, num_times
+        td = timedelta(seconds=int(times(forcing_index)*86400))
         if ((nc_start_date + td) == target_date) then
             return
         endif
     enddo
 
     ! Searching from the beginning
-    do indx=1, num_times
-        td = timedelta(seconds=int(times(indx)*86400))
+    do forcing_index=1, num_times
+        td = timedelta(seconds=int(times(forcing_index)*86400))
         if ((nc_start_date + td) == target_date) then
             return
         endif
     enddo
 
     ! The index was not found.
-    indx = -1
+    forcing_index = -1
 
 endfunction forcing_index
 

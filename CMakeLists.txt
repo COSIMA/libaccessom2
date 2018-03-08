@@ -41,7 +41,27 @@ if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
   set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
 endif()
 
-include_directories(contrib/datetime-fortran/build/include contrib/json-fortran/lib contrib/oasis3-mct/Linux/build/lib/psmile.MPI1/)
+# get external projects
+include(ExternalProject)
+ExternalProject_Add(datetime-fortran
+    GIT_REPOSITORY    https://github.com/wavebitscientific/datetime-fortran.git
+    GIT_TAG          914d21e497a29a85c9ac6ec8c269aeada244d285
+    INSTALL_COMMAND cmake -E echo "Skipping datetime-fortran install step."
+)
+ExternalProject_Get_property(datetime-fortran BINARY_DIR)
+include_directories(${BINARY_DIR}/include)
+link_directories(${BINARY_DIR}/lib)
+
+ExternalProject_Add(json-fortran
+    GIT_REPOSITORY    https://github.com/jacobwilliams/json-fortran.git
+    GIT_TAG          37de3ade555e84779ebf8a26c23e86a3ae268390
+    INSTALL_COMMAND cmake -E echo "Skipping json-fortran install step."
+)
+ExternalProject_Get_property(json-fortran BINARY_DIR)
+include_directories(${BINARY_DIR}/include)
+link_directories(${BINARY_DIR}/lib)
+
+include_directories(contrib/oasis3-mct/Linux/build/lib/psmile.MPI1/)
 
 # libcouple.a library
 file(GLOB LIB_SOURCES libcouple/src/*.F90)
@@ -50,7 +70,12 @@ add_library(couple ${LIB_SOURCES})
 # atm executable
 file(GLOB ATM_SOURCES atm/src/*.F90)
 add_executable(atm ${ATM_SOURCES})
-target_link_libraries(atm couple)
+target_link_libraries(atm couple ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+
+# ice stub executable
+file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
+add_executable(ice_stub ${ATM_SOURCES})
+target_link_libraries(ice_stub couple ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # tests
 # enable_testing()

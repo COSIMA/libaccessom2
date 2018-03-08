@@ -1,14 +1,12 @@
 module params_mod
 
-use datetime
+use datetime_module, only : datetime, strptime
 
 implicit none
 
 private
-public params
 
-type params
-    private
+type, public :: params
     type(datetime) :: start_date, end_date
     integer :: forcing_period_years
     integer :: dt
@@ -18,20 +16,20 @@ contains
     procedure, pass(self), public :: init => params_init
 endtype params
 
-namelist /atm_nml/ start_date, end_date forcing_period_years, &
-                   debug_output, runoff_remap_weights, dt
+character(len=19) :: start_date, end_date
+character(len=256) :: runoff_remap_weights_file
+integer :: forcing_period_years
+integer :: dt
+logical :: debug_output
+
+namelist /atm_nml/ start_date, end_date, forcing_period_years, &
+                   debug_output, runoff_remap_weights_file, dt
 
 contains
 
 subroutine params_init(self)
 
     class(params), intent(inout) :: self
-
-    character(len=19) :: start_date, end_date
-    character(len=256) :: runoff_remap_weights_file
-    integer :: forcing_period_years
-    integer :: dt
-    logical :: debug_output
 
     start_date = '1900-01-01 00:00:00'
     end_date = '1901-01-01 00:00:00'

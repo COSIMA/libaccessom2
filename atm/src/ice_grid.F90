@@ -7,21 +7,20 @@ private
 public ice_grid
 
 type ice_grid
-    private
     real, dimension(:, :), allocatable :: lats, lons, mask
     integer :: nx
     integer :: ny
 contains
     private
-    procedure, pass(self), public :: init => ice_grid_init
-    procedure, pass(self), public :: get_shape => ice_grid_get_shape
+    procedure, public :: init => ice_grid_init
+    procedure, public :: get_shape => ice_grid_get_shape
 endtype ice_grid
 
 contains
 
 subroutine ice_grid_init(self, ice_intercomm)
 
-    type(ice_grid_type), intent(inout) :: self
+    class(ice_grid), intent(inout) :: self
     integer, intent(in) :: ice_intercomm
 
     integer :: tag, err
@@ -55,13 +54,13 @@ subroutine ice_grid_init(self, ice_intercomm)
 
 endsubroutine ice_grid_init
 
-pure function get_shape(self)
+function ice_grid_get_shape(self)
 
-    type(ice_grid_type), intent(in) :: self
-    real, dimension(2), intent(out) :: get_shape
+    class(ice_grid), intent(in) :: self
+    real, dimension(2) :: ice_grid_get_shape
 
-    get_shape(1) = nx
-    get_shape(2) = ny
-endfunction
+    ice_grid_get_shape(1) = self%nx
+    ice_grid_get_shape(2) = self%ny
+endfunction ice_grid_get_shape
 
 endmodule ice_grid_mod

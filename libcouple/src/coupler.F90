@@ -38,8 +38,10 @@ contains
     private
     procedure, pass(self), public :: init_begin => coupler_init_begin
     procedure, pass(self), public :: init_end => coupler_init_end
+    procedure, pass(self), public :: deinit => coupler_deinit
     procedure, pass(self), public :: add_field => coupler_add_field
     procedure, pass(self), public :: put => coupler_put
+    procedure, pass(self), public :: sync => coupler_sync
     procedure, pass(self), public :: get_ice_intercomm
 endtype coupler
 

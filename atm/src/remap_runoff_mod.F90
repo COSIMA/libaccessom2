@@ -268,8 +268,8 @@ contains
 
     ! Apply weights
     do i=1, this%n_s
-       dst_field(this%row(i)) = dst_field(this%row(i)) + &
-                                  this%S(i)*src_field(this%col(i))
+       dst_field(int(this%row(i))) = dst_field(int(this%row(i))) + &
+                                  this%S(i)*src_field(int(this%col(i)))
     enddo
 
     ! Adjust destination field by fraction. Not strictly needed for global
