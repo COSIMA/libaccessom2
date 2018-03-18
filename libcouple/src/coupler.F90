@@ -1,7 +1,9 @@
 module coupler_mod
 
 use mpi
-use mod_prism
+use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_localcomm, &
+                      oasis_def_partition, oasis_enddef, OASIS_OK, OASIS_REAL, &
+                      OASIS_IN, OASIS_OUT, oasis_put, oasis_get, oasis_terminate
 use datetime_module, only : datetime, timedelta
 use error_handler, only : assert
 
@@ -29,6 +31,8 @@ type coupler
     integer :: ice_intercomm
     integer :: ice_task
 
+    character(len=6) :: model_name
+
     type(datetime) :: start_date
 
     type(field), dimension(:), allocatable :: fields
@@ -42,28 +46,35 @@ contains
     procedure, pass(self), public :: deinit => coupler_deinit
     procedure, pass(self), public :: add_field => coupler_add_field
     procedure, pass(self), public :: put => coupler_put
+    procedure, pass(self), public :: get => coupler_get
     procedure, pass(self), public :: sync => coupler_sync
     procedure, pass(self), public :: get_ice_intercomm
 endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, name, start_date, num_fields)
+subroutine coupler_init_begin(self, model_name, start_date, num_fields)
 
     class(coupler), intent(inout) :: self
-    character(len=6), intent(in) :: name
+    character(len=6), intent(in) :: model_name
     type(datetime), intent(in) :: start_date
     integer, intent(in) :: num_fields
 
     integer :: err
 
+    call assert(model_name == 'matmxx' .or. model_name == 'cicexx', &
+                'Bad model name')
+    self%model_name == model_name
+
     call MPI_INIT(err)
-    call prism_init_comp_proto(self%comp_id, trim(name), err)
-    call assert(err == PRISM_Ok, 'prism_init_comm_proto')
+    call oasis_init_comp(self%comp_id, model_name, err)
+    call assert(err == OASIS_OK, 'oasis_init_comp')
 
     ! Get an intercommunicator with the ice.
-    call prism_get_intercomm(self%ice_intercomm, 'cicexx', err)
-    call MPI_Comm_Rank(self%ice_intercomm, self%ice_task, err)
+    if (model_name == 'atmxx') then
+        call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
+        call MPI_Comm_Rank(self%ice_intercomm, self%ice_task, err)
+    endif
 
     self%start_date = start_date
     allocate(self%fields(num_fields))
@@ -71,32 +82,38 @@ subroutine coupler_init_begin(self, name, start_date, num_fields)
 
 endsubroutine coupler_init_begin
 
-subroutine coupler_add_field(self, field_name, dims)
+subroutine coupler_add_field(self, field_name, dims, direction)
     class(coupler), intent(inout) :: self
     character(len=64), intent(in) :: field_name
     integer, dimension(2), intent(in) :: dims
+    integer, intent(in) :: direction
 
     integer, dimension(2) :: var_nodims
     integer, dimension(4) :: var_shape
     integer, dimension(3) :: part_def
     integer :: err, varid, partid
 
+    call assert(direction == OASIS_OUT .or. direction == OASIS_IN, &
+                'Bad coupling field direction')
+
     var_nodims(1) = 2 ! rank of coupling field
     var_nodims(2) = 1 ! number of bundles in coupling field (always 1)
 
     ! Iterate over fields and define oasis partitions and variables.
+    ! This only supports a monoprocess atm/ice_stub
     part_def( clim_strategy ) = clim_serial
     part_def( clim_offset   ) = 0
     part_def( clim_length   ) = dims(1)*dims(2)
-    call prism_def_partition_proto(partid, part_def, err)
+    call oasis_def_partition(partid, part_def, err)
 
     var_shape(1) = 1       ! min index for the coupling field local dim
     var_shape(2) = dims(1) ! max index for the coupling field local dim
     var_shape(3) = 1
     var_shape(4) = dims(2)
-    call prism_def_var_proto(varid, trim(field_name), partid, &
-                             var_nodims, PRISM_Out, var_shape, &
-                             PRISM_Real, err)
+    call oasis_def_var(varid, trim(field_name), partid, &
+                       var_nodims, direction, var_shape, &
+                       OASIS_REAL, err)
+    call assert(err == OASIS_OK, "oasis_def_var() failed")
 
     call assert(self%next <= size(self%fields), 'coupler_add_field: bad next index')
     self%fields(self%next)%varid = varid
@@ -145,12 +162,46 @@ subroutine coupler_put(self, name, data, date, debug)
     ! Convert date to number of seconds since start
     td = date - self%start_date
 
-    call prism_put_proto(varid, td%getSeconds(), data, err)
-    call assert(err == PRISM_Ok, 'prism_put_proto')
+    call oasis_put(varid, td%getSeconds(), data, err)
+    call assert(err == OASIS_OK, 'oasis_put')
 
 endsubroutine coupler_put
 
-subroutine coupler_sync(self)
+subroutine coupler_get(self, name, data, date, debug)
+
+    class(coupler), intent(in) :: self
+    character(len=*), intent(in) :: name
+    real, dimension(:,:), intent(inout) :: data
+    type(datetime), intent(in) :: date
+    logical, optional, intent(in) :: debug
+
+    integer :: err, i, varid
+    type(timedelta) :: td
+
+    if (present(debug)) then
+        if (debug) then
+            write(stdout, *) 'chksum '//trim(name)//':', sum(data)
+        endif
+    endif
+
+    ! Find the varid for this name
+    varid = -1
+    do i=1, size(self%fields)
+        if (trim(name) == self%fields(i)%name) then
+            varid = self%fields(i)%varid
+        endif
+    enddo
+    call assert(varid /= -1, 'coupler_put: field not found')
+
+    ! Convert date to number of seconds since start
+    td = date - self%start_date
+
+    call oasis_get(varid, td%getSeconds(), data, err)
+    call assert(err == OASIS_OK, 'oasis_get')
+
+endsubroutine coupler_get
+
+subroutine coupler_sync(self, model_name)
 
     class(coupler), intent(inout) :: self
 
@@ -169,8 +220,8 @@ subroutine coupler_deinit(self)
 
     integer :: err
 
-    call prism_terminate_proto(err)
-    call assert(err == PRISM_Ok, 'prism_terminate_proto')
+    call oasis_terminate(err)
+    call assert(err == OASIS_OK, 'oasis_terminate')
 
     call MPI_Finalize(err)
 

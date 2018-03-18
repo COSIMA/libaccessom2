@@ -103,9 +103,9 @@ add_executable(atm ${ATM_SOURCES})
 target_link_libraries(atm datetime jsonfortran couple psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ice stub executable
-#file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
-#add_executable(ice_stub ${ATM_SOURCES})
-#target_link_libraries(ice_stub couple ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
+add_executable(ice_stub ${ICE_STUB_SOURCES})
+target_link_libraries(ice_stub couple psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # tests
 # enable_testing()
