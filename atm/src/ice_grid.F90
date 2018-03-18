@@ -7,21 +7,31 @@ private
 public ice_grid
 
 type ice_grid
+    integer :: peer_intercomm
     real, dimension(:, :), allocatable :: lats, lons, mask
     integer :: nx
     integer :: ny
 contains
     private
     procedure, public :: init => ice_grid_init
+    procedure, public :: recv => ice_grid_recv
     procedure, public :: get_shape => ice_grid_get_shape
 endtype ice_grid
 
 contains
 
-subroutine ice_grid_init(self, ice_intercomm)
+subroutine ice_grid_init(self, peer_intercomm)
 
     class(ice_grid), intent(inout) :: self
-    integer, intent(in) :: ice_intercomm
+    integer, intent(in) :: peer_intercomm
+
+    self%peer_intercomm = peer_intercomm
+
+endsubroutine ice_grid_init
+
+subroutine ice_grid_recv(self)
+
+    class(ice_grid), intent(inout) :: self
 
     integer :: tag, err
     integer, dimension(2) :: buf_int
@@ -30,7 +40,7 @@ subroutine ice_grid_init(self, ice_intercomm)
 
     ! Receive dimensions of the ice grid that we're coupled to.
     tag = MPI_ANY_TAG
-    call MPI_recv(buf_int, 2, MPI_INTEGER, 0, tag, ice_intercomm,  stat, err)
+    call MPI_recv(buf_int, 2, MPI_INTEGER, 0, tag, self%peer_intercomm,  stat, err)
     self%nx = buf_int(1)
     self%ny = buf_int(2)
 
@@ -40,19 +50,19 @@ subroutine ice_grid_init(self, ice_intercomm)
     allocate(buf_real(self%nx*self%ny))
 
     call MPI_recv(buf_real, self%nx*self%ny, &
-                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, err)
+                  MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
     self%lats(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
 
     call MPI_recv(buf_real, self%nx*self%ny, &
-                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, err)
+                  MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
     self%lons(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
 
     call MPI_recv(buf_real, self%nx*self%ny, &
-                  MPI_DOUBLE, 0, tag, ice_intercomm,  stat, err)
+                  MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
     self%mask(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
     deallocate(buf_real)
 
-endsubroutine ice_grid_init
+endsubroutine ice_grid_recv
 
 function ice_grid_get_shape(self)
 

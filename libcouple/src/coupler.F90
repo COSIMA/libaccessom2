@@ -6,20 +6,13 @@ use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_localcomm, &
                       OASIS_IN, OASIS_OUT, oasis_put, oasis_get, oasis_terminate
 use datetime_module, only : datetime, timedelta
 use error_handler, only : assert
+use field_mod, only : field
 
 use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
 
 implicit none
 private
 public coupler
-
-type field
-    private
-    integer :: varid
-    integer :: partid
-    character(len=64) :: name
-    integer :: nx, ny
-endtype field
 
 type coupler
     private
@@ -28,16 +21,12 @@ type coupler
     integer :: size     ! Total number of processes
 
     ! Ice intercommunicator and peer task
-    integer :: ice_intercomm
-    integer :: ice_task
+    integer :: peer_intercomm
+    integer :: peer_task
 
     character(len=6) :: model_name
 
     type(datetime) :: start_date
-
-    type(field), dimension(:), allocatable :: fields
-    ! Index of next field index to write to
-    integer :: next
 
 contains
     private
@@ -48,12 +37,12 @@ contains
     procedure, pass(self), public :: put => coupler_put
     procedure, pass(self), public :: get => coupler_get
     procedure, pass(self), public :: sync => coupler_sync
-    procedure, pass(self), public :: get_ice_intercomm
+    procedure, pass(self), public :: get_peer_intercomm
 endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, start_date, num_fields)
+subroutine coupler_init_begin(self, model_name, start_date)
 
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
@@ -70,22 +59,17 @@ subroutine coupler_init_begin(self, model_name, start_date, num_fields)
     call oasis_init_comp(self%comp_id, model_name, err)
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
-    ! Get an intercommunicator with the ice.
-    if (model_name == 'atmxx') then
-        call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
-        call MPI_Comm_Rank(self%ice_intercomm, self%ice_task, err)
-    endif
+    ! Get an intercommunicator with the peer.
+    call oasis_get_intercomm(self%peer_intercomm, model_name, err)
+    call MPI_Comm_Rank(self%peer_intercomm, self%peer_task, err)
 
     self%start_date = start_date
-    allocate(self%fields(num_fields))
-    self%next = 1
 
 endsubroutine coupler_init_begin
 
-subroutine coupler_add_field(self, field_name, dims, direction)
+subroutine coupler_init_field(self, field, direction)
     class(coupler), intent(inout) :: self
-    character(len=64), intent(in) :: field_name
-    integer, dimension(2), intent(in) :: dims
+    class(field_type), intent(inout) :: field
     integer, intent(in) :: direction
 
     integer, dimension(2) :: var_nodims
@@ -103,37 +87,32 @@ subroutine coupler_add_field(self, field_name, dims, direction)
     ! This only supports a monoprocess atm/ice_stub
     part_def( clim_strategy ) = clim_serial
     part_def( clim_offset   ) = 0
-    part_def( clim_length   ) = dims(1)*dims(2)
+    part_def( clim_length   ) = field%nx*field%ny
     call oasis_def_partition(partid, part_def, err)
 
-    var_shape(1) = 1       ! min index for the coupling field local dim
-    var_shape(2) = dims(1) ! max index for the coupling field local dim
+    var_shape(1) = 1        ! min index for the coupling field local dim
+    var_shape(2) = field%nx ! max index for the coupling field local dim
     var_shape(3) = 1
-    var_shape(4) = dims(2)
-    call oasis_def_var(varid, trim(field_name), partid, &
+    var_shape(4) = field%ny
+    call oasis_def_var(varid, field%name, partid, &
                        var_nodims, direction, var_shape, &
                        OASIS_REAL, err)
     call assert(err == OASIS_OK, "oasis_def_var() failed")
 
-    call assert(self%next <= size(self%fields), 'coupler_add_field: bad next index')
-    self%fields(self%next)%varid = varid
-    self%fields(self%next)%partid = partid
-    self%fields(self%next)%name = trim(field_name)
-    self%fields(self%next)%nx = dims(1)
-    self%fields(self%next)%ny = dims(2)
-    self%next = self%next + 1
+    self%fields(self%next)%oasis_varid = varid
+    self%fields(self%next)%oasis_partid = partid
 
-endsubroutine coupler_add_field
+endsubroutine coupler_init_field
 
 subroutine coupler_init_end(self)
     class(coupler), intent(in) :: self
 
     integer :: err
 
-    call prism_enddef_proto(err)
+    call oasis_enddef(err)
 endsubroutine coupler_init_end
 
-subroutine coupler_put(self, name, data, date, debug)
+subroutine coupler_put(self, field, date, debug)
 
     class(coupler), intent(in) :: self
     character(len=*), intent(in) :: name
@@ -141,7 +120,7 @@ subroutine coupler_put(self, name, data, date, debug)
     type(datetime), intent(in) :: date
     logical, optional, intent(in) :: debug
 
-    integer :: err, i, varid
+    integer :: err
     type(timedelta) :: td
 
     if (present(debug)) then
@@ -150,32 +129,21 @@ subroutine coupler_put(self, name, data, date, debug)
         endif
     endif
 
-    ! Find the varid for this name
-    varid = -1
-    do i=1, size(self%fields)
-        if (trim(name) == self%fields(i)%name) then
-            varid = self%fields(i)%varid
-        endif
-    enddo
-    call assert(varid /= -1, 'coupler_put: field not found')
-
     ! Convert date to number of seconds since start
     td = date - self%start_date
 
-    call oasis_put(varid, td%getSeconds(), data, err)
+    call oasis_put(field%oasis_varid, td%getSeconds(), data_array, err)
     call assert(err == OASIS_OK, 'oasis_put')
 
 endsubroutine coupler_put
 
-subroutine coupler_get(self, name, data, date, debug)
+subroutine coupler_get(self, field, date, debug)
 
     class(coupler), intent(in) :: self
-    character(len=*), intent(in) :: name
-    real, dimension(:,:), intent(inout) :: data
     type(datetime), intent(in) :: date
     logical, optional, intent(in) :: debug
 
-    integer :: err, i, varid
+    integer :: err
     type(timedelta) :: td
 
     if (present(debug)) then
@@ -184,19 +152,10 @@ subroutine coupler_get(self, name, data, date, debug)
         endif
     endif
 
-    ! Find the varid for this name
-    varid = -1
-    do i=1, size(self%fields)
-        if (trim(name) == self%fields(i)%name) then
-            varid = self%fields(i)%varid
-        endif
-    enddo
-    call assert(varid /= -1, 'coupler_put: field not found')
-
     ! Convert date to number of seconds since start
     td = date - self%start_date
 
-    call oasis_get(varid, td%getSeconds(), data, err)
+    call oasis_get(field%oasis_varid, td%getSeconds(), field%data_array, err)
     call assert(err == OASIS_OK, 'oasis_get')
 
 endsubroutine coupler_get
@@ -227,9 +186,9 @@ subroutine coupler_deinit(self)
 
 endsubroutine coupler_deinit
 
-pure elemental integer function get_ice_intercomm(self)
+pure elemental integer function get_peer_intercomm(self)
     class(coupler), intent(in) :: self
-    get_ice_intercomm = self%ice_intercomm
+    get_peer_intercomm = self%peer_intercomm
 endfunction
 
 endmodule coupler_mod

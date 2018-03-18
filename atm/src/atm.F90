@@ -4,7 +4,7 @@ program atm
     use forcing_mod, only : forcing_type => forcing
     use coupler_mod, only : coupler_type => coupler
     use params_mod, only : params
-    use ice_grid_mod, only : ice_grid
+    use ice_grid_mod, only : ice_grid_type => ice_grid
     use runoff_mod, only : runoff_type => runoff
     use restart_mod, only : restart_type => restart
 
@@ -13,7 +13,7 @@ program atm
     type(params) :: param
     type(coupler_type) :: coupler
     type(forcing_type) :: forcing
-    type(ice_grid) :: ice
+    type(ice_grid_type) :: ice_grid
     type(datetime) :: cur_date
     type(restart_type) :: restart
     type(runoff_type) :: runoff
@@ -36,9 +36,10 @@ program atm
     call coupler%init_end()
 
     ! Get information about the ice grid needed for runoff remapping.
-    call ice%init(coupler%get_ice_intercomm())
-    call runoff%init(ice, param%runoff_remap_weights_file)
-    ice_shape = ice%get_shape()
+    call ice_grid%init(coupler%get_peer_intercomm())
+    call ice_grid%recv()
+    call runoff%init(ice_grid, param%runoff_remap_weights_file)
+    ice_shape = ice_grid%get_shape()
     allocate(runoff_work(ice_shape(1), ice_shape(2)))
 
     do
@@ -50,21 +51,22 @@ program atm
             if (forcing%get_name(i) == 'runoff') then
                 call runoff%remap(forcing%fields(i)%array, runoff_work, ice%mask)
                 call coupler%put(forcing%get_name(i), runoff_work, &
-                            cur_date, param%debug_output)
+                                 cur_date, param%debug_output)
             else
                 call coupler%put(forcing%get_name(i), forcing%fields(i)%array, &
-                            cur_date, param%debug_output)
+                                 cur_date, param%debug_output)
             endif
         enddo
-
-        cur_date = cur_date + timedelta(seconds=param%dt)
 
         ! Block until we receive from ice. This prevents the atm from sending
         ! continuously.
         call coupler%sync()
 
-        if (cur_date > param%end_date) then
+        cur_date = cur_date + timedelta(seconds=param%dt)
+        if (cur_date == param%end_date) then
             exit
+        elseif (cur_date > param%end_date) then
+            assert(.false., 'Runtime not evenly divisible by timestep')
         endif
     enddo
 

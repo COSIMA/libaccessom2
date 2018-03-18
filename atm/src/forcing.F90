@@ -6,74 +6,75 @@ use json_kinds
 use datetime_module, only : datetime, timedelta
 use util_mod, only : ncheck, get_var_dims, replace_text, get_nc_start_date, read_data
 use netcdf
+use field_mod, only : field_type => field
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
 implicit none
 
 private
 
-type, public :: field
-    character(len=64) :: name
-    character(len=256) :: filename
-    character(len=64) :: ncname
-    type(datetime) :: timestamp
-    integer :: nx, ny
-    real, dimension(:, :), allocatable :: array
-endtype field
-
 type, public :: forcing
     type(datetime) :: start_date
     integer :: period
     integer :: index_guess
-    type(field), dimension(:), allocatable :: fields
+    type(json_file) :: json
+    type(json_core) :: core
+    type(json_value), pointer :: inputs
+    integer :: nfields
 contains
     procedure, pass(self), public :: init => forcing_init
     procedure, pass(self), public :: update => forcing_update
-    procedure, pass(self), public :: get_name
-    procedure, pass(self), public :: get_shape
-    procedure, pass(self), public :: get_num_fields
 endtype forcing
 
 contains
 
-!> Parse forcing file into a dictionary.
-subroutine forcing_init(self, config, start_date, period)
+!> Open forcing file and find fields
+subroutine forcing_init(self, config, start_date, period, nfields)
 
     class(forcing), intent(inout) :: self
     character(len=*), intent(in) :: config
     type(datetime), intent(in) :: start_date
     integer, intent(in) :: period
+    integer, intent(out) :: nfields
 
-    type(json_file) :: json
-    type(json_core) :: core
-    type(json_value), pointer :: root, inputs, fp
-    integer :: i, n_inputs
-    integer :: ncid, varid
-    integer :: nx, ny, unused
-    character(kind=CK, len=:), allocatable :: cname, fieldname, filename
-    character(len=64) :: fname
+    type(json_value), pointer :: root
     logical :: found
 
     self%start_date = start_date
     self%period = period
     self%index_guess = 1
 
-    call json%initialize()
-    call json%load_file(filename=config)
-    if (json%failed()) then
-        call json%print_error_message(stderr)
+    call self%json%initialize()
+    call self%json%load_file(filename=trim(config))
+    if (self%json%failed()) then
+        call self%json%print_error_message(stderr)
         call assert(.false., 'forcing_init() failed')
     endif
 
-    call core%initialize()
-    call json%get(root)
-    call core%get_child(root, "inputs", inputs)
+    call self%core%initialize()
+    call self%json%get(root)
+    call self%core%get_child(root, "inputs", self%inputs)
 
-    n_inputs = core%count(inputs)
-    allocate(self%fields(n_inputs))
+    self%nfields = self%core%count(inputs)
+    nfields = self%nfields
 
-    do i=1, n_inputs
-        call core%get_child(inputs, i, fp, found)
+endsubroutine forcing_init
+
+!> Parse forcing file into a dictionary.
+subroutine forcing_init_fields(self, fields)
+
+    class(forcing), intent(inout) :: self
+    type(field_type), dimension(:), intent(inout) :: fields
+
+    type(json_value), pointer :: root, fp
+    integer :: ncid, varid
+    integer :: nx, ny, unused
+    character(kind=CK, len=:), allocatable :: cname, fieldname, filename
+    character(len=64) :: fname
+    logical :: found
+
+    do i=1, size(fields)
+        call core%get_child(self%inputs, i, fp, found)
         call assert(found, "Input not found in forcing config.")
 
         call core%get(fp, "filename", filename, found)
@@ -97,21 +98,17 @@ subroutine forcing_init(self, config, start_date, period)
 
         ! Initialise a new field object.
 
-        self%fields(i)%name = trim(cname)
-        self%fields(i)%filename = trim(filename)
-        self%fields(i)%ncname = trim(fieldname)
-        self%fields(i)%nx = nx
-        self%fields(i)%ny = ny
-        allocate(self%fields(i)%array(nx, ny))
-        self%fields%timestamp = start_date
+        fields(i)%name = trim(cname)
+        fields(i)%filename = trim(filename)
+        fields(i)%ncname = trim(fieldname)
+        fields(i)%nx = nx
+        fields(i)%ny = ny
+        allocate(fields(i)%data_array(nx, ny))
+        fields%timestamp = self%start_date
     enddo
+endsubroutine forcing_init_fields
 
-    call core%destroy()
-    call json%destroy()
-
-endsubroutine forcing_init
-
-subroutine forcing_update(self, cur_date)
+subroutine forcing_update_fields(self, cur_date)
 
     class(forcing), intent(inout) :: self
     type(datetime), intent(in) :: cur_date
@@ -154,31 +151,6 @@ subroutine forcing_update(self, cur_date)
     enddo
 
 endsubroutine forcing_update
-
-function get_num_fields(self)
-    class(forcing), intent(in) :: self
-    integer :: get_num_fields
-
-    get_num_fields = size(self%fields)
-endfunction
-
-function get_name(self, idx)
-    class(forcing), intent(in) :: self
-    integer, intent(in) :: idx
-    character(len=64) :: get_name
-
-    get_name = self%fields(idx)%name
-endfunction
-
-function get_shape(self, idx)
-    class(forcing), intent(in) :: self
-    integer, intent(in) :: idx
-    integer, dimension(2) :: get_shape
-
-    get_shape(1) = self%fields(idx)%nx
-    get_shape(2) = self%fields(idx)%ny
-endfunction
-
 
 function filename_for_year(filename, year)
     character(len=*), intent(in) :: filename
@@ -235,5 +207,13 @@ function forcing_index(ncid, target_date, guess)
     forcing_index = -1
 
 endfunction forcing_index
+
+subroutine forcing_deinit(self)
+    class(forcing), intent(inout) :: self
+
+    call self%core%destroy()
+    call self%json%destroy()
+
+end subroutine forcing_deinit()
 
 endmodule forcing_mod

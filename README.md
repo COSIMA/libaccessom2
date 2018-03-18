@@ -14,4 +14,4 @@ cmake ../
 
 # What am I doing now
 
-- Get ice_stub to build
+Half way through refactor of how fields are done.
