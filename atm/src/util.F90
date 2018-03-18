@@ -1,6 +1,7 @@
 module util_mod
 
 use netcdf
+use error_handler, only : assert
 use datetime_module, only : datetime, strptime
 use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
 implicit none

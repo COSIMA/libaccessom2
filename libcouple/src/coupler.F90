@@ -3,6 +3,7 @@ module coupler_mod
 use mpi
 use mod_prism
 use datetime_module, only : datetime, timedelta
+use error_handler, only : assert
 
 use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
 

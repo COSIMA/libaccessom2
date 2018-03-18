@@ -4,7 +4,7 @@ use error_handler, only : assert
 use json_module
 use json_kinds
 use datetime_module, only : datetime, timedelta
-use util_mod, only : ncheck, get_var_dims, replace_text
+use util_mod, only : ncheck, get_var_dims, replace_text, get_nc_start_date, read_data
 use netcdf
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
@@ -146,7 +146,7 @@ subroutine forcing_update(self, cur_date)
         call ncheck(nf90_inq_varid(ncid, self%fields(i)%ncname, varid), &
                     'Inquire: '//trim(varname))
 
-        call read_data(ncid, varid, indx, varname, self%fields(i)%array)
+        call read_data(ncid, varid, varname, indx, self%fields(i)%array)
 
         call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
 

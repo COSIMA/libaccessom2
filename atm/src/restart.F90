@@ -1,6 +1,6 @@
 module restart_mod
 
-use util_mod, only : get_nc_start_date
+use util_mod, only : get_nc_start_date, ncheck
 use forcing_mod, only : field
 use datetime_module, only : datetime
 use netcdf
