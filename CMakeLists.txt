@@ -105,7 +105,7 @@ target_link_libraries(atm datetime jsonfortran couple psmile.MPI1 mct mpeu scrip
 # ice stub executable
 file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
 add_executable(ice_stub ${ICE_STUB_SOURCES})
-target_link_libraries(ice_stub couple psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(ice_stub datetime couple psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # tests
 # enable_testing()

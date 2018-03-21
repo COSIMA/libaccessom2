@@ -1,9 +1,12 @@
 program atm
 
+    use mod_oasis, only : OASIS_IN, OASIS_OUT
     use datetime_module, only : datetime, timedelta
     use forcing_mod, only : forcing_type => forcing
+    use field_mod, only : field_type => field
     use coupler_mod, only : coupler_type => coupler
     use params_mod, only : params
+    use error_handler, only : assert
     use ice_grid_mod, only : ice_grid_type => ice_grid
     use runoff_mod, only : runoff_type => runoff
     use restart_mod, only : restart_type => restart
@@ -18,8 +21,10 @@ program atm
     type(restart_type) :: restart
     type(runoff_type) :: runoff
     real, dimension(:, :), allocatable :: runoff_work
+    type(field_type), dimension(:), allocatable :: fields
+    type(field_type) :: runoff_field
     integer, dimension(2) :: ice_shape
-    integer :: i
+    integer :: i, num_coupling_fields
 
     call param%init()
     call restart%init(param%start_date, 'a2i.nc')
@@ -27,51 +32,63 @@ program atm
 
     call forcing%init("atm_forcing.json", param%start_date, &
                       param%forcing_period_years)
+    allocate(fields(num_coupling_fields))
+    call forcing%init_fields(fields)
 
     ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('matmxx', param%start_date, forcing%get_num_fields())
-    do i=1, forcing%get_num_fields()
-        call coupler%add_field(forcing%get_name(i), forcing%get_shape(i))
-    enddo
-    call coupler%init_end()
+    call coupler%init_begin('matmxx', param%start_date)
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(coupler%get_peer_intercomm())
     call ice_grid%recv()
     call runoff%init(ice_grid, param%runoff_remap_weights_file)
     ice_shape = ice_grid%get_shape()
-    allocate(runoff_work(ice_shape(1), ice_shape(2)))
+
+    do i=1, num_coupling_fields
+        call coupler%init_field(fields(i), OASIS_OUT)
+        if (fields(i)%name == 'runoff') then
+            call assert(.not. allocated(runoff_field%data_array), &
+                        'Runoff already associated')
+            runoff_field%name = fields(i)%name
+            runoff_field%timestamp = fields(i)%timestamp
+            allocate(runoff_field%data_array(ice_shape(1), ice_shape(2)))
+        endif
+    enddo
+    call coupler%init_end()
 
     do
         ! Update all forcing fields
-        call forcing%update(cur_date)
+        call forcing%update_fields(cur_date, fields)
 
         ! Send each forcing field
-        do i=1, forcing%get_num_fields()
-            if (forcing%get_name(i) == 'runoff') then
-                call runoff%remap(forcing%fields(i)%array, runoff_work, ice%mask)
-                call coupler%put(forcing%get_name(i), runoff_work, &
-                                 cur_date, param%debug_output)
+        do i=1, num_coupling_fields
+            if (fields(i)%name == 'runoff') then
+                call runoff%remap(fields(i)%data_array, runoff_field%data_array, ice_grid%mask)
+                call coupler%put(runoff_field, cur_date, param%debug_output)
             else
-                call coupler%put(forcing%get_name(i), forcing%fields(i)%array, &
-                                 cur_date, param%debug_output)
+                call coupler%put(fields(i), cur_date, param%debug_output)
             endif
         enddo
 
         ! Block until we receive from ice. This prevents the atm from sending
         ! continuously.
-        call coupler%sync()
+        call coupler%sync('matmxx')
 
         cur_date = cur_date + timedelta(seconds=param%dt)
         if (cur_date == param%end_date) then
             exit
         elseif (cur_date > param%end_date) then
-            assert(.false., 'Runtime not evenly divisible by timestep')
+            call assert(.false., 'Runtime not evenly divisible by timestep')
         endif
     enddo
 
-    deallocate(runoff_work)
-    call restart%write(cur_date, forcing%fields)
+    call restart%write(cur_date, fields)
     call coupler%deinit()
+
+    do i=1, num_coupling_fields
+        deallocate(fields(i)%data_array)
+    enddo
+    deallocate(fields)
+    deallocate(runoff_work)
 
 end program atm

@@ -1,7 +1,7 @@
 module restart_mod
 
 use util_mod, only : get_nc_start_date, ncheck
-use forcing_mod, only : field
+use field_mod, only : field
 use datetime_module, only : datetime
 use netcdf
 
@@ -76,8 +76,8 @@ subroutine restart_write(self, cur_date, fields)
                 'Adding attribute units to time '//trim(self%restart_file))
 
     do i=1, size(fields)
-        nx = size(fields(i)%array, 1)
-        ny = size(fields(i)%array, 2)
+        nx = size(fields(i)%data_array, 1)
+        ny = size(fields(i)%data_array, 2)
 
         call ncheck(nf90_def_dim(ncid, 'ny_'//trim(fields(i)%name), ny,  lat_dimid(i)), &
                     'Def dim '//'ny_'//trim(fields(i)%name))
@@ -98,7 +98,7 @@ subroutine restart_write(self, cur_date, fields)
 
     ! Load field values.
     do i=1, size(fields)
-        call ncheck(nf90_put_var(ncid, field_varid(i), fields(i)%array))
+        call ncheck(nf90_put_var(ncid, field_varid(i), fields(i)%data_array))
     enddo
 
     call ncheck(nf90_close(ncid))

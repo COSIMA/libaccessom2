@@ -15,7 +15,17 @@ type, public :: field
     integer :: oasis_varid
     integer :: oasis_partid
     real, dimension(:, :), allocatable :: data_array
+contains
+    procedure, pass(self), public :: get_shape
 endtype field
 
-endmodule field_mod
+contains
 
+function get_shape(self)
+    class(field), intent(in) :: self
+    integer, dimension(2) :: get_shape
+
+    get_shape = shape(self%data_array)
+endfunction
+
+endmodule field_mod

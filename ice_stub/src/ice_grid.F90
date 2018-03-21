@@ -12,6 +12,7 @@ type ice_grid
     real, dimension(:, :), allocatable :: lats, lons, mask
     integer :: nx
     integer :: ny
+    integer :: peer_intercomm
 contains
     private
     procedure, public :: init => ice_grid_init
@@ -20,19 +21,18 @@ endtype ice_grid
 
 contains
 
-subroutine ice_read_global_nc(fid, fieldname, dataout)
+subroutine ice_read_global_nc(ncid, fieldname, dataout)
 
-    integer, intent(in) :: fid
+    integer, intent(in) :: ncid
     character(len=*), intent(in) :: fieldname
-
     real, dimension(:,:), intent(inout) ::  dataout
 
-    integer :: varid, status
+    integer :: varid
 
-    datout(:,:) = 0.0
-    call ncheck(nf90_inq_varid(fid, trim(fieldname), varid), &
+    dataout(:,:) = 0.0
+    call ncheck(nf90_inq_varid(ncid, trim(fieldname), varid), &
                'Inquire: '//trim(fieldname))
-    call ncheck(nf90_get_var(fid, varid, dataout, start=(/1,1/), & 
+    call ncheck(nf90_get_var(ncid, varid, dataout, start=(/1,1/), & 
                 count=(/size(dataout, 1), size(dataout, 2)/)), &
                 'Read: '//trim(fieldname))
 
@@ -57,13 +57,13 @@ subroutine ice_grid_init(self, grid_filename, kmt_filename, resolution, peer_int
     allocate(self%lons(self%nx, self%ny))
     call ice_read_global_nc(ncid , 'tlat' , self%lats)
     call ice_read_global_nc(ncid , 'tlon' , self%lons)
-    call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
+    call ncheck(nf90_close(ncid), 'Closing '//trim(grid_filename))
 
     allocate(self%mask(self%nx, self%ny))
     call ncheck(nf90_open(trim(kmt_filename), NF90_NOWRITE, ncid), &
                 'Opening '//trim(kmt_filename))
-    call ice_read_global_nc(ncid , 'kmt' , mask)
-    call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
+    call ice_read_global_nc(ncid , 'kmt' , self%mask)
+    call ncheck(nf90_close(ncid), 'Closing '//trim(kmt_filename))
 
 endsubroutine ice_grid_init
 
@@ -79,20 +79,20 @@ subroutine ice_grid_send(self)
     tag = 0
     buf_int(1) = self%nx
     buf_int(2) = self%ny
-    call MPI_send(buf_int, 2, MPI_INTEGER, 0, tag, self%peer_intercomm, ierror)
+    call MPI_send(buf_int, 2, MPI_INTEGER, 0, tag, self%peer_intercomm, err)
 
-    allocate(buf_real(nx*ny))
+    allocate(buf_real(product(buf_int)))
     buf_real(:) = reshape(self%lats(:, :), (/ size(self%lats) /))
-    call MPI_send(buf_real, nx*ny, MPI_DOUBLE, 0, tag, &
+    call MPI_send(buf_real, size(buf_real), MPI_DOUBLE, 0, tag, &
                   self%peer_intercomm, err)
 
-    buf_real(:) = reshape(tlon_global(:, :), (/ size(tlon_global) /))
-    call MPI_send(buf_real, nx_global*ny_global, MPI_DOUBLE, 0, tag, &
-                  il_commatm, err)
+    buf_real(:) = reshape(self%lons(:, :), (/ size(self%lons) /))
+    call MPI_send(buf_real, size(buf_real), MPI_DOUBLE, 0, tag, &
+                  self%peer_intercomm, err)
 
-    buf_real(:) = reshape(mask_global(:, :), (/ size(mask_global) /))
-    call MPI_send(buf_real, nx_global*ny_global, MPI_DOUBLE, 0, tag, &
-                  il_commatm, err)
+    buf_real(:) = reshape(self%mask(:, :), (/ size(self%mask) /))
+    call MPI_send(buf_real, size(buf_real), MPI_DOUBLE, 0, tag, &
+                  self%peer_intercomm, err)
 
 endsubroutine ice_grid_send
 
