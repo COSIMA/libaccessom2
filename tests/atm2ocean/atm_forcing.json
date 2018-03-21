@@ -1,0 +1,56 @@
+{
+  "description": "JRA55-do V1.3 RYF 1990-91 forcing",
+  "inputs": [
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc",
+      "fieldname": "rsds",
+      "cname": "swfld"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc",
+      "fieldname": "rlds",
+      "cname": "lwfld"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc",
+      "fieldname": "uas_10m",
+      "cname": "uwnd"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc",
+      "fieldname": "vas_10m",
+      "cname": "vwnd"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc",
+      "fieldname": "prrn",
+      "cname": "rain"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc",
+      "fieldname": "prsn",
+      "cname": "snow"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc",
+      "fieldname": "psl",
+      "cname":"press"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.runoff_all.1990_1991.nc",
+      "fieldname": "friver",
+      "cname": "runof"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc",
+      "fieldname": "tas_10m",
+      "cname": "tair"
+    },
+    {
+      "filename": "/g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc",
+      "fieldname": "huss_10m",
+      "cname": "qair"
+    },
+  ]
+}
+
