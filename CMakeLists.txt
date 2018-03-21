@@ -13,17 +13,21 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "release")
 endif()
 
-# MPI settings
-find_package(MPI REQUIRED)
-add_definitions(${MPI_Fortran_COMPILE_FLAGS})
-include_directories(${MPI_Fortran_INCLUDE_PATH})
-link_directories(${MPI_Fortran_LIBRARIES})
+if (MPIFORT_EXE STREQUAL "MPIFORT_EXE-NOTFOUND")
+  message("mpifort not found, searching for MPI libraries" )
+  find_package(MPI)
+else()
+  message("mpifort executable found: " ${MPIFORT_EXE})
+  message("Will assume system MPI implementation is sound. Remove mpifort from PATH to automatically configure MPI")
+  set(MPI_FORTRAN_COMPILER mpifort)
+  set(CMAKE_Fortran_COMPILER mpifort)
+endif()
 
 if("${NETCDF_DIR}" STREQUAL "")
   execute_process(COMMAND nf-config --prefix OUTPUT_VARIABLE NETCDF_DIR
     OUTPUT_STRIP_TRAILING_WHITESPACE)
 endif()
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set (NETCDF_F90 "YES")
 find_package(NetCDF REQUIRED)
 include_directories(${NETCDF_F90_INCLUDE_DIRS})
@@ -75,7 +79,7 @@ ExternalProject_Add(oasis3-mct
     GIT_TAG           4fff972eb851185c56136c0a007f01a58f5b96b0
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND make ubuntu
+    BUILD_COMMAND make
     INSTALL_COMMAND cmake -E echo "Skipping json-fortran install step."
 )
 ExternalProject_Get_property(oasis3-mct BINARY_DIR)
@@ -96,16 +100,17 @@ set_property(TARGET scrip PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/Linux/lib/lib
 # libcouple.a library
 file(GLOB LIB_SOURCES libcouple/src/*.F90)
 add_library(couple ${LIB_SOURCES})
+add_dependencies(couple datetime oasis3-mct)
 
 # atm executable
 file(GLOB ATM_SOURCES atm/src/*.F90)
 add_executable(atm ${ATM_SOURCES})
-target_link_libraries(atm datetime jsonfortran couple psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(atm couple datetime jsonfortran psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ice stub executable
 file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
 add_executable(ice_stub ${ICE_STUB_SOURCES})
-target_link_libraries(ice_stub datetime couple psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(ice_stub couple datetime psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # tests
 # enable_testing()
