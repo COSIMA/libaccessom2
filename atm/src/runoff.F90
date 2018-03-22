@@ -2,7 +2,7 @@ module runoff_mod
 
 use remap_runoff_mod, only : remap_runoff_class, remap_runoff_do
 use remap_runoff_mod, only : remap_runoff_new, remap_runoff_del
-use ice_grid_mod, only : ice_grid
+use ice_grid_proxy_mod, only : ice_grid_proxy
 
 implicit none
 private
@@ -44,7 +44,7 @@ contains
 subroutine init(self, target_grid, weights_file)
 
     class(runoff), intent(inout) :: self
-    class(ice_grid), intent(in) :: target_grid
+    class(ice_grid_proxy), intent(in) :: target_grid
     character(len=*), intent(in) :: weights_file
 
     ! Rean input namelist

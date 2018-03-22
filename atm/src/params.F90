@@ -38,7 +38,7 @@ subroutine params_init(self)
     debug_output = .false.
     runoff_remap_weights_file = 'rmp_jrar_to_cict_CONSERV.nc'
 
-    ! Rean input namelist
+    ! Read input namelist
     open(unit=99, file="atm.nml", form="formatted", status="old")
     read(99, nml=atm_nml)
     close(unit=99)

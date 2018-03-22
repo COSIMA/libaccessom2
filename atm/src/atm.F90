@@ -7,7 +7,7 @@ program atm
     use coupler_mod, only : coupler_type => coupler
     use params_mod, only : params
     use error_handler, only : assert
-    use ice_grid_mod, only : ice_grid_type => ice_grid
+    use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
     use restart_mod, only : restart_type => restart
 
@@ -30,8 +30,8 @@ program atm
     call restart%init(param%start_date, 'a2i.nc')
     cur_date = restart%get_cur_date()
 
-    call forcing%init("atm_forcing.json", param%start_date, &
-                      param%forcing_period_years)
+    call forcing%init("forcing.json", param%start_date, &
+                      param%forcing_period_years, num_coupling_fields)
     allocate(fields(num_coupling_fields))
     call forcing%init_fields(fields)
 

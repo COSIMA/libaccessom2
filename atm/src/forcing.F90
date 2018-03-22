@@ -29,12 +29,13 @@ endtype forcing
 contains
 
 !> Open forcing file and find fields
-subroutine forcing_init(self, config, start_date, period)
+subroutine forcing_init(self, config, start_date, period, nfields)
 
     class(forcing), intent(inout) :: self
     character(len=*), intent(in) :: config
     type(datetime), intent(in) :: start_date
     integer, intent(in) :: period
+    integer, intent(out) :: nfields
 
     type(json_value), pointer :: root
     logical :: found
@@ -53,6 +54,8 @@ subroutine forcing_init(self, config, start_date, period)
     call self%core%initialize()
     call self%json%get(root)
     call self%core%get_child(root, "inputs", self%inputs)
+
+    nfields = self%core%count(self%inputs)
 
 endsubroutine forcing_init
 

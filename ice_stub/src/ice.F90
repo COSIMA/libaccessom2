@@ -18,17 +18,17 @@ program ice
     type(restart_type) :: restart
 
     ! Namelist parameters
-    character(len=19) :: run_start_date, run_end_date
-    integer :: dt = 1800, i, tmp_unit
+    character(len=19) :: start_date, end_date
+    integer :: dt = 3600, i, tmp_unit
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
         from_atm_field_names = ''
     integer :: num_coupling_fields
-    type(datetime) :: cur_date, start_date, end_date
+    type(datetime) :: cur_date, run_start_date, run_end_date
     logical :: file_exists
 
-    namelist /ice_nml/ run_start_date, run_end_date, dt, resolution, &
+    namelist /ice_nml/ start_date, end_date, dt, resolution, &
                        from_atm_field_names
 
     ! Read namelist which includes information about the start and end date,
@@ -39,10 +39,10 @@ program ice
     read(tmp_unit, nml=ice_nml)
     close(tmp_unit)
 
-    start_date = strptime(run_start_date, '%Y-%m-%d %H:%M:%S')
-    end_date = strptime(run_end_date, '%Y-%m-%d %H:%M:%S')
+    run_start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
+    run_end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
 
-    call restart%init(start_date, 'a2i.nc')
+    call restart%init(run_start_date, 'a2i.nc')
     cur_date = restart%get_cur_date()
 
     ! Count the coupling fields
@@ -57,7 +57,7 @@ program ice
     allocate(fields(num_coupling_fields))
 
     ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('cicexx', start_date)
+    call coupler%init_begin('cicexx', run_start_date)
     do i=1, num_coupling_fields
         allocate(fields(i)%data_array(resolution(1), resolution(2)))
         call coupler%init_field(fields(i), OASIS_IN)
@@ -85,9 +85,9 @@ program ice
         ! Do work
 
         cur_date = cur_date + timedelta(seconds=dt)
-        if (cur_date == end_date) then
+        if (cur_date == run_end_date) then
             exit
-        elseif (cur_date > end_date) then
+        elseif (cur_date > run_end_date) then
             call assert(.false., 'Runtime not evenly divisible by timestep')
         endif
     enddo

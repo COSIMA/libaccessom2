@@ -1,37 +1,37 @@
-module ice_grid_mod
+module ice_grid_proxy_mod
 
 use mpi
 
 implicit none
 private
-public ice_grid
+public ice_grid_proxy
 
-type ice_grid
+type ice_grid_proxy
     integer :: peer_intercomm
     real, dimension(:, :), allocatable :: lats, lons, mask
     integer :: nx
     integer :: ny
 contains
     private
-    procedure, public :: init => ice_grid_init
-    procedure, public :: recv => ice_grid_recv
-    procedure, public :: get_shape => ice_grid_get_shape
-endtype ice_grid
+    procedure, public :: init => ice_grid_proxy_init
+    procedure, public :: recv => ice_grid_proxy_recv
+    procedure, public :: get_shape => ice_grid_proxy_get_shape
+endtype ice_grid_proxy
 
 contains
 
-subroutine ice_grid_init(self, peer_intercomm)
+subroutine ice_grid_proxy_init(self, peer_intercomm)
 
-    class(ice_grid), intent(inout) :: self
+    class(ice_grid_proxy), intent(inout) :: self
     integer, intent(in) :: peer_intercomm
 
     self%peer_intercomm = peer_intercomm
 
-endsubroutine ice_grid_init
+endsubroutine ice_grid_proxy_init
 
-subroutine ice_grid_recv(self)
+subroutine ice_grid_proxy_recv(self)
 
-    class(ice_grid), intent(inout) :: self
+    class(ice_grid_proxy), intent(inout) :: self
 
     integer :: tag, err
     integer, dimension(2) :: buf_int
@@ -62,15 +62,15 @@ subroutine ice_grid_recv(self)
     self%mask(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
     deallocate(buf_real)
 
-endsubroutine ice_grid_recv
+endsubroutine ice_grid_proxy_recv
 
-function ice_grid_get_shape(self)
+function ice_grid_proxy_get_shape(self)
 
-    class(ice_grid), intent(in) :: self
-    real, dimension(2) :: ice_grid_get_shape
+    class(ice_grid_proxy), intent(in) :: self
+    real, dimension(2) :: ice_grid_proxy_get_shape
 
-    ice_grid_get_shape(1) = self%nx
-    ice_grid_get_shape(2) = self%ny
-endfunction ice_grid_get_shape
+    ice_grid_proxy_get_shape(1) = self%nx
+    ice_grid_proxy_get_shape(2) = self%ny
+endfunction ice_grid_proxy_get_shape
 
-endmodule ice_grid_mod
+endmodule ice_grid_proxy_mod
