@@ -2,7 +2,7 @@ module util_mod
 
 use netcdf
 use error_handler, only : assert
-use datetime_module, only : datetime, strptime
+use datetime_module, only : datetime, timedelta, c_strptime, tm2date, tm_struct
 use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
 implicit none
 
@@ -44,7 +44,7 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
     nx = 0
     ny = 0
     time = 0
-    do i = 1,ndims
+    do i=1, ndims
       call ncheck(nf90_inquire_dimension(ncid, dimids(i), name=dimname, len=len))
       if (trim(dimname) == 'time' .or. trim(dimname) == 'AT') then
         time = len
@@ -53,16 +53,11 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
       elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX') then
         nx = len
       else
-        stop 'MATM get_field_dims: Unsupported dimension name'
+        call assert(.false., 'get_field_dims: Unsupported dimension name')
       endif
     enddo
 
     deallocate(dimids)
-    call ncheck(nf90_close(ncid))
-
-    call assert(nx /= 0, "ATM get_field_dims: couldn't get nx")
-    call assert(ny /= 0, "ATM get_field_dims: couldn't get ny")
-    call assert(time /= 0, "ATM get_field_dims: couldn't get time")
 
 end subroutine get_var_dims
 
@@ -71,18 +66,56 @@ subroutine get_nc_start_date(ncid, varid, nc_start_date)
     integer, intent(in) :: ncid, varid
     type(datetime), intent(out) :: nc_start_date
 
-    type(datetime) :: nc_start_date_w_hours
     character(len=256) :: time_str
+    type(tm_struct) :: ctime
+    integer :: rc, idx
 
     ! Get start date
     call ncheck(nf90_get_att(ncid, varid, "units", time_str))
 
+    ! See whether it has the expected format
+    idx = index(time_str, "days since")
+    call assert(idx > 0, "Invald time format")
+
     time_str = replace_text(time_str, "days since ", "")
-    nc_start_date_w_hours = strptime(trim(time_str), "%Y-%m-%d %H:%M:%S")
-    nc_start_date = strptime(trim(time_str), "%Y-%m-%d")
+    ! See whether we have hours
+    idx = index(time_str, ":")
+    if (idx > 0) then
+        rc = c_strptime(trim(time_str), "%Y-%m-%d %H:%M:%S"//char(0), ctime)
+        nc_start_date = tm2date(ctime)
+    else
+        rc = c_strptime(trim(time_str)//" 00:00:00", "%Y-%m-%d %H:%M:%S"//char(0), ctime)
+        nc_start_date = tm2date(ctime)
+    endif
+    call assert(rc /= 0, 'strptime in get_nc_start_date failed on '//time_str)
 
 end subroutine get_nc_start_date
 
+function get_var_dt(ncid)
+    integer, intent(in) :: ncid
+    integer :: get_var_dt
+
+    integer :: num_times, varid, idx
+    real, dimension(:), allocatable :: times
+    character(len=256) :: time_str
+
+    ! Calculate dt by looking at the time coordinate.
+    ! FIXME: this assumes that there is only one time coordinate per file.
+    call ncheck(nf90_inq_varid(ncid, 'time', varid), 'Inquire: time')
+
+    call ncheck(nf90_inquire_dimension(ncid, varid, len = num_times))
+    call ncheck(nf90_get_att(ncid, varid, "units", time_str))
+    ! See whether it has the expected format
+    idx = index(time_str, "days since")
+    call assert(idx > 0, "Invald time format")
+    call assert(num_times > 1, "Can't determine dt")
+
+    allocate(times(num_times))
+    call ncheck(nf90_get_var(ncid, varid, times))
+
+    get_var_dt = (times(2) - times(1))*86400
+
+endfunction get_var_dt
 
 subroutine read_data(ncid, varid, varname, indx, dataout)
 
@@ -129,5 +162,14 @@ function replace_text(string, pattern, replace)  result(outs)
 
 end function replace_text
 
+function runtime_in_seconds(start_date, cur_date)
+    type(datetime), intent(in) :: start_date, cur_date
+    integer :: runtime_in_seconds
+    type(timedelta) :: td
+
+    td = cur_date - start_date
+    runtime_in_seconds = td%total_seconds()
+
+endfunction runtime_in_seconds
 
 end module util_mod

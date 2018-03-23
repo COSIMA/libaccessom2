@@ -1,0 +1,9 @@
+&ice_nml
+    start_date = '1900-01-01 00:00:00'
+    end_date = '1901-01-01 00:00:00'
+    resolution(:) = 360,300
+    from_atm_field_names = 'swfld_i', 'runoff_i'
+    ice_grid_file = 'data/grid.nc'
+    ice_mask_file = 'data/kmt.nc'
+    dt = 10800
+&end

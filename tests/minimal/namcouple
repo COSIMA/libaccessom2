@@ -1,0 +1,72 @@
+# This is a typical input file for OASIS 3.0, using netCDF format
+# for restart input files.  Oasis reads in
+# this file at run-time. Don't hesitate to ask precisions or make
+# suggestions (oasishelp@cerfacs.fr).
+#
+# Any line beginning with # is ignored. Blank lines are not allowed.
+#
+#########################################################################
+ $NFIELDS
+# Put the number of fields exchanged by OASIS.
+# If it is bigger than twice the number of fields exchanged, put also on
+# the same line the maximum number of prism_def_var_proto
+# called by one component model in the coupled system (optional).
+# For the definition of the fields, see under $STRINGS keyword
+#
+ 2
+ $END
+##########################################################################
+ $NBMODEL
+# This gives you the number of models running in this experiment +
+# their names (6 characters) + , in option, the maximum Fortran unit
+# number used by each model; 1024 will be used if none are given.
+#
+   2  matmxx cicexx
+ $END
+###########################################################################
+ $RUNTIME
+# This gives you the total simulated time for this run in seconds
+#
+  31536000
+ $END
+###########################################################################
+ $NLOGPRT
+# Index of printing level in the debug files :
+# 0 : no printing ; 1 = main routines by master procs;
+# >= 2 : complete output by all procs
+  3
+ $END
+###########################################################################
+ $STRINGS
+#
+# The above variables are the general parameters for the experiment.
+# Everything below has to do with the fields being exchanged.
+#
+############################################################################
+#                      ATM  --->>>  ICE
+#                     ------------------
+##########
+# Field 01 : swflx down
+# If a coupling field has a positive lag, the coupling field that matches the
+# oasis get at time=0 will come from a coupling restart file written by the
+# last active oasis put of the previous run.
+##########
+swfld swfld_i 367 10800 3 a2i.nc EXPORTED
+jrat cict LAG=+10800 SEQ=+1
+P  0  P  0
+#
+LOCTRANS MAPPING SCRIPR
+INSTANT
+rmp_jra55_cice_conserve.nc dst
+CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
+##########
+# Field 06 : runoff. Runoff is passed on the destination grid.
+##########
+runoff runoff_i 297 10800 1 a2i.nc EXPORTED
+cict cict LAG=+10800 SEQ=+1
+P  0  P  0
+#
+LOCTRANS
+INSTANT
+##########
+ $END

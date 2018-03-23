@@ -9,7 +9,6 @@ private
 type, public :: params
     type(datetime) :: start_date, end_date
     integer :: forcing_period_years
-    integer :: dt
     logical :: debug_output
     character(len=256) :: runoff_remap_weights_file
 contains
@@ -19,11 +18,10 @@ endtype params
 character(len=19) :: start_date, end_date
 character(len=256) :: runoff_remap_weights_file
 integer :: forcing_period_years
-integer :: dt
 logical :: debug_output
 
 namelist /atm_nml/ start_date, end_date, forcing_period_years, &
-                   debug_output, runoff_remap_weights_file, dt
+                   debug_output, runoff_remap_weights_file
 
 contains
 
@@ -34,9 +32,8 @@ subroutine params_init(self)
     start_date = '1900-01-01 00:00:00'
     end_date = '1901-01-01 00:00:00'
     forcing_period_years = 1
-    dt = 3600
     debug_output = .false.
-    runoff_remap_weights_file = 'rmp_jrar_to_cict_CONSERV.nc'
+    runoff_remap_weights_file = 'rmp_jra55_runoff_cice_conserve.nc'
 
     ! Read input namelist
     open(unit=99, file="atm.nml", form="formatted", status="old")
@@ -46,7 +43,6 @@ subroutine params_init(self)
     self%start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
     self%end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
     self%forcing_period_years = forcing_period_years
-    self%dt = dt
     self%debug_output = debug_output
     self%runoff_remap_weights_file = trim(runoff_remap_weights_file)
 

@@ -69,7 +69,7 @@ contains
     this%n_s = n_s
     this%n_a = n_a
     this%n_b = n_b
-    
+
     call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
                       this%num_land_pts, this%num_ocean_pts, &
                       num_runoff_caps, runoff_caps, &

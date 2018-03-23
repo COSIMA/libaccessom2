@@ -35,13 +35,14 @@ include_directories(${NETCDF_F90_INCLUDE_DIRS})
 
 # compiler flags for gfortran
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fdefault-real-8")
   set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -C -fbacktrace -std=f2008")
   set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -std=f2008")
 endif()
 
 # compiler flags for ifort
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -assume realloc_lhs -heap-arrays")
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -assume realloc_lhs -heap-arrays")
   set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -C -traceback")
   set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
 endif()
@@ -80,7 +81,7 @@ ExternalProject_Add(oasis3-mct
     GIT_TAG           4fff972eb851185c56136c0a007f01a58f5b96b0
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND make
+    BUILD_COMMAND make ubuntu
     INSTALL_COMMAND cmake -E echo "Skipping json-fortran install step."
 )
 ExternalProject_Get_property(oasis3-mct BINARY_DIR)

@@ -42,11 +42,11 @@ type(datetime) function restart_get_cur_date(self) result(cur_date)
     cur_date = self%restart_date
 
     ! If restart file exists then read date
-    status = nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid)
-    if (status == nf90_noerr) then
-        call ncheck(nf90_inq_varid(ncid, "time", varid), 'Inquire: time')
-        call get_nc_start_date(ncid, varid, cur_date)
-    endif
+    !status = nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid)
+    !if (status == nf90_noerr) then
+    !    call ncheck(nf90_inq_varid(ncid, "time", varid), 'Inquire: time')
+    !    call get_nc_start_date(ncid, varid, cur_date)
+    !endif
 
 endfunction restart_get_cur_date
 

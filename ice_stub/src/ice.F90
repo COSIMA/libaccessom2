@@ -11,7 +11,8 @@ program ice
 
     implicit none
 
-    integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128
+    integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128, &
+                          MAX_FILE_NAME_LEN = 256
 
     type(ice_grid_type) :: ice_grid
     type(coupler_type) :: coupler
@@ -19,17 +20,18 @@ program ice
 
     ! Namelist parameters
     character(len=19) :: start_date, end_date
-    integer :: dt = 3600, i, tmp_unit
+    integer :: dt, i, tmp_unit
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
         from_atm_field_names = ''
+    character(len=MAX_FILE_NAME_LEN) :: ice_grid_file, ice_mask_file
     integer :: num_coupling_fields
     type(datetime) :: cur_date, run_start_date, run_end_date
     logical :: file_exists
 
     namelist /ice_nml/ start_date, end_date, dt, resolution, &
-                       from_atm_field_names
+                       from_atm_field_names, ice_grid_file, ice_mask_file
 
     ! Read namelist which includes information about the start and end date,
     ! model resolution and names and direction of coupling fields.
@@ -50,6 +52,7 @@ program ice
     do i=1, MAX_FIELDS
         if (from_atm_field_names(i) /= '') then
             num_coupling_fields = num_coupling_fields + 1
+        else
             exit
         endif
     enddo
@@ -58,17 +61,19 @@ program ice
 
     ! Initialise coupler, adding coupling fields
     call coupler%init_begin('cicexx', run_start_date)
+
+    ! Initialise grid and send details to peer.
+    ! This will be used for regridding of runoff.
+    call ice_grid%init(trim(ice_grid_file), trim(ice_mask_file), &
+                       resolution, coupler%get_peer_intercomm())
+    call ice_grid%send()
+
     do i=1, num_coupling_fields
+        fields(i)%name = trim(from_atm_field_names(i))
         allocate(fields(i)%data_array(resolution(1), resolution(2)))
         call coupler%init_field(fields(i), OASIS_IN)
     enddo
     call coupler%init_end()
-
-    ! Initialise grid and send details to peer.
-    ! This will be used for regridding of runoff.
-    call ice_grid%init('grid.nc', 'kmt.nc', resolution, &
-                       coupler%get_peer_intercomm())
-    call ice_grid%send()
 
     do
         ! Get fields from atmos
@@ -79,17 +84,15 @@ program ice
         ! atm is blocked, unblock it. This prevents the atm from sending
         ! continuously and means that the next set of coupling fields
         ! will arrive while we're doing work.
-
         call coupler%sync('cicexx')
 
         ! Do work
-
         cur_date = cur_date + timedelta(seconds=dt)
         if (cur_date == run_end_date) then
             exit
-        elseif (cur_date > run_end_date) then
-            call assert(.false., 'Runtime not evenly divisible by timestep')
         endif
+        call assert(cur_date < run_end_date, 'ICE: current date after end date')
+        call assert(cur_date >= run_start_date, 'ICE: current date before start date')
     enddo
 
     ! Write out restart.

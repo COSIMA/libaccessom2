@@ -12,6 +12,7 @@ type, public :: field
     character(len=64) :: ncname
     type(datetime) :: timestamp
     integer :: nx, ny
+    integer :: dt
     integer :: oasis_varid
     integer :: oasis_partid
     real, dimension(:, :), allocatable :: data_array

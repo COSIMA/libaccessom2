@@ -15,7 +15,7 @@ subroutine assert(res, error_msg)
     character(len=*), intent(in) :: error_msg
 
     if (.not. res) then
-        write(stderr, error_msg)
+        write(stderr, '(A)') 'assertion failed: '//error_msg
         stop 1
     endif
 

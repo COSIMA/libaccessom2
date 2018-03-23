@@ -49,15 +49,18 @@ subroutine ice_grid_proxy_recv(self)
     allocate(self%mask(self%nx, self%ny))
     allocate(buf_real(self%nx*self%ny))
 
-    call MPI_recv(buf_real, self%nx*self%ny, &
+    print*, 'size(buf_real): ', size(buf_real)
+    print*, 'nx, ny: ', self%nx, self%ny
+
+    call MPI_recv(buf_real, size(buf_real), &
                   MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
     self%lats(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
 
-    call MPI_recv(buf_real, self%nx*self%ny, &
+    call MPI_recv(buf_real, size(buf_real), &
                   MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
     self%lons(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
 
-    call MPI_recv(buf_real, self%nx*self%ny, &
+    call MPI_recv(buf_real, size(buf_real), &
                   MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
     self%mask(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
     deallocate(buf_real)

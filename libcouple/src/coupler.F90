@@ -3,9 +3,11 @@ module coupler_mod
 use mpi
 use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_intercomm, &
                       oasis_def_partition, oasis_enddef, OASIS_OK, OASIS_REAL, &
+                      OASIS_RECVD, OASIS_SENT, OASIS_TOREST, &
                       OASIS_IN, OASIS_OUT, oasis_put, oasis_get, oasis_terminate
 use datetime_module, only : datetime, timedelta
 use error_handler, only : assert
+use util_mod, only : runtime_in_seconds
 use field_mod, only : field_type => field
 
 use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
@@ -54,14 +56,18 @@ subroutine coupler_init_begin(self, model_name, start_date)
                 'Bad model name')
     self%model_name = model_name
 
-    call MPI_INIT(err)
+    call MPI_Init(err)
     call oasis_init_comp(self%comp_id, model_name, err)
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
     ! Get an intercommunicator with the peer.
-    call oasis_get_intercomm(self%peer_intercomm, model_name, err)
-    call MPI_Comm_Rank(self%peer_intercomm, self%peer_task, err)
+    if (model_name == 'matmxx') then
+        call oasis_get_intercomm(self%peer_intercomm, 'cicexx', err)
+    else
+        call oasis_get_intercomm(self%peer_intercomm, 'matmxx', err)
+    endif
 
+    call MPI_Comm_Rank(self%peer_intercomm, self%peer_task, err)
     self%start_date = start_date
 
 endsubroutine coupler_init_begin
@@ -120,8 +126,7 @@ subroutine coupler_put(self, field, date, debug)
     type(datetime), intent(in) :: date
     logical, optional, intent(in) :: debug
 
-    integer :: err
-    type(timedelta) :: td
+    integer :: err, runtime
 
     if (present(debug)) then
         if (debug) then
@@ -129,11 +134,10 @@ subroutine coupler_put(self, field, date, debug)
         endif
     endif
 
-    ! Convert date to number of seconds since start
-    td = date - self%start_date
+    runtime = runtime_in_seconds(self%start_date, date)
 
-    call oasis_put(field%oasis_varid, td%getSeconds(), field%data_array, err)
-    call assert(err == OASIS_OK, 'oasis_put')
+    call oasis_put(field%oasis_varid, runtime, field%data_array, err)
+    call assert(err == OASIS_OK .or. err == OASIS_SENT .or. err == OASIS_TOREST, 'oasis_put')
 
 endsubroutine coupler_put
 
@@ -144,14 +148,12 @@ subroutine coupler_get(self, field, date, debug)
     type(datetime), intent(in) :: date
     logical, optional, intent(in) :: debug
 
-    integer :: err
-    type(timedelta) :: td
+    integer :: err, runtime
 
-    ! Convert date to number of seconds since start
-    td = date - self%start_date
+    runtime = runtime_in_seconds(self%start_date, date)
 
-    call oasis_get(field%oasis_varid, td%getSeconds(), field%data_array, err)
-    call assert(err == OASIS_OK, 'oasis_get')
+    call oasis_get(field%oasis_varid, runtime, field%data_array, err)
+    call assert(err == OASIS_OK .or. err == OASIS_RECVD, 'oasis_get')
 
     if (present(debug)) then
         if (debug) then
@@ -170,10 +172,11 @@ subroutine coupler_sync(self, model_name)
     integer, dimension(1) :: buf
     integer :: err, tag, request
 
-    tag = MPI_ANY_TAG
     if (model_name == 'matmxx') then
+        tag = MPI_ANY_TAG
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%peer_intercomm, stat, err)
     else
+        tag = 0
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%peer_intercomm, request, err)
     endif
 
