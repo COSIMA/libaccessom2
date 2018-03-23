@@ -100,9 +100,4 @@ program atm
     call restart%write(cur_date, fields)
     call coupler%deinit()
 
-    do i=1, num_coupling_fields
-        deallocate(fields(i)%data_array)
-    enddo
-    deallocate(fields)
-
 end program atm

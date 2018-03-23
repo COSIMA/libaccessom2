@@ -14,4 +14,4 @@ cmake ../
 
 # What am I doing now
 
-Half way through refactor of how fields are done.
+Getting full test case working with atm -> ice <-> ocean. Code is in intermediate state.
