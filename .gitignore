@@ -1,5 +1,7 @@
 *.swp
 build*
 building-errors.log
-tests/atm2ice/debug.root.01
-tests/atm2ice/nout.000000
+debug.root.01
+debug.01.000000
+debug.02.000000
+nout.000000

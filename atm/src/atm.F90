@@ -26,11 +26,13 @@ program atm
     integer, dimension(2) :: ice_shape
     integer :: i, num_coupling_fields, min_dt, runtime
 
+    ! Get run settings, including the start date from the prior restart file.
     call param%init()
-    call restart%init(param%start_date, 'a2i.nc')
-    !cur_date = restart%get_cur_date()
-    cur_date = param%start_date
+    call restart%init(param%start_date, 'atm_restart.nc')
+    cur_date = restart%get_date()
 
+    ! Initialise forcing object and fields, involves reading details of each
+    ! field from disk.
     call forcing%init("forcing.json", param%start_date, &
                       param%forcing_period_years, num_coupling_fields)
     allocate(fields(num_coupling_fields))
@@ -43,9 +45,12 @@ program atm
     call ice_grid%init(coupler%get_peer_intercomm())
     call ice_grid%recv()
 
+    ! Initialise the runoff remapping object with ice grid information.
     call runoff%init(ice_grid, param%runoff_remap_weights_file)
     ice_shape = ice_grid%get_shape()
 
+    ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
+    ! FIXME: should be able to remove special treatment of runoff field.
     do i=1, num_coupling_fields
         if (fields(i)%name == 'runoff') then
             call assert(.not. allocated(runoff_field%data_array), &
@@ -79,10 +84,11 @@ program atm
             endif
         enddo
 
-        ! Block until we receive from ice. This prevents the atm from sending
-        ! continuously.
+        ! Block until we receive from ice. Ice will do a nonblocking send immediately
+        ! after receiving the above fields. This prevents the atm from sending continuously.
         call coupler%sync('matmxx')
 
+        ! Update current date
         cur_date = cur_date + timedelta(seconds=min_dt)
         if (cur_date == param%end_date) then
             exit

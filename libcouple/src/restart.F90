@@ -14,7 +14,7 @@ type, public :: restart
     character(len=256) :: restart_file
 contains
     procedure, pass(self), public :: init => restart_init
-    procedure, pass(self), public :: get_cur_date => restart_get_cur_date
+    procedure, pass(self), public :: get_date => restart_get_date
     procedure, pass(self), public :: write => restart_write
 endtype restart
 
@@ -33,7 +33,7 @@ endsubroutine
 
 !>
 ! Read restart file and get current date
-type(datetime) function restart_get_cur_date(self) result(cur_date)
+type(datetime) function restart_get_date(self) result(cur_date)
 
     class(restart), intent(in) :: self
 
@@ -42,13 +42,15 @@ type(datetime) function restart_get_cur_date(self) result(cur_date)
     cur_date = self%restart_date
 
     ! If restart file exists then read date
-    !status = nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid)
-    !if (status == nf90_noerr) then
-    !    call ncheck(nf90_inq_varid(ncid, "time", varid), 'Inquire: time')
-    !    call get_nc_start_date(ncid, varid, cur_date)
-    !endif
+    status = nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid)
+    if (status == nf90_noerr) then
+        status = nf90_inq_varid(ncid, "time", varid)
+        if (status == nf90_noerr) then
+            call get_nc_start_date(ncid, varid, cur_date)
+        endif
+    endif
 
-endfunction restart_get_cur_date
+endfunction restart_get_date
 
 ! Save the atmosphere <-> ice coupling fields. This does two things:
 ! 1) save the datetime of the next forcing.
@@ -87,8 +89,6 @@ subroutine restart_write(self, cur_date, fields)
         dimids(:) = (/ lon_dimid(i), lat_dimid(i), time_dimid /)
         call ncheck(nf90_def_var(ncid, fields(i)%name, nf90_real, dimids, field_varid(i)), &
                     'Defining var '//trim(self%restart_file))
-
-
     enddo
     call ncheck(nf90_enddef(ncid), 'nf90_enddef for '//trim(self%restart_file))
 

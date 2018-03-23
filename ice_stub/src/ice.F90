@@ -44,8 +44,8 @@ program ice
     run_start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
     run_end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
 
-    call restart%init(run_start_date, 'a2i.nc')
-    cur_date = restart%get_cur_date()
+    call restart%init(run_start_date, 'ice_restart.nc')
+    cur_date = restart%get_date()
 
     ! Count the coupling fields
     num_coupling_fields = 0
