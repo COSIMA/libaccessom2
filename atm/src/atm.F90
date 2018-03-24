@@ -28,8 +28,8 @@ program atm
 
     ! Get run settings, including the start date from the prior restart file.
     call param%init()
-    call restart%init(param%start_date, 'atm_restart.nc')
-    cur_date = restart%get_date()
+    call restart%init('atm_restart.nc')
+    cur_date = restart%get_date(param%start_date)
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
@@ -66,6 +66,7 @@ program atm
     call coupler%init_end()
 
     do
+        print*, 'ATM 0'
         runtime = runtime_in_seconds(param%start_date, cur_date)
 
         ! Send each forcing field
@@ -83,10 +84,12 @@ program atm
                 call coupler%put(fields(i), cur_date, param%debug_output)
             endif
         enddo
+        print*, 'ATM 1'
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
         ! after receiving the above fields. This prevents the atm from sending continuously.
         call coupler%sync('matmxx')
+        print*, 'ATM 2'
 
         ! Update current date
         cur_date = cur_date + timedelta(seconds=min_dt)

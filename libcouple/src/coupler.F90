@@ -22,9 +22,10 @@ type coupler
     integer :: comp_id  ! Component ID
     integer :: size     ! Total number of processes
 
-    ! Ice intercommunicator and peer task
-    integer :: peer_intercomm
-    integer :: peer_task
+    ! Intercommunicators
+    integer :: ice_intercomm, ocean_intercomm
+    integer :: localcomm
+    integer :: my_local_pe
 
     character(len=6) :: model_name
 
@@ -52,22 +53,28 @@ subroutine coupler_init_begin(self, model_name, start_date)
 
     integer :: err
 
-    call assert(model_name == 'matmxx' .or. model_name == 'cicexx', &
-                'Bad model name')
+    call assert(model_name == 'matmxx' .or. model_name == 'cicexx' &
+                .or. model_name == 'oceanx', 'Bad model name')
     self%model_name = model_name
 
     call MPI_Init(err)
     call oasis_init_comp(self%comp_id, model_name, err)
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
+    call oasis_get_localcomm(self%local_comm, err)
+    call assert(err == OASIS_OK, 'oasis_get_localcomm')
+    call MPI_Comm_rank(self%local_comm, self%my_local_pe, err)
+
     ! Get an intercommunicator with the peer.
     if (model_name == 'matmxx') then
-        call oasis_get_intercomm(self%peer_intercomm, 'cicexx', err)
-    else
-        call oasis_get_intercomm(self%peer_intercomm, 'matmxx', err)
+        call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
+        call oasis_get_intercomm(self%ocean_intercomm, 'cicexx', err)
+    elseif (model_name == 'cicexx') then
+        call oasis_get_intercomm(self%ice_intercomm, 'matmxx', err)
+    elseif (model_name == 'oceanx') then
+        call oasis_get_intercomm(self%ocean_intercomm, 'matmxx', err)
     endif
 
-    call MPI_Comm_Rank(self%peer_intercomm, self%peer_task, err)
     self%start_date = start_date
 
 endsubroutine coupler_init_begin
@@ -174,10 +181,10 @@ subroutine coupler_sync(self, model_name)
 
     if (model_name == 'matmxx') then
         tag = MPI_ANY_TAG
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%peer_intercomm, stat, err)
-    else
+        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
+    elseif (model_name == 'cicexx')
         tag = 0
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%peer_intercomm, request, err)
+        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, request, err)
     endif
 
 endsubroutine coupler_sync

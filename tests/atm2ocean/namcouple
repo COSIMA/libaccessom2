@@ -21,7 +21,7 @@
 # their names (6 characters) + , in option, the maximum Fortran unit
 # number used by each model; 1024 will be used if none are given.
 #
-   2  matmxx cicexx
+   3  matmxx cicexx oceanx
  $END
 ###########################################################################
  $RUNTIME
@@ -34,7 +34,7 @@
 # Index of printing level in the debug files :
 # 0 : no printing ; 1 = main routines by master procs;
 # >= 2 : complete output by all procs
-  3
+  2
  $END
 ###########################################################################
  $STRINGS
@@ -57,7 +57,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-rmp_jra55_cice_conserve.nc dst
+../test_data/rmp_jra55_cice_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.
@@ -73,13 +73,13 @@ INSTANT
 #                      ICE --->>> OCEAN
 #                      ----------------
 ##########
-swfld_io swfld_o 170 3600 1 i2o.nc IGNORED
+swfld_io swfld_o 170 10800 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
 INSTANT
 ##########
-runoff_io runoff_o 175 3600 1 i2o.nc IGNORED
+runoff_io runoff_o 175 10800 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
@@ -89,7 +89,7 @@ INSTANT
 #                      OCEAN --->>> ICE
 #                      ----------------
 ##########
-sst sst_i 1 3600 1 o2i.nc IGNORED
+sst sst_i 1 10800 1 o2i.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
 LOCTRANS

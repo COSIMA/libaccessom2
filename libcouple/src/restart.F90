@@ -1,6 +1,6 @@
 module restart_mod
 
-use util_mod, only : get_nc_start_date, ncheck
+use util_mod, only : get_nc_start_date, ncheck, read_data
 use field_mod, only : field
 use datetime_module, only : datetime
 use netcdf
@@ -15,6 +15,7 @@ contains
     procedure, pass(self), public :: init => restart_init
     procedure, pass(self), public :: get_date => restart_get_date
     procedure, pass(self), public :: write => restart_write
+    procedure, pass(self), public :: read => restart_read
 endtype restart
 
 contains
@@ -106,8 +107,7 @@ endsubroutine restart_write
 !> Read in coupling field restart fields.
 subroutine restart_read(self, fields)
     class(restart), intent(inout) :: self
-    type(datetime), intent(in) :: cur_date
-    type(field), dimension(:), intent(in) :: fields
+    type(field), dimension(:), intent(inout) :: fields
 
     integer :: ncid, varid, i
     integer :: ndims, nx, ny, time
@@ -115,15 +115,15 @@ subroutine restart_read(self, fields)
     call ncheck(nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid), &
                 'Opening '//trim(self%restart_file))
 
-    do i, size(fields)
+    do i=1, size(fields)
         call ncheck(nf90_inq_varid(ncid, fields(i)%name, varid), &
                     'Inquire: '//trim(fields(i)%name))
-        call read_data(ncid, varid, fields(i)%name, indx, fields(i)%data_array)
+        call read_data(ncid, varid, fields(i)%name, 1, fields(i)%data_array)
         call ncheck(nf90_close(ncid), 'Closing '//trim(fields(i)%name))
     enddo
 
     call ncheck(nf90_close(ncid))
 
-end subroutine coupler_read_restart
+end subroutine restart_read
 
 endmodule restart_mod

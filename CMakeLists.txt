@@ -114,6 +114,11 @@ file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
 add_executable(ice_stub ${ICE_STUB_SOURCES})
 target_link_libraries(ice_stub couple datetime psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
+# ocean stub executable
+file(GLOB OCEAN_STUB_SOURCES ocean_stub/src/*.F90)
+add_executable(ocean_stub ${OCEAN_STUB_SOURCES})
+target_link_libraries(ocean_stub couple datetime psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+
 # tests
 # enable_testing()
 # add_executable(matm_tests tests/matm_tests.F90)

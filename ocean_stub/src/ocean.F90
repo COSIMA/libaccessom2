@@ -24,7 +24,7 @@ program ocean
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: in_fields, out_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
-        from_ice_field_names = '', to_ice_field_names
+        from_ice_field_names = '', to_ice_field_names = ''
     integer :: num_from_ice_fields, num_to_ice_fields
     type(datetime) :: cur_date, run_start_date, run_end_date
     logical :: file_exists
@@ -43,7 +43,7 @@ program ocean
     run_start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
     run_end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
 
-    call restart%init('o2i.nc')
+    call restart%init('../test_data/o2i.nc')
     cur_date = restart%get_date(run_start_date)
 
     ! Count and allocate the coupling fields
@@ -57,6 +57,8 @@ program ocean
             num_to_ice_fields = num_to_ice_fields + 1
         endif
     enddo
+    print*, 'num_from_ice_fields: ', num_from_ice_fields
+    print*, 'num_to_ice_fields: ', num_to_ice_fields
     allocate(in_fields(num_from_ice_fields))
     allocate(out_fields(num_to_ice_fields))
 
@@ -76,10 +78,12 @@ program ocean
     call coupler%init_end()
 
     do
+        print*, 'OCEAN 0'
         ! Get fields from ice
         do i=1, num_from_ice_fields
             call coupler%get(in_fields(i), cur_date)
         enddo
+        print*, 'OCEAN 1'
 
         ! Do work, i.e. use the in_fields and populate the out_fields
 
@@ -87,6 +91,7 @@ program ocean
         do i=1, num_to_ice_fields
             call coupler%put(out_fields(i), cur_date)
         enddo
+        print*, 'OCEAN 2'
 
         cur_date = cur_date + timedelta(seconds=dt)
         if (cur_date == run_end_date) then

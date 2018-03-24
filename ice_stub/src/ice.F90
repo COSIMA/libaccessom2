@@ -58,7 +58,7 @@ program ice
         if (from_ocean_field_names(i) /= '') then
             num_from_ocean_fields = num_from_ocean_fields + 1
         endif
-        if (to_atm_field_names(i) /= '') then
+        if (to_ocean_field_names(i) /= '') then
             num_to_ocean_fields = num_to_ocean_fields + 1
         endif
     enddo
@@ -77,20 +77,20 @@ program ice
     call ice_grid%send()
 
     ! Set up coupling fields
-    do i=1, num_from_atm_fields
+    do i=1, size(from_atm_fields)
         from_atm_fields(i)%name = trim(from_atm_field_names(i))
         allocate(from_atm_fields(i)%data_array(resolution(1), resolution(2)))
         call coupler%init_field(from_atm_fields(i), OASIS_IN)
     enddo
-    do i=1, num_from_ocean_fields
+    do i=1, size(from_ocean_fields)
         from_ocean_fields(i)%name = trim(from_ocean_field_names(i))
         allocate(from_ocean_fields(i)%data_array(resolution(1), resolution(2)))
         call coupler%init_field(from_ocean_fields(i), OASIS_IN)
     enddo
-    do i=1, num_to_ocean_fields
+    do i=1, size(to_ocean_fields)
         to_ocean_fields(i)%name = trim(to_ocean_field_names(i))
         allocate(to_ocean_fields(i)%data_array(resolution(1), resolution(2)))
-        call coupler%init_field(to_ocean_fields(i), OASIS_IN)
+        call coupler%init_field(to_ocean_fields(i), OASIS_OUT)
     enddo
     call coupler%init_end()
 
@@ -101,8 +101,10 @@ program ice
     cur_date = i2o_restart%get_date(run_start_date)
     call i2o_restart%read(to_ocean_fields)
 
+    print*, 'ICE 0'
+
     ! Get from atmosphere
-    do i=1, num_coupling_fields
+    do i=1, size(from_atm_fields)
         call coupler%get(from_atm_fields(i), cur_date)
     enddo
     ! Update atmospheric forcing halos - expensive operation.
@@ -115,17 +117,21 @@ program ice
     ! only time that the ocean is waiting on the ice (given that the ice
     ! runs slightly faster than the ocean).
     do
+        print*, 'ICE 1'
         ! Send to ocean - non-blocking
-        do i=1, num_coupling_fields
+        do i=1, size(to_ocean_fields)
             call coupler%put(to_ocean_fields(i), cur_date)
         enddo
 
         ! Do work
+        print*, 'ICE 2'
 
         ! Get from atmos - fast because atmos should have already sent.
-        do i=1, num_coupling_fields
+        do i=1, size(from_atm_fields)
             call coupler%get(from_atm_fields(i), cur_date)
         enddo
+
+        print*, 'ICE 3'
 
         ! atm is blocked, unblock it. This prevents the atm from sending
         ! continuously and means that the next set of coupling fields
@@ -133,13 +139,15 @@ program ice
         call coupler%sync('cicexx')
 
         ! Update atmospheric forcing halos - expensive operation.
+        print*, 'ICE 4'
 
         ! Get from ocean - blocking on ocean. Important that ice runs faster
         ! that ocean and can receive immediately and quickly loop to send
         ! to the ocean. This will minimise the ocean wait time.
-        do i=1, num_coupling_fields
+        do i=1, size(from_ocean_fields)
             call coupler%get(from_ocean_fields(i), cur_date)
         enddo
+        print*, 'ICE 5'
 
         cur_date = cur_date + timedelta(seconds=dt)
         if (cur_date == run_end_date) then

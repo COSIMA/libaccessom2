@@ -1,0 +1,7 @@
+&access_om2_nml
+    start_date = '1900-01-01 00:00:00'
+    end_date = '1901-01-01 00:00:00'
+    calendar = 'noleap'
+    ! Runtime for a single job/submit, format is years, months, seconds
+    job_runtime = 1, 0, 0
+&end

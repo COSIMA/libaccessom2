@@ -14,7 +14,7 @@ subroutine ncheck(status, error_str)
     character(len=*), intent(in), optional :: error_str
 
     if (status /= nf90_noerr) then
-        write(stdout, '(/a)') 'ATM: error - from NetCDF library'
+        write(stdout, '(/a)') 'Error - from NetCDF library'
         if (present(error_str)) then
             write(stdout, '(a)') error_str
         endif
