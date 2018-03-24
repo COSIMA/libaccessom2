@@ -16,7 +16,7 @@ program ice
 
     type(ice_grid_type) :: ice_grid
     type(coupler_type) :: coupler
-    type(restart_type) :: restart
+    type(restart_type) :: i2o_restart, o2i_restart
 
     ! Namelist parameters
     character(len=19) :: start_date, end_date
@@ -46,9 +46,6 @@ program ice
 
     run_start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
     run_end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
-
-    call restart%init(run_start_date, 'ice_restart.nc')
-    cur_date = restart%get_date()
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0
@@ -98,8 +95,16 @@ program ice
     call coupler%init_end()
 
     ! Read in o2i and i2o coupling field restart files.
+    call o2i_restart%init('o2i.nc')
+    call o2i_restart%read(from_ocean_fields)
+    call i2o_restart%init('i2o.nc')
+    cur_date = i2o_restart%get_date(run_start_date)
+    call i2o_restart%read(to_ocean_fields)
 
     ! Get from atmosphere
+    do i=1, num_coupling_fields
+        call coupler%get(from_atm_fields(i), cur_date)
+    enddo
     ! Update atmospheric forcing halos - expensive operation.
 
     ! Note the structure of the following loop:
@@ -111,12 +116,15 @@ program ice
     ! runs slightly faster than the ocean).
     do
         ! Send to ocean - non-blocking
+        do i=1, num_coupling_fields
+            call coupler%put(to_ocean_fields(i), cur_date)
+        enddo
 
         ! Do work
 
         ! Get from atmos - fast because atmos should have already sent.
         do i=1, num_coupling_fields
-            call coupler%get(fields(i), cur_date)
+            call coupler%get(from_atm_fields(i), cur_date)
         enddo
 
         ! atm is blocked, unblock it. This prevents the atm from sending
@@ -129,6 +137,9 @@ program ice
         ! Get from ocean - blocking on ocean. Important that ice runs faster
         ! that ocean and can receive immediately and quickly loop to send
         ! to the ocean. This will minimise the ocean wait time.
+        do i=1, num_coupling_fields
+            call coupler%get(from_ocean_fields(i), cur_date)
+        enddo
 
         cur_date = cur_date + timedelta(seconds=dt)
         if (cur_date == run_end_date) then
@@ -139,7 +150,7 @@ program ice
     enddo
 
     ! Write out restart.
-    call restart%write(cur_date, fields)
+    call i2o_restart%write(cur_date, to_ocean_fields)
     call coupler%deinit()
 
 end program

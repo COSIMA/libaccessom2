@@ -127,13 +127,17 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
     integer :: ndims, nx, ny, time
 
     call get_var_dims(ncid, varid, ndims, nx, ny, time)
+    call assert(ndims == 2 .or. ndims == 3 .or. ndims == 4, 'Unsupported number of dims')
 
     allocate(count(ndims), start(ndims))
     nx = size(dataout, 1)
     ny = size(dataout, 2)
 
     ! Get data, we select a specfic time-point of data to read
-    if (ndims == 3) then
+    if (ndims == 2) then
+        start = (/ 1, 1 /)
+        count = (/ nx, ny /)
+    elseif (ndims == 3) then
         start = (/ 1, 1, indx /)
         count = (/ nx, ny, 1 /)
     else

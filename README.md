@@ -14,4 +14,4 @@ cmake ../
 
 # What am I doing now
 
-Getting full test case working with atm -> ice <-> ocean. Code is in intermediate state.
+Getting full test case working with atm -> ice <-> ocean. Code in nearly complete state but not compiling.

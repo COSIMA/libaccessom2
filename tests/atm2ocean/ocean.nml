@@ -1,0 +1,8 @@
+&ocean_nml
+    start_date = '1900-01-01 00:00:00'
+    end_date = '1901-01-01 00:00:00'
+    from_ice_field_names = 'swfld_o', 'runoff_o'
+    to_ice_field_names = 'sst'
+    resolution(:) = 360,300
+    dt = 10800
+&end

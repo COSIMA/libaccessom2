@@ -43,8 +43,8 @@ program ocean
     run_start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
     run_end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
 
-    call restart%init(run_start_date, 'ocean_restart.nc')
-    cur_date = restart%get_date()
+    call restart%init('o2i.nc')
+    cur_date = restart%get_date(run_start_date)
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
@@ -97,7 +97,7 @@ program ocean
     enddo
 
     ! Write out restart.
-    call restart%write(cur_date, fields)
+    call restart%write(cur_date, out_fields)
     call coupler%deinit()
 
 end program ocean

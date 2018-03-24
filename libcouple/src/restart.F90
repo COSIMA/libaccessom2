@@ -10,7 +10,6 @@ implicit none
 private
 
 type, public :: restart
-    type(datetime) :: restart_date
     character(len=256) :: restart_file
 contains
     procedure, pass(self), public :: init => restart_init
@@ -20,26 +19,25 @@ endtype restart
 
 contains
 
-subroutine restart_init(self, start_date, restart_file)
+subroutine restart_init(self, restart_file)
 
     class(restart), intent(inout) :: self
-    type(datetime), intent(in) :: start_date
     character(len=*), intent(in) :: restart_file
 
-    self%restart_date = start_date
     self%restart_file = trim(restart_file)
 
 endsubroutine
 
 !>
 ! Read restart file and get current date
-type(datetime) function restart_get_date(self) result(cur_date)
+type(datetime) function restart_get_date(self, default_date) result(cur_date)
 
     class(restart), intent(in) :: self
+    type(datetime), intent(in) :: default_date
 
     integer :: ncid, varid, status
 
-    cur_date = self%restart_date
+    cur_date = default_date
 
     ! If restart file exists then read date
     status = nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid)
@@ -104,5 +102,28 @@ subroutine restart_write(self, cur_date, fields)
     call ncheck(nf90_close(ncid))
 
 endsubroutine restart_write
+
+!> Read in coupling field restart fields.
+subroutine restart_read(self, fields)
+    class(restart), intent(inout) :: self
+    type(datetime), intent(in) :: cur_date
+    type(field), dimension(:), intent(in) :: fields
+
+    integer :: ncid, varid, i
+    integer :: ndims, nx, ny, time
+
+    call ncheck(nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid), &
+                'Opening '//trim(self%restart_file))
+
+    do i, size(fields)
+        call ncheck(nf90_inq_varid(ncid, fields(i)%name, varid), &
+                    'Inquire: '//trim(fields(i)%name))
+        call read_data(ncid, varid, fields(i)%name, indx, fields(i)%data_array)
+        call ncheck(nf90_close(ncid), 'Closing '//trim(fields(i)%name))
+    enddo
+
+    call ncheck(nf90_close(ncid))
+
+end subroutine coupler_read_restart
 
 endmodule restart_mod
