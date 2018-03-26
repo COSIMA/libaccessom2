@@ -2,9 +2,11 @@ module accessom2_mod
 
 use mpi
 use datetime_module, only : datetime, strptime, timedelta
+use error_handler, only : assert
 
 implicit none
 private
+public accessom2
 
 type accessom2
     private
@@ -23,6 +25,7 @@ contains
     procedure, pass(self), public :: init => accessom2_init
     procedure, pass(self), public :: deinit => accessom2_deinit
     procedure, pass(self), public :: get_start_date
+    procedure, pass(self), public :: get_end_date
 endtype accessom2
 
 character(len=19) :: start_date, end_date
@@ -77,13 +80,13 @@ function get_start_date(self)
 
 endfunction get_start_date
 
-function get_job_end_date(self)
+function get_end_date(self)
     class(accessom2), intent(inout) :: self
-    type(datetime) :: get_job_end_date
+    type(datetime) :: get_end_date
 
-    get_job_end_date = self%job_end_date
+    get_end_date = self%job_end_date
 
-endfunction get_job_end_date
+endfunction get_end_date
 
 
 !> Called by all models at the end of the run.

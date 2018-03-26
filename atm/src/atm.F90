@@ -32,7 +32,7 @@ program atm
     ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
     call accessom2%init('matmxx')
     start_date = accessom2%get_start_date()
-    end_date = accessom2%get_job_end_date()
+    end_date = accessom2%get_end_date()
     cur_date = start_date
 
     ! Initialise the coupler
@@ -40,7 +40,7 @@ program atm
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
-    call forcing%init("forcing.json", start_date,
+    call forcing%init("forcing.json", start_date, &
                       param%forcing_period_years, num_coupling_fields)
     allocate(fields(num_coupling_fields))
     call forcing%init_fields(fields, min_dt)

@@ -7,6 +7,7 @@ program ocean
     use ice_grid_mod, only  : ice_grid_type => ice_grid
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
+    use accessom2_mod, only : accessom2_type => accessom2
     use mod_oasis, only : OASIS_IN, OASIS_OUT
 
     implicit none
@@ -17,6 +18,7 @@ program ocean
     type(ice_grid_type) :: ice_grid
     type(coupler_type) :: coupler
     type(restart_type) :: restart
+    type(accessom2_type) :: accessom2
 
     ! Namelist parameters
     type(datetime) :: cur_date, start_date, end_date
@@ -42,7 +44,7 @@ program ocean
     ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
     call accessom2%init('matmxx')
     start_date = accessom2%get_start_date()
-    end_date = accessom2%get_job_end_date()
+    end_date = accessom2%get_end_date()
     cur_date = start_date
 
     ! Initialise coupler, adding coupling fields
@@ -91,11 +93,11 @@ program ocean
         print*, 'OCEAN 2'
 
         cur_date = cur_date + timedelta(seconds=dt)
-        if (cur_date == run_end_date) then
+        if (cur_date == end_date) then
             exit
         endif
-        call assert(cur_date < run_end_date, 'ICE: current date after end date')
-        call assert(cur_date >= run_start_date, 'ICE: current date before start date')
+        call assert(cur_date < end_date, 'ICE: current date after end date')
+        call assert(cur_date >= start_date, 'ICE: current date before start date')
     enddo
 
     ! Write out restart.

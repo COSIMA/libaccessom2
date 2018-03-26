@@ -16,6 +16,7 @@ program ice
                           MAX_FILE_NAME_LEN = 256
 
     type(ice_grid_type) :: ice_grid
+    type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
     type(restart_type) :: i2o_restart, o2i_restart
 
@@ -45,9 +46,9 @@ program ice
     close(tmp_unit)
 
     ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
-    call accessom2%init('matmxx')
+    call accessom2%init('cicexx')
     start_date = accessom2%get_start_date()
-    end_date = accessom2%get_job_end_date()
+    end_date = accessom2%get_end_date()
     cur_date = start_date
 
     ! Initialise coupler, this needs to be done before the ice grid is

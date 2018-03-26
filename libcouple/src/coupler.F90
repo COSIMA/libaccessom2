@@ -4,8 +4,9 @@ use mpi
 use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_intercomm, &
                       oasis_def_partition, oasis_enddef, OASIS_OK, OASIS_REAL, &
                       OASIS_RECVD, OASIS_SENT, OASIS_TOREST, &
-                      OASIS_IN, OASIS_OUT, oasis_put, oasis_get, oasis_terminate
-use datetime_module, only : datetime, timedelta
+                      OASIS_IN, OASIS_OUT, oasis_put, oasis_get, oasis_terminate, &
+                      oasis_get_localcomm
+use datetime_module, only : datetime, timedelta, date2num
 use error_handler, only : assert
 use util_mod, only : runtime_in_seconds
 use field_mod, only : field_type => field
@@ -49,7 +50,6 @@ subroutine coupler_init_begin(self, model_name, start_date)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
     type(datetime), intent(in) :: start_date
-    integer, optional, intent(out) :: atm_intercomm, ice_intercomm, ocean_intercomm
 
     integer :: err
 
@@ -88,11 +88,11 @@ function get_peer_intercomm(self)
 
     if (self%model_name == 'matmxx') then
         get_peer_intercomm = self%ice_intercomm
-    elseif(self%model_name == 'cicexx')
+    elseif(self%model_name == 'cicexx') then
         get_peer_intercomm = self%atm_intercomm
     endif
 
-function get_peer_intercomm
+endfunction get_peer_intercomm
 
 subroutine coupler_init_field(self, field, direction)
     class(coupler), intent(inout) :: self
@@ -197,7 +197,7 @@ subroutine coupler_sync(self, model_name)
     if (model_name == 'matmxx') then
         tag = MPI_ANY_TAG
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-    elseif (model_name == 'cicexx')
+    elseif (model_name == 'cicexx') then
         tag = 0
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, request, err)
     endif
@@ -208,7 +208,10 @@ subroutine coupler_deinit(self, cur_date)
     class(coupler), intent(in) :: self
     type(datetime), intent(in) :: cur_date
 
-    integer :: err
+    integer :: stat(MPI_STATUS_SIZE)
+    integer, dimension(1) :: buf
+    integer :: err, tag, request
+    integer :: checksum
 
     checksum = date2num(cur_date)
 
@@ -223,7 +226,7 @@ subroutine coupler_deinit(self, cur_date)
         tag = 0
         buf(1) = checksum
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, request, err)
-    elseif (model_name == 'oceanx') then
+    elseif (self%model_name == 'oceanx') then
         tag = 0
         buf(1) = checksum
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, request, err)
@@ -234,10 +237,5 @@ subroutine coupler_deinit(self, cur_date)
     call MPI_Finalize(err)
 
 endsubroutine coupler_deinit
-
-pure elemental integer function get_peer_intercomm(self)
-    class(coupler), intent(in) :: self
-    get_peer_intercomm = self%peer_intercomm
-endfunction
 
 endmodule coupler_mod
