@@ -19,32 +19,34 @@ program ocean
     type(restart_type) :: restart
 
     ! Namelist parameters
-    character(len=19) :: start_date, end_date
+    type(datetime) :: cur_date, start_date, end_date
     integer :: dt, i, tmp_unit
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: in_fields, out_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
         from_ice_field_names = '', to_ice_field_names = ''
     integer :: num_from_ice_fields, num_to_ice_fields
-    type(datetime) :: cur_date, run_start_date, run_end_date
     logical :: file_exists
 
-    namelist /ocean_nml/ start_date, end_date, dt, resolution, &
+    namelist /ocean_nml/ dt, resolution, &
                        from_ice_field_names, to_ice_field_names
 
-    ! Read namelist which includes information about the start and end date,
-    ! model resolution and names and direction of coupling fields.
+    ! Read namelist which model resolution and names and
+    ! direction of coupling fields.
     inquire(file='ocean.nml', exist=file_exists)
     call assert(file_exists, 'Input ocean.nml does not exist.')
     open(newunit=tmp_unit, file='ocean.nml')
     read(tmp_unit, nml=ocean_nml)
     close(tmp_unit)
 
-    run_start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
-    run_end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
+    ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
+    call accessom2%init('matmxx')
+    start_date = accessom2%get_start_date()
+    end_date = accessom2%get_job_end_date()
+    cur_date = start_date
 
-    call restart%init('../test_data/o2i.nc')
-    cur_date = restart%get_date(run_start_date)
+    ! Initialise coupler, adding coupling fields
+    call coupler%init_begin('oceanx', start_date)
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
@@ -57,13 +59,8 @@ program ocean
             num_to_ice_fields = num_to_ice_fields + 1
         endif
     enddo
-    print*, 'num_from_ice_fields: ', num_from_ice_fields
-    print*, 'num_to_ice_fields: ', num_to_ice_fields
     allocate(in_fields(num_from_ice_fields))
     allocate(out_fields(num_to_ice_fields))
-
-    ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('oceanx', run_start_date)
 
     do i=1, num_from_ice_fields
         in_fields(i)%name = trim(from_ice_field_names(i))
@@ -102,7 +99,10 @@ program ocean
     enddo
 
     ! Write out restart.
+    call restart%init('../test_data/o2i.nc')
     call restart%write(cur_date, out_fields)
-    call coupler%deinit()
+
+    call accessom2%deinit(cur_date)
+    call coupler%deinit(cur_date)
 
 end program ocean

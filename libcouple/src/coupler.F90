@@ -23,7 +23,7 @@ type coupler
     integer :: size     ! Total number of processes
 
     ! Intercommunicators
-    integer :: ice_intercomm, ocean_intercomm
+    integer :: atm_intercomm, ice_intercomm, ocean_intercomm
     integer :: localcomm
     integer :: my_local_pe
 
@@ -46,38 +46,53 @@ endtype coupler
 contains
 
 subroutine coupler_init_begin(self, model_name, start_date)
-
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
     type(datetime), intent(in) :: start_date
+    integer, optional, intent(out) :: atm_intercomm, ice_intercomm, ocean_intercomm
 
     integer :: err
 
     call assert(model_name == 'matmxx' .or. model_name == 'cicexx' &
                 .or. model_name == 'oceanx', 'Bad model name')
     self%model_name = model_name
+    self%start_date = start_date
 
     call MPI_Init(err)
     call oasis_init_comp(self%comp_id, model_name, err)
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
-    call oasis_get_localcomm(self%local_comm, err)
+    call oasis_get_localcomm(self%localcomm, err)
     call assert(err == OASIS_OK, 'oasis_get_localcomm')
-    call MPI_Comm_rank(self%local_comm, self%my_local_pe, err)
+    call MPI_Comm_rank(self%localcomm, self%my_local_pe, err)
 
     ! Get an intercommunicator with the peer.
     if (model_name == 'matmxx') then
         call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
-        call oasis_get_intercomm(self%ocean_intercomm, 'cicexx', err)
+        call oasis_get_intercomm(self%ocean_intercomm, 'oceanx', err)
     elseif (model_name == 'cicexx') then
-        call oasis_get_intercomm(self%ice_intercomm, 'matmxx', err)
+        call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
     elseif (model_name == 'oceanx') then
-        call oasis_get_intercomm(self%ocean_intercomm, 'matmxx', err)
+        call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
     endif
 
-    self%start_date = start_date
-
 endsubroutine coupler_init_begin
+
+function get_peer_intercomm(self)
+    class(coupler), intent(inout) :: self
+
+    integer :: get_peer_intercomm
+
+    call assert(self%model_name == 'matmxx' .or. self%model_name == 'cicexx', &
+                'No peer intercomm for '//self%model_name)
+
+    if (self%model_name == 'matmxx') then
+        get_peer_intercomm = self%ice_intercomm
+    elseif(self%model_name == 'cicexx')
+        get_peer_intercomm = self%atm_intercomm
+    endif
+
+function get_peer_intercomm
 
 subroutine coupler_init_field(self, field, direction)
     class(coupler), intent(inout) :: self
@@ -133,7 +148,7 @@ subroutine coupler_put(self, field, date, debug)
     type(datetime), intent(in) :: date
     logical, optional, intent(in) :: debug
 
-    integer :: err, runtime
+    integer :: err, timestamp
 
     if (present(debug)) then
         if (debug) then
@@ -141,9 +156,9 @@ subroutine coupler_put(self, field, date, debug)
         endif
     endif
 
-    runtime = runtime_in_seconds(self%start_date, date)
+    timestamp = runtime_in_seconds(self%start_date, date)
 
-    call oasis_put(field%oasis_varid, runtime, field%data_array, err)
+    call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
     call assert(err == OASIS_OK .or. err == OASIS_SENT .or. err == OASIS_TOREST, 'oasis_put')
 
 endsubroutine coupler_put
@@ -155,11 +170,11 @@ subroutine coupler_get(self, field, date, debug)
     type(datetime), intent(in) :: date
     logical, optional, intent(in) :: debug
 
-    integer :: err, runtime
+    integer :: err, timestamp
 
-    runtime = runtime_in_seconds(self%start_date, date)
+    timestamp = runtime_in_seconds(self%start_date, date)
 
-    call oasis_get(field%oasis_varid, runtime, field%data_array, err)
+    call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
     call assert(err == OASIS_OK .or. err == OASIS_RECVD, 'oasis_get')
 
     if (present(debug)) then
@@ -189,15 +204,33 @@ subroutine coupler_sync(self, model_name)
 
 endsubroutine coupler_sync
 
-subroutine coupler_deinit(self)
-
+subroutine coupler_deinit(self, cur_date)
     class(coupler), intent(in) :: self
+    type(datetime), intent(in) :: cur_date
 
     integer :: err
 
+    checksum = date2num(cur_date)
+
+    ! Check that cur_date is the same between all models.
+    if (self%model_name == 'matmxx') then
+        tag = MPI_ANY_TAG
+        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
+        call assert(buf(1) == checksum, 'Models are out of sync.')
+        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
+        call assert(buf(1) == checksum, 'Models are out of sync.')
+    elseif (self%model_name == 'cicexx') then
+        tag = 0
+        buf(1) = checksum
+        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, request, err)
+    elseif (model_name == 'oceanx') then
+        tag = 0
+        buf(1) = checksum
+        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, request, err)
+    endif
+
     call oasis_terminate(err)
     call assert(err == OASIS_OK, 'oasis_terminate')
-
     call MPI_Finalize(err)
 
 endsubroutine coupler_deinit

@@ -9,37 +9,41 @@ program atm
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
-    use restart_mod, only : restart_type => restart
     use util_mod, only : runtime_in_seconds
+    use accessom2_mod, only : accessom2_type => accessom2
 
     implicit none
 
     type(params) :: param
+    type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
     type(forcing_type) :: forcing
     type(ice_grid_type) :: ice_grid
-    type(datetime) :: cur_date
-    type(restart_type) :: restart
+    type(datetime) :: start_date, end_date, cur_date
     type(runoff_type) :: runoff
     type(field_type), dimension(:), allocatable :: fields
     type(field_type) :: runoff_field
     integer, dimension(2) :: ice_shape
     integer :: i, num_coupling_fields, min_dt, runtime
 
-    ! Get run settings, including the start date from the prior restart file.
+    ! Initialise run settings
     call param%init()
-    call restart%init('atm_restart.nc')
-    cur_date = restart%get_date(param%start_date)
+
+    ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
+    call accessom2%init('matmxx')
+    start_date = accessom2%get_start_date()
+    end_date = accessom2%get_job_end_date()
+    cur_date = start_date
+
+    ! Initialise the coupler
+    call coupler%init_begin('matmxx', start_date)
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
-    call forcing%init("forcing.json", param%start_date, &
+    call forcing%init("forcing.json", start_date,
                       param%forcing_period_years, num_coupling_fields)
     allocate(fields(num_coupling_fields))
     call forcing%init_fields(fields, min_dt)
-
-    ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('matmxx', param%start_date)
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(coupler%get_peer_intercomm())
@@ -50,7 +54,6 @@ program atm
     ice_shape = ice_grid%get_shape()
 
     ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
-    ! FIXME: should be able to remove special treatment of runoff field.
     do i=1, num_coupling_fields
         if (fields(i)%name == 'runoff') then
             call assert(.not. allocated(runoff_field%data_array), &
@@ -67,7 +70,7 @@ program atm
 
     do
         print*, 'ATM 0'
-        runtime = runtime_in_seconds(param%start_date, cur_date)
+        runtime = runtime_in_seconds(start_date, cur_date)
 
         ! Send each forcing field
         do i=1, num_coupling_fields
@@ -93,14 +96,14 @@ program atm
 
         ! Update current date
         cur_date = cur_date + timedelta(seconds=min_dt)
-        if (cur_date == param%end_date) then
+        if (cur_date == end_date) then
             exit
         endif
-        call assert(cur_date < param%end_date, 'ATM: current date after end date')
-        call assert(cur_date >= param%start_date, 'ATM: current date before start date')
+        call assert(cur_date < end_date, 'ATM: current date after end date')
+        call assert(cur_date >= start_date, 'ATM: current date before start date')
     enddo
 
-    call restart%write(cur_date, fields)
-    call coupler%deinit()
+    call accessom2%deinit(cur_date)
+    call coupler%deinit(cur_date)
 
 end program atm

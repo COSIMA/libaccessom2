@@ -1,7 +1,7 @@
 module accessom2_mod
 
 use mpi
-use datetime
+use datetime_module, only : datetime, strptime, timedelta
 
 implicit none
 private
@@ -12,7 +12,7 @@ type accessom2
     ! Intercommunicators
     integer :: ice_intercomm, ocean_intercomm
 
-    character(len=6) :: model_name. calendar
+    character(len=6) :: model_name, calendar
 
     type(datetime) :: start_date
     type(datetime) :: end_date
@@ -22,24 +22,27 @@ contains
     private
     procedure, pass(self), public :: init => accessom2_init
     procedure, pass(self), public :: deinit => accessom2_deinit
+    procedure, pass(self), public :: get_start_date
 endtype accessom2
 
+character(len=19) :: start_date, end_date
+character(len=6) :: calendar
+integer, dimension(3) :: job_runtime
+character(len=19) :: current_datetime
+ 
 namelist /accessom2_nml/ start_date, end_date, calendar, job_runtime
 namelist /do_not_edit_nml/ current_datetime
 
-subroutine accessom2_init(self, model_name, ice_intercomm, ocean_intercomm)
-    class(coupler), intent(inout) :: self
+contains
+
+subroutine accessom2_init(self, model_name)
+    class(accessom2), intent(inout) :: self
     character(len=6), intent(in) :: model_name
-    integer, intent(in) :: ice_intercomm, ocean_intercomm
 
-    character(len=19) :: start_date, end_date
-    integer, dimension(3) :: job_runtime
-    character(len=19) :: current_datetime
-    character(len=6) :: calendar
     logical :: file_exists
+    integer :: tmp_unit
 
-    self%ice_intercomm = ice_intercomm
-    self%ocean_intercomm = ocean_intercomm
+    self%model_name = model_name
 
     ! Read namelist which includes information about the start and end date
     inquire(file='accessom2.nml', exist=file_exists)
@@ -61,56 +64,56 @@ subroutine accessom2_init(self, model_name, ice_intercomm, ocean_intercomm)
     self%end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
     self%calendar = calendar
 
-    self%job_end_date = job_end_date(self%start_date, self%job_runtime, &
-                                     self%end_date)
+    self%job_end_date = job_end_date(self%start_date, job_runtime, &
+                                     self%end_date, calendar)
 
 endsubroutine accessom2_init
 
+function get_start_date(self)
+    class(accessom2), intent(inout) :: self
+    type(datetime) :: get_start_date
+
+    get_start_date = self%start_date
+
+endfunction get_start_date
+
+function get_job_end_date(self)
+    class(accessom2), intent(inout) :: self
+    type(datetime) :: get_job_end_date
+
+    get_job_end_date = self%job_end_date
+
+endfunction get_job_end_date
+
+
 !> Called by all models at the end of the run.
-! currentdatetime will be compared between PEs and the root will write it out.
-subroutine accessom2_deinit(self, model_name, cur_date)
-    class(coupler), intent(inout) :: self
-    integer, intent(in) :: localcomm
+! The root will write out the new current date
+subroutine accessom2_deinit(self, cur_date)
+    class(accessom2), intent(inout) :: self
     type(datetime), intent(in) :: cur_date
 
     integer :: tmp_unit, my_pe, err
     integer, dimension(1) :: buf
     character(len=19) :: current_datetime
 
-    current_datetime = strftime(cur_date, '%Y-%m-%d %H:%M:%S')
-    checksum = date2num(cur_date)
-
-    if (model_name == 'matmxx') then
-        tag = MPI_ANY_TAG
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-        call assert(buf(1) == checksum, 'Models are out of sync.')
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
-        call assert(buf(1) == checksum, 'Models are out of sync.')
-    elseif (model_name == 'cicexx') then
-        tag = 0
-        buf(1) = checksum
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, request, err)
-    elseif (model_name == 'oceanx') then
-        tag = 0
-        buf(1) = checksum
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, request, err)
-    endif
+    current_datetime = cur_date%strftime('%Y-%m-%d %H:%M:%S')
 
     call MPI_Comm_rank(MPI_COMM_WORLD, my_pe, err)
-    if (my_pe == 0)
+    if (my_pe == 0) then
         open(newunit=tmp_unit, file='accessom2_datetime.nml')
-        write(unit=tmp_unit, nml=CASE )
+        write(unit=tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)
     endif
 
 endsubroutine accessom2_deinit
 
 function job_end_date(start_date, job_runtime, end_date, calendar)
-    type(datetime), intent(in) :: start_date, end_date,
-    integer, dimension(3) :: job_runtime
-    type(datetime) :: job_end_date
+    type(datetime), intent(in) :: start_date, end_date
+    integer, dimension(3), intent(in) :: job_runtime
+    character(len=6), intent(in) :: calendar
 
-    integer :: year, month, day, hour, minute, second
+    type(datetime) :: job_end_date
+    integer :: year, month, day, hour, minute, second, i
 
     if (job_runtime(3) > 0) then
         call assert(job_runtime(1) == 0 .and. job_runtime(2) == 0, &
@@ -138,7 +141,7 @@ function job_end_date(start_date, job_runtime, end_date, calendar)
         job_end_date = datetime(start_date%getYear(), start_date%getMonth(), 1, &
                                 hour, minute, second)
         do i=1, day
-            if (job_end_date%getMonth() == 2 .and. job_end_date%getDay == 29 &
+            if (job_end_date%getMonth() == 2 .and. job_end_date%getDay() == 29 &
                 .and. calendar == 'noleap')  then
                 job_end_date = job_end_date + timedelta(days=1)
             endif

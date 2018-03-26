@@ -8,6 +8,7 @@ program ice
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
     use mod_oasis, only : OASIS_IN, OASIS_OUT
+    use accessom2_mod, only : accessom2_type => accessom2
 
     implicit none
 
@@ -19,7 +20,7 @@ program ice
     type(restart_type) :: i2o_restart, o2i_restart
 
     ! Namelist parameters
-    character(len=19) :: start_date, end_date
+    type(datetime) :: start_date, end_date, cur_date
     integer :: dt, i, tmp_unit
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: from_atm_fields, &
@@ -29,14 +30,13 @@ program ice
         to_ocean_field_names = ''
     integer :: num_from_atm_fields, num_from_ocean_fields, num_to_ocean_fields
     character(len=MAX_FILE_NAME_LEN) :: ice_grid_file, ice_mask_file
-    type(datetime) :: cur_date, run_start_date, run_end_date
     logical :: file_exists
 
-    namelist /ice_nml/ start_date, end_date, dt, resolution, &
+    namelist /ice_nml/ dt, resolution, &
                        from_atm_field_names, from_ocean_field_names, &
                        to_ocean_field_names, ice_grid_file, ice_mask_file
 
-    ! Read namelist which includes information about the start and end date,
+    ! Read namelist which includes information
     ! model resolution and names and direction of coupling fields.
     inquire(file='ice.nml', exist=file_exists)
     call assert(file_exists, 'Input ice.nml does not exist.')
@@ -44,8 +44,15 @@ program ice
     read(tmp_unit, nml=ice_nml)
     close(tmp_unit)
 
-    run_start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
-    run_end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
+    ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
+    call accessom2%init('matmxx')
+    start_date = accessom2%get_start_date()
+    end_date = accessom2%get_job_end_date()
+    cur_date = start_date
+
+    ! Initialise coupler, this needs to be done before the ice grid is
+    ! sent to the atmosphere.
+    call coupler%init_begin('cicexx', start_date)
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0
@@ -65,10 +72,6 @@ program ice
     allocate(from_atm_fields(num_from_atm_fields))
     allocate(from_ocean_fields(num_from_ocean_fields))
     allocate(to_ocean_fields(num_to_ocean_fields))
-
-    ! Initialise coupler, this needs to be done before the ice grid is
-    ! sent to the atmosphere.
-    call coupler%init_begin('cicexx', run_start_date)
 
     ! Initialise ice grid and send details to peer.
     ! This will be used for regridding of runoff.
@@ -98,7 +101,6 @@ program ice
     call o2i_restart%init('o2i.nc')
     call o2i_restart%read(from_ocean_fields)
     call i2o_restart%init('i2o.nc')
-    cur_date = i2o_restart%get_date(run_start_date)
     call i2o_restart%read(to_ocean_fields)
 
     print*, 'ICE 0'
@@ -150,15 +152,17 @@ program ice
         print*, 'ICE 5'
 
         cur_date = cur_date + timedelta(seconds=dt)
-        if (cur_date == run_end_date) then
+        if (cur_date == end_date) then
             exit
         endif
-        call assert(cur_date < run_end_date, 'ICE: current date after end date')
-        call assert(cur_date >= run_start_date, 'ICE: current date before start date')
+        call assert(cur_date < end_date, 'ICE: current date after end date')
+        call assert(cur_date >= start_date, 'ICE: current date before start date')
     enddo
 
     ! Write out restart.
     call i2o_restart%write(cur_date, to_ocean_fields)
-    call coupler%deinit()
+
+    call accessom2%deinit(cur_date)
+    call coupler%deinit(cur_date)
 
 end program
