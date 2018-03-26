@@ -35,7 +35,7 @@ include_directories(${NETCDF_F90_INCLUDE_DIRS})
 
 # compiler flags for gfortran
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -pg -fdefault-real-8")
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -fdefault-real-8")
   set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -C -fbacktrace -std=f2008")
   set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -std=f2008")
 endif()

@@ -69,8 +69,8 @@ program atm
     call coupler%init_end()
 
     do
-        print*, 'ATM 0'
         runtime = runtime_in_seconds(start_date, cur_date)
+        print*, 'ATM: '//cur_date%isoformat()
 
         ! Send each forcing field
         do i=1, num_coupling_fields
@@ -87,12 +87,10 @@ program atm
                 call coupler%put(fields(i), cur_date, param%debug_output)
             endif
         enddo
-        print*, 'ATM 1'
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
         ! after receiving the above fields. This prevents the atm from sending continuously.
-        call coupler%sync('matmxx')
-        print*, 'ATM 2'
+        call coupler%atm_ice_sync()
 
         ! Update current date
         cur_date = cur_date + timedelta(seconds=min_dt)

@@ -50,7 +50,7 @@ subroutine accessom2_init(self, model_name)
     ! Read namelist which includes information about the start and end date
     inquire(file='accessom2.nml', exist=file_exists)
     call assert(file_exists, 'Input accessom2.nml does not exist.')
-    open(newunit=tmp_unit, file='access_om2.nml')
+    open(newunit=tmp_unit, file='accessom2.nml')
     read(tmp_unit, nml=accessom2_nml)
     close(tmp_unit)
 

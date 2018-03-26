@@ -40,7 +40,7 @@ contains
     procedure, pass(self), public :: init_field => coupler_init_field
     procedure, pass(self), public :: put => coupler_put
     procedure, pass(self), public :: get => coupler_get
-    procedure, pass(self), public :: sync => coupler_sync
+    procedure, pass(self), public :: atm_ice_sync => coupler_atm_ice_sync
     procedure, pass(self), public :: get_peer_intercomm
 endtype coupler
 
@@ -174,6 +174,7 @@ subroutine coupler_get(self, field, date, debug)
 
     timestamp = runtime_in_seconds(self%start_date, date)
 
+
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
     call assert(err == OASIS_OK .or. err == OASIS_RECVD, 'oasis_get')
 
@@ -185,24 +186,23 @@ subroutine coupler_get(self, field, date, debug)
 
 endsubroutine coupler_get
 
-subroutine coupler_sync(self, model_name)
+subroutine coupler_atm_ice_sync(self)
 
     class(coupler), intent(inout) :: self
-    character(len=6), intent(in) :: model_name
 
     integer :: stat(MPI_STATUS_SIZE)
     integer, dimension(1) :: buf
     integer :: err, tag, request
 
-    if (model_name == 'matmxx') then
+    if (self%model_name == 'matmxx') then
         tag = MPI_ANY_TAG
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-    elseif (model_name == 'cicexx') then
+    elseif (self%model_name == 'cicexx') then
         tag = 0
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, request, err)
+        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
     endif
 
-endsubroutine coupler_sync
+endsubroutine coupler_atm_ice_sync
 
 subroutine coupler_deinit(self, cur_date)
     class(coupler), intent(in) :: self

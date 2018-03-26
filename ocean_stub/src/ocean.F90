@@ -77,12 +77,10 @@ program ocean
     call coupler%init_end()
 
     do
-        print*, 'OCEAN 0'
         ! Get fields from ice
         do i=1, num_from_ice_fields
             call coupler%get(in_fields(i), cur_date)
         enddo
-        print*, 'OCEAN 1'
 
         ! Do work, i.e. use the in_fields and populate the out_fields
 
@@ -90,7 +88,6 @@ program ocean
         do i=1, num_to_ice_fields
             call coupler%put(out_fields(i), cur_date)
         enddo
-        print*, 'OCEAN 2'
 
         cur_date = cur_date + timedelta(seconds=dt)
         if (cur_date == end_date) then

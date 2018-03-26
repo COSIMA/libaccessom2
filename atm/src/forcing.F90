@@ -144,7 +144,6 @@ subroutine forcing_update_field(self, cur_date, fld)
     call assert(indx /= -1, "Could not find forcing index")
     ! Update the guess for next time.
     self%index_guess = indx
-    print*, 'Forcing date: ', forcing_date%isoformat()
 
     ! Get data
     call ncheck(nf90_inq_varid(ncid, fld%ncname, varid), &

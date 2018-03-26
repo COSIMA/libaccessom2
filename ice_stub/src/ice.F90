@@ -104,8 +104,6 @@ program ice
     call i2o_restart%init('i2o.nc')
     call i2o_restart%read(to_ocean_fields)
 
-    print*, 'ICE 0'
-
     ! Get from atmosphere
     do i=1, size(from_atm_fields)
         call coupler%get(from_atm_fields(i), cur_date)
@@ -120,29 +118,30 @@ program ice
     ! only time that the ocean is waiting on the ice (given that the ice
     ! runs slightly faster than the ocean).
     do
-        print*, 'ICE 1'
         ! Send to ocean - non-blocking
         do i=1, size(to_ocean_fields)
             call coupler%put(to_ocean_fields(i), cur_date)
         enddo
 
         ! Do work
-        print*, 'ICE 2'
+        cur_date = cur_date + timedelta(seconds=dt)
+        if (cur_date == end_date) then
+            exit
+        endif
+        call assert(cur_date < end_date, 'ICE: current date after end date')
+        call assert(cur_date >= start_date, 'ICE: current date before start date')
 
         ! Get from atmos - fast because atmos should have already sent.
         do i=1, size(from_atm_fields)
             call coupler%get(from_atm_fields(i), cur_date)
         enddo
 
-        print*, 'ICE 3'
-
         ! atm is blocked, unblock it. This prevents the atm from sending
         ! continuously and means that the next set of coupling fields
         ! will arrive while we're doing work.
-        call coupler%sync('cicexx')
+        call coupler%atm_ice_sync()
 
         ! Update atmospheric forcing halos - expensive operation.
-        print*, 'ICE 4'
 
         ! Get from ocean - blocking on ocean. Important that ice runs faster
         ! that ocean and can receive immediately and quickly loop to send
@@ -150,14 +149,6 @@ program ice
         do i=1, size(from_ocean_fields)
             call coupler%get(from_ocean_fields(i), cur_date)
         enddo
-        print*, 'ICE 5'
-
-        cur_date = cur_date + timedelta(seconds=dt)
-        if (cur_date == end_date) then
-            exit
-        endif
-        call assert(cur_date < end_date, 'ICE: current date after end date')
-        call assert(cur_date >= start_date, 'ICE: current date before start date')
     enddo
 
     ! Write out restart.

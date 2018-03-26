@@ -97,7 +97,8 @@ subroutine restart_write(self, cur_date, fields)
 
     ! Load field values.
     do i=1, size(fields)
-        call ncheck(nf90_put_var(ncid, field_varid(i), fields(i)%data_array))
+        call ncheck(nf90_put_var(ncid, field_varid(i), fields(i)%data_array), &
+                    'restart_write: nf90_put_var '//trim(fields(i)%name))
     enddo
 
     call ncheck(nf90_close(ncid))
@@ -116,13 +117,12 @@ subroutine restart_read(self, fields)
                 'Opening '//trim(self%restart_file))
 
     do i=1, size(fields)
-        call ncheck(nf90_inq_varid(ncid, fields(i)%name, varid), &
-                    'Inquire: '//trim(fields(i)%name))
-        call read_data(ncid, varid, fields(i)%name, 1, fields(i)%data_array)
-        call ncheck(nf90_close(ncid), 'Closing '//trim(fields(i)%name))
+        call ncheck(nf90_inq_varid(ncid, trim(fields(i)%name), varid), &
+                    'Inquire: '//trim(fields(i)%name)//' in '//trim(self%restart_file))
+        call read_data(ncid, varid, trim(fields(i)%name), 1, fields(i)%data_array)
     enddo
 
-    call ncheck(nf90_close(ncid))
+    call ncheck(nf90_close(ncid), 'Closing '//self%restart_file)
 
 end subroutine restart_read
 

@@ -36,21 +36,26 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
     character(len=nf90_max_name) :: dimname
 
     ! Get dimensions used by this var.
-    call ncheck(nf90_inquire_variable(ncid, varid, ndims=ndims))
+    call ncheck(nf90_inquire_variable(ncid, varid, ndims=ndims), &
+                'get_var_dims: Inquire ndims')
     allocate(dimids(ndims))
-    call ncheck(nf90_inquire_variable(ncid, varid, dimids=dimids))
+    call ncheck(nf90_inquire_variable(ncid, varid, dimids=dimids), &
+                'get_var_dims: Inquire dimids')
 
     ! Only support dimension names: time, latitude, longitude for now.
     nx = 0
     ny = 0
     time = 0
     do i=1, ndims
-      call ncheck(nf90_inquire_dimension(ncid, dimids(i), name=dimname, len=len))
+      call ncheck(nf90_inquire_dimension(ncid, dimids(i), name=dimname, len=len), &
+                    'get_var_dims: Inquire dimension '//dimname)
       if (trim(dimname) == 'time' .or. trim(dimname) == 'AT') then
         time = len
-      elseif (trim(dimname) == 'latitude' .or. trim(dimname) == 'AY') then
+      elseif (trim(dimname) == 'latitude' .or. trim(dimname) == 'AY' .or. &
+                trim(dimname) == 'ny') then
         ny = len
-      elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX') then
+      elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX' .or. &
+                trim(dimname) == 'nx') then
         nx = len
       else
         call assert(.false., 'get_field_dims: Unsupported dimension name')
@@ -71,7 +76,8 @@ subroutine get_nc_start_date(ncid, varid, nc_start_date)
     integer :: rc, idx
 
     ! Get start date
-    call ncheck(nf90_get_att(ncid, varid, "units", time_str))
+    call ncheck(nf90_get_att(ncid, varid, "units", time_str), &
+                'get_nc_start_date: nf90_get_att: '//time_str)
 
     ! See whether it has the expected format
     idx = index(time_str, "days since")
@@ -101,7 +107,8 @@ function get_var_dt(ncid)
 
     ! Calculate dt by looking at the time coordinate.
     ! FIXME: this assumes that there is only one time coordinate per file.
-    call ncheck(nf90_inq_varid(ncid, 'time', varid), 'Inquire: time')
+    call ncheck(nf90_inq_varid(ncid, 'time', varid), &
+                'get_var_dt: Inquire time')
 
     call ncheck(nf90_inquire_dimension(ncid, varid, len = num_times))
     call ncheck(nf90_get_att(ncid, varid, "units", time_str))
@@ -111,7 +118,8 @@ function get_var_dt(ncid)
     call assert(num_times > 1, "Can't determine dt")
 
     allocate(times(num_times))
-    call ncheck(nf90_get_var(ncid, varid, times))
+    call ncheck(nf90_get_var(ncid, varid, times), &
+                 'get_var_dt: nf90_get_var')
 
     get_var_dt = (times(2) - times(1))*86400
 
