@@ -8,6 +8,7 @@ program ocean
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
     use accessom2_mod, only : accessom2_type => accessom2
+    use util_mod, only : timedelta_in_seconds
     use mod_oasis, only : OASIS_IN, OASIS_OUT
 
     implicit none
@@ -48,7 +49,8 @@ program ocean
     cur_date = start_date
 
     ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('oceanx', start_date)
+    call coupler%init_begin('oceanx', start_date, &
+                            timedelta_in_seconds(start_date, end_date))
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
@@ -78,14 +80,14 @@ program ocean
 
     do
         ! Get fields from ice
-        do i=1, num_from_ice_fields
+        do i=1, size(in_fields)
             call coupler%get(in_fields(i), cur_date)
         enddo
 
         ! Do work, i.e. use the in_fields and populate the out_fields
 
         ! Send fields to ice
-        do i=1, num_to_ice_fields
+        do i=1, size(out_fields)
             call coupler%put(out_fields(i), cur_date)
         enddo
 
@@ -98,7 +100,13 @@ program ocean
     enddo
 
     ! Write out restart.
-    call restart%init('../test_data/o2i.nc')
+    call restart%init('o2i.nc')
+    ! FIXME: dodgy hack, we need to change the out_field names to have
+    ! '_i' prefix. This exists in ACCESS-OM2 and will go away once we do
+    ! ocean and ice restarts properly.
+    do i=1, size(out_fields)
+        out_fields(i)%name = trim(out_fields(i)%name)//'_i'
+    enddo
     call restart%write(cur_date, out_fields)
 
     call accessom2%deinit(cur_date)

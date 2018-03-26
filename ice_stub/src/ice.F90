@@ -8,6 +8,7 @@ program ice
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
     use mod_oasis, only : OASIS_IN, OASIS_OUT
+    use util_mod, only : timedelta_in_seconds
     use accessom2_mod, only : accessom2_type => accessom2
 
     implicit none
@@ -53,7 +54,8 @@ program ice
 
     ! Initialise coupler, this needs to be done before the ice grid is
     ! sent to the atmosphere.
-    call coupler%init_begin('cicexx', start_date)
+    call coupler%init_begin('cicexx', start_date, &
+                            timedelta_in_seconds(start_date, end_date))
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0
@@ -108,6 +110,7 @@ program ice
     do i=1, size(from_atm_fields)
         call coupler%get(from_atm_fields(i), cur_date)
     enddo
+    call coupler%atm_ice_sync()
     ! Update atmospheric forcing halos - expensive operation.
 
     ! Note the structure of the following loop:

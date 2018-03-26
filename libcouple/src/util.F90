@@ -58,7 +58,7 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
                 trim(dimname) == 'nx') then
         nx = len
       else
-        call assert(.false., 'get_field_dims: Unsupported dimension name')
+        call assert(.false., 'get_field_dims: Unsupported dimension name '//trim(dimname))
       endif
     enddo
 
@@ -88,12 +88,11 @@ subroutine get_nc_start_date(ncid, varid, nc_start_date)
     idx = index(time_str, ":")
     if (idx > 0) then
         rc = c_strptime(trim(time_str), "%Y-%m-%d %H:%M:%S"//char(0), ctime)
-        nc_start_date = tm2date(ctime)
     else
         rc = c_strptime(trim(time_str)//" 00:00:00", "%Y-%m-%d %H:%M:%S"//char(0), ctime)
-        nc_start_date = tm2date(ctime)
     endif
     call assert(rc /= 0, 'strptime in get_nc_start_date failed on '//time_str)
+    nc_start_date = tm2date(ctime)
 
 end subroutine get_nc_start_date
 
@@ -174,14 +173,16 @@ function replace_text(string, pattern, replace)  result(outs)
 
 end function replace_text
 
-function runtime_in_seconds(start_date, cur_date)
-    type(datetime), intent(in) :: start_date, cur_date
-    integer :: runtime_in_seconds
+function timedelta_in_seconds(start_date, end_date, calendar)
+    type(datetime), intent(in) :: start_date, end_date
+    character(len=6), optional, intent(in) :: calendar
+
+    integer :: timedelta_in_seconds
     type(timedelta) :: td
 
-    td = cur_date - start_date
-    runtime_in_seconds = td%total_seconds()
+    td = end_date - start_date
+    timedelta_in_seconds = td%total_seconds()
 
-endfunction runtime_in_seconds
+endfunction timedelta_in_seconds
 
 end module util_mod

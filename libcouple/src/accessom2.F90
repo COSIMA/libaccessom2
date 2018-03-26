@@ -1,7 +1,7 @@
 module accessom2_mod
 
 use mpi
-use datetime_module, only : datetime, strptime, timedelta
+use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
 use error_handler, only : assert
 
 implicit none
@@ -42,8 +42,9 @@ subroutine accessom2_init(self, model_name)
     class(accessom2), intent(inout) :: self
     character(len=6), intent(in) :: model_name
 
+    type(tm_struct) :: ctime
     logical :: file_exists
-    integer :: tmp_unit
+    integer :: tmp_unit, rc
 
     self%model_name = model_name
 
@@ -59,16 +60,25 @@ subroutine accessom2_init(self, model_name)
         open(newunit=tmp_unit, file='accessom2_datetime.nml')
         read(tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)
-        self%start_date = strptime(current_datetime, '%Y-%m-%d %H:%M:%S')
+        rc = c_strptime(current_datetime, "%Y-%m-%dT%H:%M:%S", ctime)
+        call assert(rc /= 0, 'Bad start_date format in accessom2_datetime.nml')
+        self%start_date = tm2date(ctime)
     else
-        self%start_date = strptime(start_date, '%Y-%m-%d %H:%M:%S')
+        rc = c_strptime(start_date, "%Y-%m-%dT%H:%M:%S", ctime)
+        call assert(rc /= 0, 'Bad start_date format in accessom2.nml')
+        self%start_date = tm2date(ctime)
     endif
 
-    self%end_date = strptime(end_date, '%Y-%m-%d %H:%M:%S')
-    self%calendar = calendar
+    rc = c_strptime(end_date, "%Y-%m-%dT%H:%M:%S", ctime)
+    call assert(rc /= 0, 'Bad end_date format in accessom2.nml')
+    self%end_date = tm2date(ctime)
 
+    self%calendar = calendar
     self%job_end_date = job_end_date(self%start_date, job_runtime, &
                                      self%end_date, calendar)
+    if (self%end_date < self%job_end_date) then
+        self%job_end_date = self%end_date
+    endif
 
 endsubroutine accessom2_init
 
@@ -97,9 +107,8 @@ subroutine accessom2_deinit(self, cur_date)
 
     integer :: tmp_unit, my_pe, err
     integer, dimension(1) :: buf
-    character(len=19) :: current_datetime
 
-    current_datetime = cur_date%strftime('%Y-%m-%d %H:%M:%S')
+    current_datetime = cur_date%strftime('%Y-%m-%dT%H:%M:%S')
 
     call MPI_Comm_rank(MPI_COMM_WORLD, my_pe, err)
     if (my_pe == 0) then
@@ -143,7 +152,7 @@ function job_end_date(start_date, job_runtime, end_date, calendar)
 
         job_end_date = datetime(start_date%getYear(), start_date%getMonth(), 1, &
                                 hour, minute, second)
-        do i=1, day
+        do i=1, day-1
             if (job_end_date%getMonth() == 2 .and. job_end_date%getDay() == 29 &
                 .and. calendar == 'noleap')  then
                 job_end_date = job_end_date + timedelta(days=1)

@@ -8,7 +8,7 @@ use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_intercomm, &
                       oasis_get_localcomm
 use datetime_module, only : datetime, timedelta, date2num
 use error_handler, only : assert
-use util_mod, only : runtime_in_seconds
+use util_mod, only : timedelta_in_seconds
 use field_mod, only : field_type => field
 
 use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
@@ -46,10 +46,12 @@ endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, start_date)
+subroutine coupler_init_begin(self, model_name, start_date, &
+                              total_runtime_in_seconds)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
     type(datetime), intent(in) :: start_date
+    integer, intent(in) :: total_runtime_in_seconds
 
     integer :: err
 
@@ -59,7 +61,8 @@ subroutine coupler_init_begin(self, model_name, start_date)
     self%start_date = start_date
 
     call MPI_Init(err)
-    call oasis_init_comp(self%comp_id, model_name, err)
+    call oasis_init_comp(self%comp_id, model_name, err, &
+                         total_runtime_in_seconds)
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
     call oasis_get_localcomm(self%localcomm, err)
@@ -156,7 +159,7 @@ subroutine coupler_put(self, field, date, debug)
         endif
     endif
 
-    timestamp = runtime_in_seconds(self%start_date, date)
+    timestamp = timedelta_in_seconds(self%start_date, date)
 
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
     call assert(err == OASIS_OK .or. err == OASIS_SENT .or. err == OASIS_TOREST, 'oasis_put')
@@ -172,8 +175,7 @@ subroutine coupler_get(self, field, date, debug)
 
     integer :: err, timestamp
 
-    timestamp = runtime_in_seconds(self%start_date, date)
-
+    timestamp = timedelta_in_seconds(self%start_date, date)
 
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
     call assert(err == OASIS_OK .or. err == OASIS_RECVD, 'oasis_get')
@@ -225,11 +227,11 @@ subroutine coupler_deinit(self, cur_date)
     elseif (self%model_name == 'cicexx') then
         tag = 0
         buf(1) = checksum
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, request, err)
+        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
     elseif (self%model_name == 'oceanx') then
         tag = 0
         buf(1) = checksum
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, request, err)
+        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
     endif
 
     call oasis_terminate(err)

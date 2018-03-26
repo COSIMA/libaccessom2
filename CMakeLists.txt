@@ -78,7 +78,7 @@ set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/lib
 # json-fortran external project
 ExternalProject_Add(oasis3-mct
     GIT_REPOSITORY    https://github.com/OceansAus/oasis3-mct.git
-    GIT_TAG           4fff972eb851185c56136c0a007f01a58f5b96b0
+    GIT_TAG           1a67d0465b18c3b252b95563d00feb349587803d
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make ubuntu

@@ -61,9 +61,15 @@ subroutine restart_write(self, cur_date, fields)
     type(datetime), intent(in) :: cur_date
     type(field), dimension(:), intent(in) :: fields
 
-    integer :: ncid, time_dimid, time_varid, nx, ny, i
-    integer, dimension(size(fields)) :: lat_dimid, lon_dimid, field_varid
+    integer :: ncid, nx, ny, i
+    integer :: time_dimid, lat_dimid, lon_dimid
+    integer :: time_varid
+    integer, dimension(size(fields)) :: field_varid
     integer, dimension(3) :: dimids
+
+    if (size(fields) < 1) then
+        return
+    endif
 
     ! Create file, time dim and var, lat and lon dims.
     call ncheck(nf90_create(trim(self%restart_file), nf90_write, ncid), &
@@ -76,18 +82,17 @@ subroutine restart_write(self, cur_date, fields)
                         'days since '//cur_date%strftime("%Y-%m-%d %H:%M:%S")), &
                 'Adding attribute units to time '//trim(self%restart_file))
 
+    ! FIXME: this assumes that all fields have the same shape
+    nx = size(fields(1)%data_array, 1)
+    ny = size(fields(1)%data_array, 2)
+    call ncheck(nf90_def_dim(ncid, 'ny', ny,  lat_dimid), 'Def dim ny')
+    call ncheck(nf90_def_dim(ncid, 'nx', nx,  lon_dimid), 'Def dim nx')
+
     do i=1, size(fields)
-        nx = size(fields(i)%data_array, 1)
-        ny = size(fields(i)%data_array, 2)
-
-        call ncheck(nf90_def_dim(ncid, 'ny_'//trim(fields(i)%name), ny,  lat_dimid(i)), &
-                    'Def dim '//'ny_'//trim(fields(i)%name))
-        call ncheck(nf90_def_dim(ncid, 'nx_'//trim(fields(i)%name), nx,  lon_dimid(i)), &
-                    'Def dim '//'nx_'//trim(fields(i)%name))
-
-        dimids(:) = (/ lon_dimid(i), lat_dimid(i), time_dimid /)
-        call ncheck(nf90_def_var(ncid, fields(i)%name, nf90_real, dimids, field_varid(i)), &
-                    'Defining var '//trim(self%restart_file))
+        dimids(:) = (/ lon_dimid, lat_dimid, time_dimid /)
+        call ncheck(nf90_def_var(ncid, trim(fields(i)%name), nf90_real, &
+                    dimids, field_varid(i)), &
+                    'Defining var '//trim(fields(i)%name)//' in '//trim(self%restart_file))
     enddo
     call ncheck(nf90_enddef(ncid), 'nf90_enddef for '//trim(self%restart_file))
 

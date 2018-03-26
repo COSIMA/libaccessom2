@@ -9,7 +9,7 @@ program atm
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
-    use util_mod, only : runtime_in_seconds
+    use util_mod, only : timedelta_in_seconds
     use accessom2_mod, only : accessom2_type => accessom2
 
     implicit none
@@ -24,7 +24,7 @@ program atm
     type(field_type), dimension(:), allocatable :: fields
     type(field_type) :: runoff_field
     integer, dimension(2) :: ice_shape
-    integer :: i, num_coupling_fields, min_dt, runtime
+    integer :: i, num_coupling_fields, min_dt, cur_time_in_secs
 
     ! Initialise run settings
     call param%init()
@@ -35,8 +35,11 @@ program atm
     end_date = accessom2%get_end_date()
     cur_date = start_date
 
+    print*, 'ATM: start_date, end_date: '//start_date%isoformat()//' '//end_date%isoformat()
+
     ! Initialise the coupler
-    call coupler%init_begin('matmxx', start_date)
+    call coupler%init_begin('matmxx', start_date, &
+                            timedelta_in_seconds(start_date, end_date))
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
@@ -69,12 +72,12 @@ program atm
     call coupler%init_end()
 
     do
-        runtime = runtime_in_seconds(start_date, cur_date)
         print*, 'ATM: '//cur_date%isoformat()
+        cur_time_in_secs = timedelta_in_seconds(start_date, cur_date)
 
         ! Send each forcing field
         do i=1, num_coupling_fields
-            if (mod(runtime, fields(i)%dt) == 0) then
+            if (mod(cur_time_in_secs, fields(i)%dt) == 0) then
                 call forcing%update_field(cur_date, fields(i))
                 if (fields(i)%name == 'runoff') then
                     call runoff%remap(fields(i)%data_array, runoff_field%data_array, ice_grid%mask)
