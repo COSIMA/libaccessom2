@@ -5,6 +5,7 @@ use json_module
 use json_kinds
 use datetime_module, only : datetime, timedelta
 use util_mod, only : ncheck, get_var_dims, replace_text, get_nc_start_date, get_var_dt, read_data
+use util_mod, only : first_file_matching_pattern
 use netcdf
 use field_mod, only : field_type => field
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
@@ -158,13 +159,14 @@ endsubroutine forcing_update_field
 function filename_for_year(filename, year)
     character(len=*), intent(in) :: filename
     integer, intent(in) :: year
-    character(len=len(filename)) :: filename_for_year
+    character(len=1024) :: filename_for_year
 
     character(len=4) :: year_str
 
     write(year_str, "(I4)") year
     filename_for_year = replace_text(filename, "{{ year }}", year_str)
-    filename_for_year = replace_text(filename, "{{year}}", year_str)
+    filename_for_year = replace_text(filename_for_year, "{{year}}", year_str)
+    filename_for_year = first_file_matching_pattern(filename_for_year)
 endfunction filename_for_year
 
 !> Return the time index of a particular date.

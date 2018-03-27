@@ -185,4 +185,26 @@ function timedelta_in_seconds(start_date, end_date, calendar)
 
 endfunction timedelta_in_seconds
 
+!> Return name of the first file that matches pattern
+function first_file_matching_pattern(pattern)
+    character(len=*), intent(in) :: pattern
+
+    character(len=1024) :: first_file_matching_pattern
+    character(len=1024) :: command
+    integer :: exitstat, tmp_unit
+
+    open(newunit=tmp_unit, file='tmpfile.txt')
+    command = 'ls '//trim(pattern)//' > tmpfile.txt 2> /dev/null'
+
+    call execute_command_line(trim(command), exitstat=exitstat)
+    if (exitstat == 0) then
+        read(tmp_unit, '(A)') first_file_matching_pattern
+    else
+        first_file_matching_pattern = ''
+    endif
+
+    close(tmp_unit, status='delete')
+
+endfunction
+
 end module util_mod

@@ -1,0 +1,8 @@
+&atm_nml
+    forcing_period_years = 1
+    runoff_remap_weights_file = '../test_data/rmp_jra55_runoff_cice_conserve.nc'
+    dt = 3600
+&end
+
+&runoff_nml
+&end
