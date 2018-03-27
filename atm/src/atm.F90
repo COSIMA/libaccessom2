@@ -59,7 +59,7 @@ program atm
 
     ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
     do i=1, num_coupling_fields
-        if (fields(i)%name == 'runoff') then
+        if (index(fields(i)%name, 'runoff') /= 0) then
             call assert(.not. allocated(runoff_field%data_array), &
                         'Runoff already associated')
             runoff_field%name = fields(i)%name
@@ -80,12 +80,12 @@ program atm
         do i=1, num_coupling_fields
             if (mod(cur_time_in_secs, fields(i)%dt) == 0) then
                 call forcing%update_field(cur_date, fields(i))
-                if (fields(i)%name == 'runoff') then
+                if (index(fields(i)%name, 'runoff') /= 0) then
                     call runoff%remap(fields(i)%data_array, runoff_field%data_array, ice_grid%mask)
                 endif
             endif
 
-            if (fields(i)%name == 'runoff') then
+            if (index(fields(i)%name, 'runoff') /= 0) then
                 call coupler%put(runoff_field, cur_date, err)
             else
                 call coupler%put(fields(i), cur_date, err)

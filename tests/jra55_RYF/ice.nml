@@ -5,5 +5,5 @@
     from_ocean_field_names = 'sst_i', 'sss_i', 'ssu_i', 'ssv_i', 'frazil_i', 'sslx_i', 'ssly_i'
     ice_grid_file = '../test_data/grid.nc'
     ice_mask_file = '../test_data/kmt.nc'
-    dt = 10800
+    dt = 3600
 &end
