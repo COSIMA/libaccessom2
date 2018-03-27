@@ -21,7 +21,7 @@ program ocean
 
     ! Namelist parameters
     type(datetime) :: cur_date, start_date, end_date
-    integer :: dt, i, tmp_unit, err
+    integer :: dt, i, idx, tmp_unit, err
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: in_fields, out_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
@@ -103,7 +103,9 @@ program ocean
     ! '_i' prefix. This exists in ACCESS-OM2 and will go away once we do
     ! ocean and ice restarts properly.
     do i=1, size(out_fields)
-        out_fields(i)%name = trim(out_fields(i)%name)//'_i'
+        idx = index(out_fields(i)%name, '_oi')
+        call assert(idx /= 0, 'Did not find expected substring _oi')
+        out_fields(i)%name = out_fields(i)%name(1:idx-1)//'_i'
     enddo
     call restart%write(cur_date, out_fields)
 
