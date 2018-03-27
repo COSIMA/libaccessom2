@@ -46,6 +46,8 @@ program atm
                       param%forcing_period_years, num_coupling_fields)
     allocate(fields(num_coupling_fields))
     call forcing%init_fields(fields, min_dt)
+    ! FIXME: use dt from atm.nml instead of min_dt for the time being. 
+    min_dt = param%dt
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(coupler%get_peer_intercomm())
