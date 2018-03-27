@@ -18,4 +18,4 @@ time mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 -np 
 
 # What am I doing now
 
-Doing full JRA55 RYF and IAF forcing tests.
+Doing full JRA55 RYF and IAF forcing tests. Sorting out issues with short atm timestep.

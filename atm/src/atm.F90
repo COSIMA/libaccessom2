@@ -36,7 +36,6 @@ program atm
     end_date = accessom2%get_end_date()
     cur_date = start_date
 
-
     ! Initialise the coupler
     call coupler%init_begin('matmxx', start_date, &
                             timedelta_in_seconds(start_date, end_date))
