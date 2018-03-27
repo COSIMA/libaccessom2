@@ -4,7 +4,6 @@ program ocean
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
     use datetime_module, only : datetime, strptime, timedelta
-    use ice_grid_mod, only  : ice_grid_type => ice_grid
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
     use accessom2_mod, only : accessom2_type => accessom2
@@ -16,7 +15,6 @@ program ocean
     integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128, &
                           MAX_FILE_NAME_LEN = 256
 
-    type(ice_grid_type) :: ice_grid
     type(coupler_type) :: coupler
     type(restart_type) :: restart
     type(accessom2_type) :: accessom2
