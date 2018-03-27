@@ -1,6 +1,4 @@
 &atm_nml
-    start_date = '1900-01-01 00:00:00'
-    end_date = '1901-01-01 00:00:00'
     forcing_period_years = 1
     runoff_remap_weights_file = '../test_data/rmp_jra55_runoff_cice_conserve.nc'
 &end

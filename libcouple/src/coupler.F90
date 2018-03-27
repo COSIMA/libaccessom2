@@ -24,7 +24,7 @@ type coupler
     integer :: size     ! Total number of processes
 
     ! Intercommunicators
-    integer :: atm_intercomm, ice_intercomm, ocean_intercomm
+    integer :: monitor_intercomm, atm_intercomm, ice_intercomm, ocean_intercomm
     integer :: localcomm
     integer :: my_local_pe
 
@@ -56,7 +56,8 @@ subroutine coupler_init_begin(self, model_name, start_date, &
     integer :: err
 
     call assert(model_name == 'matmxx' .or. model_name == 'cicexx' &
-                .or. model_name == 'oceanx', 'Bad model name')
+                .or. model_name == 'oceanx' .or. model_name == 'monito', &
+                'Bad model name')
     self%model_name = model_name
     self%start_date = start_date
 
@@ -144,20 +145,18 @@ subroutine coupler_init_end(self)
     call oasis_enddef(err)
 endsubroutine coupler_init_end
 
-subroutine coupler_put(self, field, date, debug)
+subroutine coupler_put(self, field, date, err)
 
     class(coupler), intent(in) :: self
     class(field_type), intent(inout) :: field
     type(datetime), intent(in) :: date
-    logical, optional, intent(in) :: debug
+    integer, intent(out) :: err
 
-    integer :: err, timestamp
+    integer :: timestamp
 
-    if (present(debug)) then
-        if (debug) then
-            write(stdout, *) 'chksum '//trim(field%name)//':', sum(field%data_array)
-        endif
-    endif
+#if defined(DEBUG)
+     write(stdout, *) 'chksum '//trim(field%name)//':', sum(field%data_array)
+#endif
 
     timestamp = timedelta_in_seconds(self%start_date, date)
 
@@ -166,25 +165,23 @@ subroutine coupler_put(self, field, date, debug)
 
 endsubroutine coupler_put
 
-subroutine coupler_get(self, field, date, debug)
+subroutine coupler_get(self, field, date, err)
 
     class(coupler), intent(in) :: self
     class(field_type), intent(inout) :: field
     type(datetime), intent(in) :: date
-    logical, optional, intent(in) :: debug
+    integer, intent(out) :: err
 
-    integer :: err, timestamp
+    integer :: timestamp
 
     timestamp = timedelta_in_seconds(self%start_date, date)
 
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
     call assert(err == OASIS_OK .or. err == OASIS_RECVD, 'oasis_get')
 
-    if (present(debug)) then
-        if (debug) then
-            write(stdout, *) 'chksum '//trim(field%name)//':', sum(field%data_array)
-        endif
-    endif
+#if defined(DEBUG)
+    write(stdout, *) 'chksum '//trim(field%name)//':', sum(field%data_array)
+#endif
 
 endsubroutine coupler_get
 

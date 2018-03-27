@@ -1,6 +1,6 @@
 module accessom2_mod
 
-use mpi
+use, intrinsic :: iso_c_binding, only: c_null_char
 use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
 use error_handler, only : assert
 
@@ -60,16 +60,19 @@ subroutine accessom2_init(self, model_name)
         open(newunit=tmp_unit, file='accessom2_datetime.nml')
         read(tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)
-        rc = c_strptime(current_datetime, "%Y-%m-%dT%H:%M:%S", ctime)
+        rc = c_strptime(current_datetime//c_null_char, &
+                        "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
         call assert(rc /= 0, 'Bad start_date format in accessom2_datetime.nml')
         self%start_date = tm2date(ctime)
     else
-        rc = c_strptime(start_date, "%Y-%m-%dT%H:%M:%S", ctime)
+        rc = c_strptime(start_date//c_null_char, &
+                        "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
         call assert(rc /= 0, 'Bad start_date format in accessom2.nml')
         self%start_date = tm2date(ctime)
     endif
 
-    rc = c_strptime(end_date, "%Y-%m-%dT%H:%M:%S", ctime)
+    rc = c_strptime(end_date//c_null_char, &
+                    "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
     call assert(rc /= 0, 'Bad end_date format in accessom2.nml')
     self%end_date = tm2date(ctime)
 
@@ -110,8 +113,7 @@ subroutine accessom2_deinit(self, cur_date)
 
     current_datetime = cur_date%strftime('%Y-%m-%dT%H:%M:%S')
 
-    call MPI_Comm_rank(MPI_COMM_WORLD, my_pe, err)
-    if (my_pe == 0) then
+    if (self%model_name == 'matmxx') then
         open(newunit=tmp_unit, file='accessom2_datetime.nml')
         write(unit=tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)

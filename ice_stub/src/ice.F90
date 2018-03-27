@@ -23,7 +23,7 @@ program ice
 
     ! Namelist parameters
     type(datetime) :: start_date, end_date, cur_date
-    integer :: dt, i, tmp_unit
+    integer :: dt, i, tmp_unit, err
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: from_atm_fields, &
         from_ocean_fields, to_ocean_fields
@@ -108,7 +108,7 @@ program ice
 
     ! Get from atmosphere
     do i=1, size(from_atm_fields)
-        call coupler%get(from_atm_fields(i), cur_date)
+        call coupler%get(from_atm_fields(i), cur_date, err)
     enddo
     call coupler%atm_ice_sync()
     ! Update atmospheric forcing halos - expensive operation.
@@ -123,7 +123,7 @@ program ice
     do
         ! Send to ocean - non-blocking
         do i=1, size(to_ocean_fields)
-            call coupler%put(to_ocean_fields(i), cur_date)
+            call coupler%put(to_ocean_fields(i), cur_date, err)
         enddo
 
         ! Do work
@@ -136,7 +136,7 @@ program ice
 
         ! Get from atmos - fast because atmos should have already sent.
         do i=1, size(from_atm_fields)
-            call coupler%get(from_atm_fields(i), cur_date)
+            call coupler%get(from_atm_fields(i), cur_date, err)
         enddo
 
         ! atm is blocked, unblock it. This prevents the atm from sending
@@ -150,7 +150,7 @@ program ice
         ! that ocean and can receive immediately and quickly loop to send
         ! to the ocean. This will minimise the ocean wait time.
         do i=1, size(from_ocean_fields)
-            call coupler%get(from_ocean_fields(i), cur_date)
+            call coupler%get(from_ocean_fields(i), cur_date, err)
         enddo
     enddo
 

@@ -13,7 +13,7 @@
 # called by one component model in the coupled system (optional).
 # For the definition of the fields, see under $STRINGS keyword
 #
- 2
+ 5
  $END
 ##########################################################################
  $NBMODEL
@@ -21,20 +21,21 @@
 # their names (6 characters) + , in option, the maximum Fortran unit
 # number used by each model; 1024 will be used if none are given.
 #
-   2  matmxx cicexx
+   3  matmxx cicexx oceanx
  $END
 ###########################################################################
  $RUNTIME
 # This gives you the total simulated time for this run in seconds
-#
-  31536000
+# This is not used but needs to be >= to the timestep to satisfy error checking.
+# See https://github.com/OceansAus/oasis3-mct/issues/3
+  10800
  $END
 ###########################################################################
  $NLOGPRT
 # Index of printing level in the debug files :
 # 0 : no printing ; 1 = main routines by master procs;
 # >= 2 : complete output by all procs
-  3
+  2
  $END
 ###########################################################################
  $STRINGS
@@ -51,7 +52,7 @@
 # oasis get at time=0 will come from a coupling restart file written by the
 # last active oasis put of the previous run.
 ##########
-swfld swfld_i 367 10800 3 ../test_data/a2i.nc EXPORTED
+swfld swfld_i 367 10800 3 a2i.nc EXPORTED
 jrat cict LAG=+10800 SEQ=+1
 P  0  P  0
 #
@@ -62,11 +63,36 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.
 ##########
-runoff runoff_i 297 10800 1 ../test_data/a2i.nc EXPORTED
+runoff runoff_i 297 10800 1 a2i.nc EXPORTED
 cict cict LAG=+10800 SEQ=+1
 P  0  P  0
 #
 LOCTRANS
 INSTANT
+############################################################################
+#
+#                      ICE --->>> OCEAN
+#                      ----------------
 ##########
+swfld_io swfld_o 170 10800 1 i2o.nc IGNORED
+cict cict LAG=0 SEQ=+1
+#
+LOCTRANS
+INSTANT
+##########
+runoff_io runoff_o 175 10800 1 i2o.nc IGNORED
+cict cict LAG=0 SEQ=+1
+#
+LOCTRANS
+INSTANT
+############################################################################
+#
+#                      OCEAN --->>> ICE
+#                      ----------------
+##########
+sst sst_i 1 10800 1 o2i.nc IGNORED
+cict cict LAG=0 SEQ=+1
+#
+LOCTRANS
+INSTANT
  $END

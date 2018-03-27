@@ -24,7 +24,8 @@ program atm
     type(field_type), dimension(:), allocatable :: fields
     type(field_type) :: runoff_field
     integer, dimension(2) :: ice_shape
-    integer :: i, num_coupling_fields, min_dt, cur_time_in_secs
+    integer :: i, err
+    integer :: num_coupling_fields, min_dt, cur_time_in_secs
 
     ! Initialise run settings
     call param%init()
@@ -35,7 +36,6 @@ program atm
     end_date = accessom2%get_end_date()
     cur_date = start_date
 
-    print*, 'ATM: start_date, end_date: '//start_date%isoformat()//' '//end_date%isoformat()
 
     ! Initialise the coupler
     call coupler%init_begin('matmxx', start_date, &
@@ -85,9 +85,9 @@ program atm
             endif
 
             if (fields(i)%name == 'runoff') then
-                call coupler%put(runoff_field, cur_date, param%debug_output)
+                call coupler%put(runoff_field, cur_date, err)
             else
-                call coupler%put(fields(i), cur_date, param%debug_output)
+                call coupler%put(fields(i), cur_date, err)
             endif
         enddo
 

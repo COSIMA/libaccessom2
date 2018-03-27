@@ -23,7 +23,7 @@ program ocean
 
     ! Namelist parameters
     type(datetime) :: cur_date, start_date, end_date
-    integer :: dt, i, tmp_unit
+    integer :: dt, i, tmp_unit, err
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: in_fields, out_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
@@ -81,14 +81,14 @@ program ocean
     do
         ! Get fields from ice
         do i=1, size(in_fields)
-            call coupler%get(in_fields(i), cur_date)
+            call coupler%get(in_fields(i), cur_date, err)
         enddo
 
         ! Do work, i.e. use the in_fields and populate the out_fields
 
         ! Send fields to ice
         do i=1, size(out_fields)
-            call coupler%put(out_fields(i), cur_date)
+            call coupler%put(out_fields(i), cur_date, err)
         enddo
 
         cur_date = cur_date + timedelta(seconds=dt)
