@@ -4,12 +4,12 @@
     {
       "filename": "../test_data/RYF/v1-3/RYF.rsds.1990_1991.nc",
       "fieldname": "rsds",
-      "cname": "swfld"
+      "cname": "swfld_ai"
     },
     {
       "filename": "../test_data/RYF/v1-3/RYF.runoff_all.1990_1991.nc",
       "fieldname": "friver",
-      "cname": "runoff"
+      "cname": "runoff_ai"
     },
   ]
 }
