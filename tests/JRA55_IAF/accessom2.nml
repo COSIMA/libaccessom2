@@ -1,8 +1,8 @@
 &accessom2_nml
-    start_date = '1958-01-01T00:00:00'
+    start_date = '1958-12-30T00:00:00'
     end_date = '1960-01-01T00:00:00'
     calendar = 'noleap'
     ! Runtime for a single job/submit, format is years, months, seconds,
     ! two of which must be zero.
-    job_runtime = 0, 0, 172800
+    job_runtime = 2, 0, 0
 &end

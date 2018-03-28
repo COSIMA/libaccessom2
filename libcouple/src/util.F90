@@ -196,6 +196,7 @@ function first_file_matching_pattern(pattern)
     open(newunit=tmp_unit, file='tmpfile.txt')
     command = 'ls '//trim(pattern)//' > tmpfile.txt 2> /dev/null'
 
+    exitstat = 1
     call execute_command_line(trim(command), exitstat=exitstat)
     if (exitstat == 0) then
         read(tmp_unit, '(A)') first_file_matching_pattern

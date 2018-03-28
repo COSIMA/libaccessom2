@@ -213,7 +213,6 @@ function forcing_index(ncid, target_date, guess)
                     'Get '//trim(time_bnds_name))
 
         do forcing_index=guess, num_times
-            nguesses = nguesses + 1
             td_before = timedelta(seconds=int(time_bnds(1, forcing_index)*86400))
             td_after = timedelta(seconds=int(time_bnds(2, forcing_index)*86400))
             if (target_date >= (nc_start_date + td_before) .and. &

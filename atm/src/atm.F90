@@ -75,7 +75,6 @@ program atm
     do
         cur_time_in_secs = timedelta_in_seconds(start_date, cur_date)
         print*, 'ATM: '//cur_date%isoformat()
-        print*, 'cur_time_in_secs: ', cur_time_in_secs
 
         ! Send each forcing field
         do i=1, num_coupling_fields
