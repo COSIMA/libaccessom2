@@ -107,31 +107,26 @@ subroutine forcing_init_fields(self, fields, min_dt)
 
 endsubroutine forcing_init_fields
 
-subroutine forcing_update_field(self, cur_date, fld)
+subroutine forcing_update_field(self, forcing_date, fld)
 
     class(forcing), intent(inout) :: self
-    type(datetime), intent(in) :: cur_date
+    type(datetime), intent(in) :: forcing_date
     type(field_type), intent(inout) :: fld
 
-    integer :: year, offset, indx, i, ncid, varid
+    integer :: indx, ncid, varid
     character(len=256) :: filename, varname
-    type(datetime) :: forcing_date
 
     ! Check whether any work needs to be done
-    if (fld%timestamp == cur_date) then
+    if (fld%timestamp == forcing_date) then
         return
     endif
 
-    year = cur_date%getYear()
-    filename = filename_for_year(fld%filename, year)
+    filename = filename_for_year(fld%filename, forcing_date%getYear())
     call assert(trim(filename) /= '', "File not found: "//fld%filename)
 
     ! Find the correct timeslice in the file.
     call ncheck(nf90_open(trim(filename), NF90_NOWRITE, ncid), &
                 'Opening '//trim(filename))
-    forcing_date = datetime(year, cur_date%getMonth(), &
-                            cur_date%getDay(), cur_date%getHour(), &
-                            cur_date%getMinute(), cur_date%getSecond())
     indx = forcing_index(ncid, forcing_date, fld%nc_idx_guess)
     if (indx == -1) then
         ! Search from the beginning before failing
