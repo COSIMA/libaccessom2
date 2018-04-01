@@ -28,6 +28,7 @@ program ice
         from_atm_field_names = '', from_ocean_field_names = '', &
         to_ocean_field_names = ''
     integer :: num_from_atm_fields, num_from_ocean_fields, num_to_ocean_fields
+    integer :: cur_runtime_in_seconds
     character(len=MAX_FILE_NAME_LEN) :: ice_grid_file, ice_mask_file
     logical :: file_exists
 
@@ -44,11 +45,11 @@ program ice
     close(tmp_unit)
 
     ! Initialise time manager
-    call time_manager%init('cicexx')
+    call date_manager%init('cicexx')
 
     ! Initialise coupler, this needs to be done before the ice grid is
     ! sent to the atmosphere.
-    call coupler%init_begin('cicexx', time_manager%get_total_runtime_in_seconds())
+    call coupler%init_begin('cicexx', date_manager%get_total_runtime_in_seconds())
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0
@@ -100,7 +101,7 @@ program ice
     call i2o_restart%read(to_ocean_fields)
 
     ! Get from atmosphere
-    cur_runtime_in_seconds = time_manager%get_cur_runtime_in_seconds()
+    cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
     do i=1, size(from_atm_fields)
         call coupler%get(from_atm_fields(i), cur_runtime_in_seconds, err)
     enddo
@@ -122,11 +123,11 @@ program ice
 
         ! Do work
 
-        time_manager%progress_date(dt)
-        if (time_manager%run_finished())
+        call date_manager%progress_date(dt)
+        if (date_manager%run_finished()) then
             exit
         endif
-        cur_runtime_in_seconds = time_manager%get_cur_runtime_in_seconds()
+        cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
 
         ! Get from atmos - fast because atmos should have already sent.
         do i=1, size(from_atm_fields)
@@ -149,8 +150,8 @@ program ice
     enddo
 
     ! Write out restart.
-    call i2o_restart%write(time_manager%get_cur_exp_date(), to_ocean_fields)
-    call coupler%deinit(time_manager%get_cur_exp_date())
-    call time_manager%deinit()
+    call i2o_restart%write(date_manager%get_cur_exp_date(), to_ocean_fields)
+    call coupler%deinit(date_manager%get_cur_exp_date())
+    call date_manager%deinit()
 
 end program

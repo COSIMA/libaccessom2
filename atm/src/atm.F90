@@ -22,20 +22,20 @@ program atm
     type(field_type) :: runoff_field
     integer, dimension(2) :: ice_shape
     integer :: i, err
-    integer :: num_coupling_fields, min_dt, cur_time_in_secs
+    integer :: num_coupling_fields, min_dt, cur_runtime_in_seconds
 
     ! Initialise run settings
     call param%init()
 
     ! Initialise time manager
-    call time_manager%init('matmxx')
+    call date_manager%init('matmxx')
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
-    call coupler%init_begin('matmxx', time_manager%get_total_runtime_in_seconds())
+    call coupler%init_begin('matmxx', date_manager%get_total_runtime_in_seconds())
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
-    call forcing%init("forcing.json", time_manager%get_cur_forcing_date(), &
+    call forcing%init("forcing.json", date_manager%get_cur_forcing_date(), &
                       num_coupling_fields)
     allocate(fields(num_coupling_fields))
     call forcing%init_fields(fields, min_dt)
@@ -65,15 +65,15 @@ program atm
     enddo
     call coupler%init_end()
 
-    do while (.not. time_manager%run_finished())
+    do while (.not. date_manager%run_finished())
 
-        cur_forcing_date = time_manager%get_cur_forcing_date()
-        cur_runtime_in_seconds = time_manager%get_cur_runtime_in_seconds()
+        cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
 
         ! Send each forcing field
         do i=1, num_coupling_fields
             if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
-                call forcing%update_field(cur_forcing_date, fields(i))
+                call forcing%update_field(date_manager%get_cur_forcing_date(), &
+                                          fields(i))
                 if (index(fields(i)%name, 'runoff') /= 0) then
                     call runoff%remap(fields(i)%data_array, &
                                       runoff_field%data_array, ice_grid%mask)
@@ -91,10 +91,10 @@ program atm
         ! after receiving the above fields. This prevents the atm from sending continuously.
         call coupler%atm_ice_sync()
 
-        time_manager%progress_date(min_dt)
+        call date_manager%progress_date(min_dt)
     enddo
 
-    call coupler%deinit(time_manager%get_cur_exp_date())
-    call time_manager%deinit()
+    call coupler%deinit(date_manager%get_cur_exp_date())
+    call date_manager%deinit()
 
 end program atm

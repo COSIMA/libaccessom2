@@ -6,9 +6,8 @@ use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_intercomm, &
                       OASIS_RECVD, OASIS_SENT, OASIS_TOREST, &
                       OASIS_IN, OASIS_OUT, oasis_put, oasis_get, oasis_terminate, &
                       oasis_get_localcomm
-use datetime_module, only : datetime, timedelta, date2num
+use datetime_module, only : datetime, date2num
 use error_handler, only : assert
-use util_mod, only : timedelta_in_seconds
 use field_mod, only : field_type => field
 
 use, intrinsic :: iso_fortran_env, only : stdout=>output_unit

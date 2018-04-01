@@ -24,6 +24,7 @@ program ocean
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
         from_ice_field_names = '', to_ice_field_names = ''
     integer :: num_from_ice_fields, num_to_ice_fields
+    integer :: cur_runtime_in_seconds
     logical :: file_exists
 
     namelist /ocean_nml/ dt, resolution, &
@@ -38,10 +39,10 @@ program ocean
     close(tmp_unit)
 
     ! Initialise time manager
-    call time_manager%init('oceanx')
+    call date_manager%init('oceanx')
 
     ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('oceanx', time_manager%get_total_runtime_in_seconds())
+    call coupler%init_begin('oceanx', date_manager%get_total_runtime_in_seconds())
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
@@ -69,8 +70,8 @@ program ocean
     enddo
     call coupler%init_end()
 
-    do while (.not. time_manager%run_finished())
-        cur_runtime_in_seconds = time_manager%get_cur_runtime_in_seconds()
+    do while (.not. date_manager%run_finished())
+        cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
 
         ! Get fields from ice
         do i=1, size(in_fields)
@@ -84,7 +85,7 @@ program ocean
             call coupler%put(out_fields(i), cur_runtime_in_seconds, err)
         enddo
 
-        time_manager%progress_date(dt)
+        call date_manager%progress_date(dt)
     enddo
 
     ! Write out restart.
@@ -99,8 +100,8 @@ program ocean
     enddo
 
     ! Write out restart.
-    call restart%write(time_manager%get_cur_exp_date(), out_fields)
-    call coupler%deinit(time_manager%get_cur_exp_date())
-    call time_manager%deinit()
+    call restart%write(date_manager%get_cur_exp_date(), out_fields)
+    call coupler%deinit(date_manager%get_cur_exp_date())
+    call date_manager%deinit()
 
 end program ocean

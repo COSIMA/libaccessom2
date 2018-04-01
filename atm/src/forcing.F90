@@ -143,7 +143,7 @@ subroutine forcing_update_field(self, forcing_date, fld)
     call read_data(ncid, varid, varname, indx, fld%data_array)
     call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
 
-    fld%timestamp = cur_date
+    fld%timestamp = forcing_date
 
 endsubroutine forcing_update_field
 
