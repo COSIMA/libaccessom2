@@ -1,4 +1,5 @@
-module accessom2_mod
+
+module date_manager_mod
 
 use, intrinsic :: iso_c_binding, only: c_null_char
 use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
@@ -6,47 +7,65 @@ use error_handler, only : assert
 
 implicit none
 private
-public accessom2
+public date_manager
+public integer, parameter :: CALENDAR_NOLEAP = 1, CALENDAR_GREGORIAN = 2
 
-type accessom2
+type date_manager
     private
 
-    ! Intercommunicators
-    integer :: ice_intercomm, ocean_intercomm
+    ! These are set by the user.
+    type(datetime) :: forcing_start_date
+    type(datetime) :: forcing_end_date
+    integer, dimension(3) :: restart_period
+    integer :: timestep
+    integer :: calendar
 
-    character(len=6) :: model_name, calendar
+    ! These are internal
+    type(datetime) :: exp_start_date
+    type(datetime) :: exp_cur_date, forcing_cur_date
+    type(datetime) :: run_end_date
 
-    type(datetime) :: start_date
-    type(datetime) :: end_date
-    type(datetime) :: job_end_date
+    character(len=*), parameter :: restart_file = 'accessom2_restart_datetime.nml'
 
 contains
     private
-    procedure, pass(self), public :: init => accessom2_init
-    procedure, pass(self), public :: deinit => accessom2_deinit
-    procedure, pass(self), public :: get_start_date
-    procedure, pass(self), public :: get_end_date
-endtype accessom2
+    procedure, pass(self), public :: init => date_manager_init
+    procedure, pass(self), public :: deinit => date_manager_deinit
+    procedure, pass(self), public :: progress_forcing_date => &
+                                        date_manager_progress_forcing_date
+    procedure, pass(self), public :: progress_exp_date => &
+                                        date_manager_progress_exp_date
+    procedure, pass(self), public :: run_finished => &
+                                        date_manager_run_finished
+    procedure, pass(self), public :: get_cur_forcing_date => &
+                                        date_manager_get_cur_forcing_date
+    procedure, pass(self), public :: get_cur_exp_date => &
+                                        date_manager_get_cur_exp_date
+endtype date_manager
 
 character(len=19) :: start_date, end_date
 character(len=6) :: calendar
 integer, dimension(3) :: job_runtime
 character(len=19) :: current_datetime
- 
-namelist /accessom2_nml/ start_date, end_date, calendar, job_runtime
+
+namelist /time_manager_nml/ start_date, end_date, calendar, job_runtime
 namelist /do_not_edit_nml/ current_datetime
 
 contains
 
-subroutine accessom2_init(self, model_name)
-    class(accessom2), intent(inout) :: self
-    character(len=6), intent(in) :: model_name
+subroutine date_manager_init(self, forcing_start_date, forcing_end_date, &
+                             restart_period, timestep, calendar)
 
-    type(tm_struct) :: ctime
-    logical :: file_exists
-    integer :: tmp_unit, rc
+    class(coupler), intent(inout) :: self
+    type(datetime), intent(in) :: forcing_start_date, forcing_end_date
+    integer, dimension(3), intent(in) :: restart_period
+    integer, intent(in) :: timestep, calendar
 
-    self%model_name = model_name
+    self%forcing_start_date = forcing_start_date
+    self%forcing_end_date = forcing_end_date
+    self%restart_period = restart_period
+    self%timestep = timestep
+    self%calendar = calendar
 
     ! Read namelist which includes information about the start and end date
     inquire(file='accessom2.nml', exist=file_exists)
@@ -55,6 +74,8 @@ subroutine accessom2_init(self, model_name)
     read(tmp_unit, nml=accessom2_nml)
     close(tmp_unit)
 
+
+    ! Read in exp_cur_date and focing_cur_date from restart file.
     inquire(file='accessom2_datetime.nml', exist=file_exists)
     if (file_exists) then
         open(newunit=tmp_unit, file='accessom2_datetime.nml')
@@ -83,43 +104,7 @@ subroutine accessom2_init(self, model_name)
         self%job_end_date = self%end_date
     endif
 
-endsubroutine accessom2_init
-
-function get_start_date(self)
-    class(accessom2), intent(inout) :: self
-    type(datetime) :: get_start_date
-
-    get_start_date = self%start_date
-
-endfunction get_start_date
-
-function get_end_date(self)
-    class(accessom2), intent(inout) :: self
-    type(datetime) :: get_end_date
-
-    get_end_date = self%job_end_date
-
-endfunction get_end_date
-
-
-!> Called by all models at the end of the run.
-! The root will write out the new current date
-subroutine accessom2_deinit(self, cur_date)
-    class(accessom2), intent(inout) :: self
-    type(datetime), intent(in) :: cur_date
-
-    integer :: tmp_unit, my_pe, err
-    integer, dimension(1) :: buf
-
-    current_datetime = cur_date%strftime('%Y-%m-%dT%H:%M:%S')
-
-    if (self%model_name == 'matmxx') then
-        open(newunit=tmp_unit, file='accessom2_datetime.nml')
-        write(unit=tmp_unit, nml=do_not_edit_nml)
-        close(tmp_unit)
-    endif
-
-endsubroutine accessom2_deinit
+endsubroutine
 
 function job_end_date(start_date, job_runtime, end_date, calendar)
     type(datetime), intent(in) :: start_date, end_date
@@ -186,4 +171,16 @@ function job_end_date(start_date, job_runtime, end_date, calendar)
     endif
 endfunction job_end_date
 
-endmodule accessom2_mod
+subroutine deinit(self)
+    current_datetime = cur_date%strftime('%Y-%m-%dT%H:%M:%S')
+
+    if (self%model_name == 'matmxx') then
+        open(newunit=tmp_unit, file='accessom2_datetime.nml')
+        write(unit=tmp_unit, nml=do_not_edit_nml)
+        close(tmp_unit)
+    endif
+
+end subroutine deinit
+
+
+end module date_manager_mod
