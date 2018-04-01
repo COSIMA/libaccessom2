@@ -29,19 +29,17 @@ endtype forcing
 contains
 
 !> Open forcing file and find fields
-subroutine forcing_init(self, config, start_date, period, nfields)
+subroutine forcing_init(self, config, start_date, nfields)
 
     class(forcing), intent(inout) :: self
     character(len=*), intent(in) :: config
     type(datetime), intent(in) :: start_date
-    integer, intent(in) :: period
     integer, intent(out) :: nfields
 
     type(json_value), pointer :: root
     logical :: found
 
     self%start_date = start_date
-    self%period = period
 
     call self%json%initialize()
     call self%json%load_file(filename=trim(config))
@@ -124,9 +122,7 @@ subroutine forcing_update_field(self, cur_date, fld)
         return
     endif
 
-    ! Find the correct file based on the current year.
-    offset = mod(cur_date%getYear() - self%start_date%getYear(), self%period)
-    year = cur_date%getYear() + offset
+    year = cur_date%getYear()
     filename = filename_for_year(fld%filename, year)
     call assert(trim(filename) /= '', "File not found: "//fld%filename)
 

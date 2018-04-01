@@ -30,7 +30,6 @@ type coupler
 
     character(len=6) :: model_name
 
-    type(datetime) :: start_date
 
 contains
     private
@@ -46,11 +45,10 @@ endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, start_date, &
+subroutine coupler_init_begin(self, model_name, &
                               total_runtime_in_seconds)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
-    type(datetime), intent(in) :: start_date
     integer, intent(in) :: total_runtime_in_seconds
 
     integer :: err
@@ -59,7 +57,6 @@ subroutine coupler_init_begin(self, model_name, start_date, &
                 .or. model_name == 'oceanx' .or. model_name == 'monito', &
                 'Bad model name')
     self%model_name = model_name
-    self%start_date = start_date
 
     call MPI_Init(err)
     call oasis_init_comp(self%comp_id, model_name, err, &
@@ -145,36 +142,28 @@ subroutine coupler_init_end(self)
     call oasis_enddef(err)
 endsubroutine coupler_init_end
 
-subroutine coupler_put(self, field, date, err)
+subroutine coupler_put(self, field, timestamp, err)
 
     class(coupler), intent(in) :: self
     class(field_type), intent(inout) :: field
-    type(datetime), intent(in) :: date
+    integer, intent(in) :: timestamp
     integer, intent(out) :: err
-
-    integer :: timestamp
 
 #if defined(DEBUG)
      write(stdout, *) 'chksum '//trim(field%name)//':', sum(field%data_array)
 #endif
-
-    timestamp = timedelta_in_seconds(self%start_date, date)
 
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
     call assert(err == OASIS_OK .or. err == OASIS_SENT .or. err == OASIS_TOREST, 'oasis_put')
 
 endsubroutine coupler_put
 
-subroutine coupler_get(self, field, date, err)
+subroutine coupler_get(self, field, timestamp, err)
 
     class(coupler), intent(in) :: self
     class(field_type), intent(inout) :: field
-    type(datetime), intent(in) :: date
+    integer, intent(in) :: timestamp
     integer, intent(out) :: err
-
-    integer :: timestamp
-
-    timestamp = timedelta_in_seconds(self%start_date, date)
 
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
     call assert(err == OASIS_OK .or. err == OASIS_RECVD, 'oasis_get')

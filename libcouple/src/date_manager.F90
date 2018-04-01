@@ -13,17 +13,16 @@ public integer, parameter :: CALENDAR_NOLEAP = 1, CALENDAR_GREGORIAN = 2
 type date_manager
     private
 
+    character(len=6) :: model_name
+
     ! These are set by the user.
-    type(datetime) :: forcing_start_date
-    type(datetime) :: forcing_end_date
+    type(datetime) :: forcing_start_date, forcing_end_date
     integer, dimension(3) :: restart_period
-    integer :: timestep
     integer :: calendar
 
     ! These are internal
-    type(datetime) :: exp_start_date
     type(datetime) :: exp_cur_date, forcing_cur_date
-    type(datetime) :: run_end_date
+    type(datetime) :: run_start_date, run_end_date
 
     character(len=*), parameter :: restart_file = 'accessom2_restart_datetime.nml'
     character(len=*), parameter :: config_file = 'accessom2.nml'
@@ -32,10 +31,8 @@ contains
     private
     procedure, pass(self), public :: init => date_manager_init
     procedure, pass(self), public :: deinit => date_manager_deinit
-    procedure, pass(self), public :: progress_forcing_date => &
-                                        date_manager_progress_forcing_date
-    procedure, pass(self), public :: progress_exp_date => &
-                                        date_manager_progress_exp_date
+    procedure, pass(self), public :: progress_date => &
+                                        date_manager_progress_date
     procedure, pass(self), public :: run_finished => &
                                         date_manager_run_finished
     procedure, pass(self), public :: get_cur_forcing_date => &
@@ -44,6 +41,10 @@ contains
                                         date_manager_get_cur_exp_date
     procedure, pass(self), public :: run_finished => date_manager_run_finished
     procedure, pass(self) :: run_end_date => date_manager_run_end_date
+    procedure, pass(self), public :: get_total_runtime_in_seconds => &
+                                     date_manager_get_total_runtime_in_seconds
+    procedure, pass(self), public :: get_cur_runtime_in_seconds => &
+                                     date_manager_get_cur_runtime_in_seconds
 endtype date_manager
 
 character(len=19) :: forcing_start_date, forcing_end_date
@@ -51,18 +52,18 @@ character(len=19) :: exp_cur_date, forcing_cur_date
 character(len=9) :: calendar
 integer, dimension(3) :: restart_period
 
-namelist /time_manager_nml/ forcing_start_date, forcing_end_date, calendar, restart_period
+namelist /time_manager_nml/ forcing_start_date, forcing_end_date, restart_period, &
+                            calendar
 namelist /do_not_edit_nml/ current_forcing_date, current_exp_date
 
 contains
 
-subroutine date_manager_init(self, timestep, calendar)
-
+subroutine date_manager_init(self, model_name)
     class(date_manager), intent(inout) :: self
-    integer, intent(in) :: timestep, calendar
+    character(len=6), intent(in) :: model_name
+    integer, intent(in) :: calendar
 
-    self%timestep = timestep
-    self%calendar = calendar
+    self%model_name = model_name
 
     ! Read namelist which includes information about the forcing start and end date
     inquire(file=self.config_file, exist=file_exists)
@@ -82,6 +83,7 @@ subroutine date_manager_init(self, timestep, calendar)
     self%forcing_end_date = tm2date(ctime)
 
     self%restart_period = restart_period
+    self%calendar = calendar
 
     ! Read in exp_cur_date and focing_cur_date from restart file.
     inquire(file=self.restart_file, exist=file_exists)
@@ -103,6 +105,7 @@ subroutine date_manager_init(self, timestep, calendar)
         self%exp_cur_date = self%forcing_start_date
     endif
 
+    self%run_start_date = self%exp_cur_date
     self%run_end_date = self%date_manager_run_end_date()
 
 endsubroutine
@@ -178,25 +181,24 @@ function date_manager_run_end_date(self)
 
 endfunction date_manager_run_end_date
 
-subroutine date_manager_progress_forcing_date(self)
+!> Progress both the forcing and experiment dates
+subroutine date_manager_progress_date(self, timestep)
     class(date_manager), intent(inout) :: self
+    integer, intent(in) :: timestep
 
-    self%forcing_cur_date += timedelta(seconds=self.timestep)
+    ! Forcing date
+    self%forcing_cur_date += timedelta(seconds=timestep)
     if self%forcing_cur_date%getMonth() == 2 .and. &
         self%forcing_cur_date%getMonth() == 29 .and. &
         trim(self%calendar) == 'noleap':
 
         self%forcing_cur_date += timedelta(days=1)
 
-    if self%forcing_cur_date > self%run_end_date:
-        self%forcing_cur_date = self%run_end_date
+    if self%forcing_cur_date >= self%run_end_date:
+        self%forcing_cur_date = self%forcing_start_date
 
-endsubroutine date_manager_progress_forcing_date
-
-subroutine date_manager_progress_exp_date(self)
-    class(date_manager), intent(inout) :: self
-
-    self%exp_cur_date += timedelta(seconds=self.timestep)
+    ! Experiment date
+    self%exp_cur_date += timedelta(seconds=timestep)
     if self%exp_cur_date%getMonth() == 2 .and. &
         self%exp_cur_date%getMonth() == 29 .and. &
         trim(self%calendar) == 'noleap':
@@ -206,7 +208,7 @@ subroutine date_manager_progress_exp_date(self)
     if self%exp_cur_date > self%run_end_date:
         self%exp_cur_date = self%run_end_date
 
-endsubroutine date_manager_progress_exp_date
+endsubroutine date_manager_progress_date
 
 function date_manager_get_cur_forcing_date(self)
     class(date_manager), intent(inout) :: self
@@ -226,6 +228,30 @@ function date_manager_get_cur_exp_date(self)
 
 endfunction date_manager_get_cur_exp_date
 
+function date_manager_get_total_runtime_in_seconds(self)
+    class(date_manager), intent(inout) :: self
+
+    integer :: date_manager_get_total_runtime_in_seconds
+
+    type(timedelta) :: td
+
+    td = self%run_end_date - self%run_start_date
+    date_manager_get_total_runtime_in_seconds = td%total_seconds()
+
+endfunction date_manager_get_total_runtime_in_seconds
+
+function date_manager_get_cur_runtime_in_seconds(self)
+    class(date_manager), intent(inout) :: self
+
+    integer :: date_manager_get_cur_runtime_in_seconds
+
+    type(timedelta) :: td
+
+    td = self%exp_cur_date - self%run_start_date
+    date_manager_get_cur_runtime_in_seconds = td%total_seconds()
+
+endfunction date_manager_get_cur_runtime_in_seconds
+
 function date_manager_run_finished(self)
     class(date_manager), intent(inout) :: self
 
@@ -237,7 +263,6 @@ function date_manager_run_finished(self)
         date_manager_run_finished = .false.
 
 endfunction date_manager_run_finished
-
 
 subroutine deinit(self)
     class(date_manager), intent(inout) :: self
@@ -252,6 +277,5 @@ subroutine deinit(self)
     endif
 
 end subroutine deinit
-
 
 end module date_manager_mod

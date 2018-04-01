@@ -3,11 +3,9 @@ program ocean
 
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
-    use datetime_module, only : datetime, strptime, timedelta
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
-    use accessom2_mod, only : accessom2_type => accessom2
-    use util_mod, only : timedelta_in_seconds
+    use date_manager_mod, only : date_manager_type => date_manager
     use mod_oasis, only : OASIS_IN, OASIS_OUT
 
     implicit none
@@ -17,10 +15,9 @@ program ocean
 
     type(coupler_type) :: coupler
     type(restart_type) :: restart
-    type(accessom2_type) :: accessom2
+    type(date_manager_type) :: date_manager
 
     ! Namelist parameters
-    type(datetime) :: cur_date, start_date, end_date
     integer :: dt, i, idx, tmp_unit, err
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: in_fields, out_fields
@@ -40,15 +37,11 @@ program ocean
     read(tmp_unit, nml=ocean_nml)
     close(tmp_unit)
 
-    ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
-    call accessom2%init('matmxx')
-    start_date = accessom2%get_start_date()
-    end_date = accessom2%get_end_date()
-    cur_date = start_date
+    ! Initialise time manager
+    call time_manager%init('oceanx')
 
     ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('oceanx', start_date, &
-                            timedelta_in_seconds(start_date, end_date))
+    call coupler%init_begin('oceanx', time_manager%get_total_runtime_in_seconds())
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
@@ -76,25 +69,22 @@ program ocean
     enddo
     call coupler%init_end()
 
-    do
+    do while (.not. time_manager%run_finished())
+        cur_runtime_in_seconds = time_manager%get_cur_runtime_in_seconds()
+
         ! Get fields from ice
         do i=1, size(in_fields)
-            call coupler%get(in_fields(i), cur_date, err)
+            call coupler%get(in_fields(i), cur_runtime_in_seconds, err)
         enddo
 
         ! Do work, i.e. use the in_fields and populate the out_fields
 
         ! Send fields to ice
         do i=1, size(out_fields)
-            call coupler%put(out_fields(i), cur_date, err)
+            call coupler%put(out_fields(i), cur_runtime_in_seconds, err)
         enddo
 
-        cur_date = cur_date + timedelta(seconds=dt)
-        if (cur_date == end_date) then
-            exit
-        endif
-        call assert(cur_date < end_date, 'ICE: current date after end date')
-        call assert(cur_date >= start_date, 'ICE: current date before start date')
+        time_manager%progress_date(dt)
     enddo
 
     ! Write out restart.
@@ -107,9 +97,10 @@ program ocean
         call assert(idx /= 0, 'Did not find expected substring _oi')
         out_fields(i)%name = out_fields(i)%name(1:idx-1)//'_i'
     enddo
-    call restart%write(cur_date, out_fields)
 
-    call accessom2%deinit(cur_date)
-    call coupler%deinit(cur_date)
+    ! Write out restart.
+    call restart%write(time_manager%get_cur_exp_date(), out_fields)
+    call coupler%deinit(time_manager%get_cur_exp_date())
+    call time_manager%deinit()
 
 end program ocean

@@ -1,7 +1,6 @@
 program atm
 
     use mod_oasis, only : OASIS_IN, OASIS_OUT
-    use datetime_module, only : datetime, timedelta
     use forcing_mod, only : forcing_type => forcing
     use field_mod, only : field_type => field
     use coupler_mod, only : coupler_type => coupler
@@ -9,17 +8,15 @@ program atm
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
-    use util_mod, only : timedelta_in_seconds
-    use accessom2_mod, only : accessom2_type => accessom2
+    use date_manager_mod, only : date_manager_type => date_manager
 
     implicit none
 
     type(params) :: param
-    type(accessom2_type) :: accessom2
+    type(date_manager_type) :: date_manager
     type(coupler_type) :: coupler
     type(forcing_type) :: forcing
     type(ice_grid_type) :: ice_grid
-    type(datetime) :: start_date, end_date, cur_date
     type(runoff_type) :: runoff
     type(field_type), dimension(:), allocatable :: fields
     type(field_type) :: runoff_field
@@ -30,20 +27,16 @@ program atm
     ! Initialise run settings
     call param%init()
 
-    ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
-    call accessom2%init('matmxx')
-    start_date = accessom2%get_start_date()
-    end_date = accessom2%get_end_date()
-    cur_date = start_date
+    ! Initialise time manager
+    call time_manager%init('matmxx')
 
-    ! Initialise the coupler
-    call coupler%init_begin('matmxx', start_date, &
-                            timedelta_in_seconds(start_date, end_date))
+    ! Initialise the coupler. It needs to tell oasis how long the run is.
+    call coupler%init_begin('matmxx', time_manager%get_total_runtime_in_seconds())
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
-    call forcing%init("forcing.json", start_date, &
-                      param%forcing_period_years, num_coupling_fields)
+    call forcing%init("forcing.json", time_manager%get_cur_forcing_date(), &
+                      num_coupling_fields)
     allocate(fields(num_coupling_fields))
     call forcing%init_fields(fields, min_dt)
     ! FIXME: use dt from atm.nml instead of min_dt for the time being. 
@@ -72,23 +65,25 @@ program atm
     enddo
     call coupler%init_end()
 
-    do
-        cur_time_in_secs = timedelta_in_seconds(start_date, cur_date)
-        print*, 'ATM: '//cur_date%isoformat()
+    do while (.not. time_manager%run_finished())
+
+        cur_forcing_date = time_manager%get_cur_forcing_date()
+        cur_runtime_in_seconds = time_manager%get_cur_runtime_in_seconds()
 
         ! Send each forcing field
         do i=1, num_coupling_fields
-            if (mod(cur_time_in_secs, fields(i)%dt) == 0) then
-                call forcing%update_field(cur_date, fields(i))
+            if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
+                call forcing%update_field(cur_forcing_date, fields(i))
                 if (index(fields(i)%name, 'runoff') /= 0) then
-                    call runoff%remap(fields(i)%data_array, runoff_field%data_array, ice_grid%mask)
+                    call runoff%remap(fields(i)%data_array, &
+                                      runoff_field%data_array, ice_grid%mask)
                 endif
             endif
 
             if (index(fields(i)%name, 'runoff') /= 0) then
-                call coupler%put(runoff_field, cur_date, err)
+                call coupler%put(runoff_field, cur_runtime_in_seconds, err)
             else
-                call coupler%put(fields(i), cur_date, err)
+                call coupler%put(fields(i), cur_runtime_in_seconds, err)
             endif
         enddo
 
@@ -96,16 +91,10 @@ program atm
         ! after receiving the above fields. This prevents the atm from sending continuously.
         call coupler%atm_ice_sync()
 
-        ! Update current date
-        cur_date = cur_date + timedelta(seconds=min_dt)
-        if (cur_date == end_date) then
-            exit
-        endif
-        call assert(cur_date < end_date, 'ATM: current date after end date')
-        call assert(cur_date >= start_date, 'ATM: current date before start date')
+        time_manager%progress_date(min_dt)
     enddo
 
-    call accessom2%deinit(cur_date)
-    call coupler%deinit(cur_date)
+    call coupler%deinit(time_manager%get_cur_exp_date())
+    call time_manager%deinit()
 
 end program atm

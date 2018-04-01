@@ -24,7 +24,6 @@ subroutine ncheck(status, error_str)
 
 end subroutine ncheck
 
-
 ! Return the spatial and time dimensions of a field.
 subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
 
@@ -172,18 +171,6 @@ function replace_text(string, pattern, replace)  result(outs)
     end do
 
 end function replace_text
-
-function timedelta_in_seconds(start_date, end_date, calendar)
-    type(datetime), intent(in) :: start_date, end_date
-    character(len=6), optional, intent(in) :: calendar
-
-    integer :: timedelta_in_seconds
-    type(timedelta) :: td
-
-    td = end_date - start_date
-    timedelta_in_seconds = td%total_seconds()
-
-endfunction timedelta_in_seconds
 
 !> Return name of the first file that matches pattern
 function first_file_matching_pattern(pattern)

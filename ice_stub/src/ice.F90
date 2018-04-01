@@ -3,13 +3,11 @@ program ice
 
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
-    use datetime_module, only : datetime, strptime, timedelta
     use ice_grid_mod, only  : ice_grid_type => ice_grid
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
     use mod_oasis, only : OASIS_IN, OASIS_OUT
-    use util_mod, only : timedelta_in_seconds
-    use accessom2_mod, only : accessom2_type => accessom2
+    use date_manager_mod, only : date_manager_type => date_manager
 
     implicit none
 
@@ -17,12 +15,11 @@ program ice
                           MAX_FILE_NAME_LEN = 256
 
     type(ice_grid_type) :: ice_grid
-    type(accessom2_type) :: accessom2
+    type(date_manager_type) :: date_manager
     type(coupler_type) :: coupler
     type(restart_type) :: i2o_restart, o2i_restart
 
     ! Namelist parameters
-    type(datetime) :: start_date, end_date, cur_date
     integer :: dt, i, tmp_unit, err
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: from_atm_fields, &
@@ -46,16 +43,12 @@ program ice
     read(tmp_unit, nml=ice_nml)
     close(tmp_unit)
 
-    ! Initialise our ACCESS-OM2 module needed for model-level housekeeping
-    call accessom2%init('cicexx')
-    start_date = accessom2%get_start_date()
-    end_date = accessom2%get_end_date()
-    cur_date = start_date
+    ! Initialise time manager
+    call time_manager%init('cicexx')
 
     ! Initialise coupler, this needs to be done before the ice grid is
     ! sent to the atmosphere.
-    call coupler%init_begin('cicexx', start_date, &
-                            timedelta_in_seconds(start_date, end_date))
+    call coupler%init_begin('cicexx', time_manager%get_total_runtime_in_seconds())
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0
@@ -107,8 +100,9 @@ program ice
     call i2o_restart%read(to_ocean_fields)
 
     ! Get from atmosphere
+    cur_runtime_in_seconds = time_manager%get_cur_runtime_in_seconds()
     do i=1, size(from_atm_fields)
-        call coupler%get(from_atm_fields(i), cur_date, err)
+        call coupler%get(from_atm_fields(i), cur_runtime_in_seconds, err)
     enddo
     call coupler%atm_ice_sync()
     ! Update atmospheric forcing halos - expensive operation.
@@ -123,20 +117,20 @@ program ice
     do
         ! Send to ocean - non-blocking
         do i=1, size(to_ocean_fields)
-            call coupler%put(to_ocean_fields(i), cur_date, err)
+            call coupler%put(to_ocean_fields(i), cur_runtime_in_seconds, err)
         enddo
 
         ! Do work
-        cur_date = cur_date + timedelta(seconds=dt)
-        if (cur_date == end_date) then
+
+        time_manager%progress_date(dt)
+        if (time_manager%run_finished())
             exit
         endif
-        call assert(cur_date < end_date, 'ICE: current date after end date')
-        call assert(cur_date >= start_date, 'ICE: current date before start date')
+        cur_runtime_in_seconds = time_manager%get_cur_runtime_in_seconds()
 
         ! Get from atmos - fast because atmos should have already sent.
         do i=1, size(from_atm_fields)
-            call coupler%get(from_atm_fields(i), cur_date, err)
+            call coupler%get(from_atm_fields(i), cur_runtime_in_seconds, err)
         enddo
 
         ! atm is blocked, unblock it. This prevents the atm from sending
@@ -150,14 +144,13 @@ program ice
         ! that ocean and can receive immediately and quickly loop to send
         ! to the ocean. This will minimise the ocean wait time.
         do i=1, size(from_ocean_fields)
-            call coupler%get(from_ocean_fields(i), cur_date, err)
+            call coupler%get(from_ocean_fields(i), cur_runtime_in_seconds, err)
         enddo
     enddo
 
     ! Write out restart.
-    call i2o_restart%write(cur_date, to_ocean_fields)
-
-    call accessom2%deinit(cur_date)
-    call coupler%deinit(cur_date)
+    call i2o_restart%write(time_manager%get_cur_exp_date(), to_ocean_fields)
+    call coupler%deinit(time_manager%get_cur_exp_date())
+    call time_manager%deinit()
 
 end program
