@@ -26,6 +26,7 @@ type date_manager
     type(datetime) :: run_end_date
 
     character(len=*), parameter :: restart_file = 'accessom2_restart_datetime.nml'
+    character(len=*), parameter :: config_file = 'accessom2.nml'
 
 contains
     private
@@ -41,87 +42,86 @@ contains
                                         date_manager_get_cur_forcing_date
     procedure, pass(self), public :: get_cur_exp_date => &
                                         date_manager_get_cur_exp_date
+    procedure, pass(self), public :: run_finished => date_manager_run_finished
+    procedure, pass(self) :: run_end_date => date_manager_run_end_date
 endtype date_manager
 
-character(len=19) :: start_date, end_date
-character(len=6) :: calendar
-integer, dimension(3) :: job_runtime
-character(len=19) :: current_datetime
+character(len=19) :: forcing_start_date, forcing_end_date
+character(len=19) :: exp_cur_date, forcing_cur_date
+character(len=9) :: calendar
+integer, dimension(3) :: restart_period
 
-namelist /time_manager_nml/ start_date, end_date, calendar, job_runtime
-namelist /do_not_edit_nml/ current_datetime
+namelist /time_manager_nml/ forcing_start_date, forcing_end_date, calendar, restart_period
+namelist /do_not_edit_nml/ current_forcing_date, current_exp_date
 
 contains
 
-subroutine date_manager_init(self, forcing_start_date, forcing_end_date, &
-                             restart_period, timestep, calendar)
+subroutine date_manager_init(self, timestep, calendar)
 
-    class(coupler), intent(inout) :: self
-    type(datetime), intent(in) :: forcing_start_date, forcing_end_date
-    integer, dimension(3), intent(in) :: restart_period
+    class(date_manager), intent(inout) :: self
     integer, intent(in) :: timestep, calendar
 
-    self%forcing_start_date = forcing_start_date
-    self%forcing_end_date = forcing_end_date
-    self%restart_period = restart_period
     self%timestep = timestep
     self%calendar = calendar
 
-    ! Read namelist which includes information about the start and end date
-    inquire(file='accessom2.nml', exist=file_exists)
+    ! Read namelist which includes information about the forcing start and end date
+    inquire(file=self.config_file, exist=file_exists)
     call assert(file_exists, 'Input accessom2.nml does not exist.')
     open(newunit=tmp_unit, file='accessom2.nml')
-    read(tmp_unit, nml=accessom2_nml)
+    read(tmp_unit, nml=time_manager_nml)
     close(tmp_unit)
 
+    rc = c_strptime(forcing_start_date//c_null_char, &
+                    "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
+    call assert(rc /= 0, 'Bad forcing_start_date format in '//self.config_file)
+    self%forcing_start_date = tm2date(ctime)
+
+    rc = c_strptime(forcing_end_date//c_null_char, &
+                    "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
+    call assert(rc /= 0, 'Bad forcing_end_date format in '//self.config_file)
+    self%forcing_end_date = tm2date(ctime)
+
+    self%restart_period = restart_period
 
     ! Read in exp_cur_date and focing_cur_date from restart file.
-    inquire(file='accessom2_datetime.nml', exist=file_exists)
+    inquire(file=self.restart_file, exist=file_exists)
     if (file_exists) then
-        open(newunit=tmp_unit, file='accessom2_datetime.nml')
+        open(newunit=tmp_unit, file=self.restart_file)
         read(tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)
-        rc = c_strptime(current_datetime//c_null_char, &
+        rc = c_strptime(forcing_cur_date//c_null_char, &
                         "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
-        call assert(rc /= 0, 'Bad start_date format in accessom2_datetime.nml')
-        self%start_date = tm2date(ctime)
+        call assert(rc /= 0, 'Bad forcing_cur_date format in '//self.restart_file)
+        self%forcing_cur_date = tm2date(ctime)
+
+        rc = c_strptime(exp_cur_date//c_null_char, &
+                        "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
+        call assert(rc /= 0, 'Bad exp_cur_date format in '//self.restart_file)
+        self%exp_cur_date = tm2date(ctime)
     else
-        rc = c_strptime(start_date//c_null_char, &
-                        "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
-        call assert(rc /= 0, 'Bad start_date format in accessom2.nml')
-        self%start_date = tm2date(ctime)
+        self%forcing_cur_date = self%forcing_start_date
+        self%exp_cur_date = self%forcing_start_date
     endif
 
-    rc = c_strptime(end_date//c_null_char, &
-                    "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
-    call assert(rc /= 0, 'Bad end_date format in accessom2.nml')
-    self%end_date = tm2date(ctime)
-
-    self%calendar = calendar
-    self%job_end_date = job_end_date(self%start_date, job_runtime, &
-                                     self%end_date, calendar)
-    if (self%end_date < self%job_end_date) then
-        self%job_end_date = self%end_date
-    endif
+    self%run_end_date = self%date_manager_run_end_date()
 
 endsubroutine
 
-function job_end_date(start_date, job_runtime, end_date, calendar)
-    type(datetime), intent(in) :: start_date, end_date
-    integer, dimension(3), intent(in) :: job_runtime
-    character(len=6), intent(in) :: calendar
+function date_manager_run_end_date(self)
+    class(date_manager), intent(inout) :: self
 
-    type(datetime) :: job_end_date
+    type(datetime) :: date_manager_run_end_date
     integer :: year, month, day, hour, minute, second, i
 
-    if (job_runtime(3) > 0) then
-        call assert(job_runtime(1) == 0 .and. job_runtime(2) == 0, &
+    if (self%restart_period(3) > 0) then
+        call assert(self%restart_period(1) == 0 .and. &
+                    self%restart_period(2) == 0, &
                     'Job runtime must be only one of years, months, seconds')
 
-        day = start_date%getDay()
-        hour = start_date%getHour()
-        minute = start_date%getMinute()
-        second = start_date%getSecond()
+        day = self%cur_exp_date%getDay()
+        hour = self%cur_exp_date%getHour()
+        minute = self%cur_exp_date%getMinute()
+        second = self%cur_exp_date%getSecond()
 
         second = second + job_runtime(3)
         if (second > 0) then
@@ -137,45 +137,116 @@ function job_end_date(start_date, job_runtime, end_date, calendar)
             hour = mod(hour, 24)
         endif
 
-        job_end_date = datetime(start_date%getYear(), start_date%getMonth(), 1, &
-                                hour, minute, second)
+        date_manager_run_end_date = datetime(self%cur_exp_date%getYear(), &
+                                             self%cur_exp_date%getMonth(), 1, &
+                                             hour, minute, second)
         do i=1, day-1
-            if (job_end_date%getMonth() == 2 .and. job_end_date%getDay() == 29 &
-                .and. calendar == 'noleap')  then
-                job_end_date = job_end_date + timedelta(days=1)
+            if (run_end_date%getMonth() == 2 .and. run_end_date%getDay() == 29 &
+                .and. trim(self%calendar) == 'noleap')  then
+                run_end_date = run_end_date + timedelta(days=1)
             endif
-            job_end_date = job_end_date + timedelta(days=1)
+            run_end_date = run_end_date + timedelta(days=1)
         enddo
 
-    elseif (job_runtime(2) > 0) then
-        call assert(job_runtime(1) == 0 .and. job_runtime(3) == 0, &
+    elseif (run_period(2) > 0) then
+        call assert(run_period(1) == 0 .and. run_period(3) == 0, &
                     'Job runtime must be only one of years, months, seconds')
 
-        year = start_date%getYear()
-        month = start_date%getMonth() + job_runtime(2)
+        year = self%cur_exp_date%getYear()
+        month = self%cur_exp_date%getMonth() + run_period(2)
         year = year + (month / 12)
         month = mod(month, 12)
 
-        job_end_date = datetime(year, month, start_date%getDay(), &
-                                start_date%getHour(), start_date%getMinute(), &
-                                start_date%getSecond())
+        date_manager_run_end_date = datetime(year, month, &
+                                             self%cur_exp_date%getDay(), &
+                                             self%cur_exp_date%getHour(), &
+                                             self%cur_exp_date%getMinute(), &
+                                             self%cur_exp_date%getSecond())
 
-    elseif (job_runtime(1) > 0) then
-        call assert(job_runtime(2) == 0 .and. job_runtime(3) == 0, &
+    elseif (run_period(1) > 0) then
+        call assert(run_period(2) == 0 .and. run_period(3) == 0, &
                     'Job runtime must be only one of years, months, seconds')
 
-        year = start_date%getYear() + job_runtime(1)
-        job_end_date = datetime(year, start_date%getMonth(), start_date%getDay(), &
-                                start_date%getHour(), start_date%getMinute(), &
-                                start_date%getSecond())
+        year = self%cur_exp_date%getYear() + run_period(1)
+        date_manager_run_end_date = datetime(year, &
+                                             self%cur_exp_date%getMonth(), &
+                                             self%cur_exp_date%getDay(), &
+                                             self%cur_exp_date%getHour(), &
+                                             self%cur_exp_date%getMinute(), &
+                                             self%cur_exp_date%getSecond())
     endif
-endfunction job_end_date
+
+endfunction date_manager_run_end_date
+
+subroutine date_manager_progress_forcing_date(self)
+    class(date_manager), intent(inout) :: self
+
+    self%forcing_cur_date += timedelta(seconds=self.timestep)
+    if self%forcing_cur_date%getMonth() == 2 .and. &
+        self%forcing_cur_date%getMonth() == 29 .and. &
+        trim(self%calendar) == 'noleap':
+
+        self%forcing_cur_date += timedelta(days=1)
+
+    if self%forcing_cur_date > self%run_end_date:
+        self%forcing_cur_date = self%run_end_date
+
+endsubroutine date_manager_progress_forcing_date
+
+subroutine date_manager_progress_exp_date(self)
+    class(date_manager), intent(inout) :: self
+
+    self%exp_cur_date += timedelta(seconds=self.timestep)
+    if self%exp_cur_date%getMonth() == 2 .and. &
+        self%exp_cur_date%getMonth() == 29 .and. &
+        trim(self%calendar) == 'noleap':
+
+        self%exp_cur_date += timedelta(days=1)
+
+    if self%exp_cur_date > self%run_end_date:
+        self%exp_cur_date = self%run_end_date
+
+endsubroutine date_manager_progress_exp_date
+
+function date_manager_get_cur_forcing_date(self)
+    class(date_manager), intent(inout) :: self
+
+    type(datetime) :: date_manager_get_cur_forcing_date
+
+    date_manager_get_cur_forcing_date = self%forcing_cur_date
+
+endfunction date_manager_get_cur_forcing_date
+
+function date_manager_get_cur_exp_date(self)
+    class(date_manager), intent(inout) :: self
+
+    type(datetime) :: date_manager_get_cur_exp_date
+
+    date_manager_get_cur_exp_date = self%exp_cur_date
+
+endfunction date_manager_get_cur_exp_date
+
+function date_manager_run_finished(self)
+    class(date_manager), intent(inout) :: self
+
+    logical :: date_manager_run_finished
+
+    if (self%exp_cur_date >= self%run_end_date) then
+        date_manager_run_finished = .true.
+    else:
+        date_manager_run_finished = .false.
+
+endfunction date_manager_run_finished
+
 
 subroutine deinit(self)
-    current_datetime = cur_date%strftime('%Y-%m-%dT%H:%M:%S')
+    class(date_manager), intent(inout) :: self
+
+    exp_cur_date = self%exp_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
+    forcing_cur_date = self%forcing_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
 
     if (self%model_name == 'matmxx') then
-        open(newunit=tmp_unit, file='accessom2_datetime.nml')
+        open(newunit=tmp_unit, file=self.restart_file)
         write(unit=tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)
     endif
