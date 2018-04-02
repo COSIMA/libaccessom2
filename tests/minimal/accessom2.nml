@@ -1,8 +1,9 @@
-&accessom2_nml
-    start_date = '1900-01-01T00:00:00'
-    end_date = '1901-01-01T00:00:00'
+&date_manager_nml
+    forcing_start_date = '1900-01-01T00:00:00'
+    forcing_end_date = '1901-01-01T00:00:00'
     calendar = 'noleap'
+
     ! Runtime for a single job/submit, format is years, months, seconds,
     ! two of which must be zero.
-    job_runtime = 0, 0, 86400
+    restart_period = 0, 0, 86400
 &end

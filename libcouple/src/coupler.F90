@@ -153,7 +153,6 @@ subroutine coupler_put(self, field, timestamp, err)
 #endif
 
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
-    call assert(err == OASIS_OK .or. err == OASIS_SENT .or. err == OASIS_TOREST, 'oasis_put')
 
 endsubroutine coupler_put
 
@@ -165,7 +164,6 @@ subroutine coupler_get(self, field, timestamp, err)
     integer, intent(out) :: err
 
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
-    call assert(err == OASIS_OK .or. err == OASIS_RECVD, 'oasis_get')
 
 #if defined(DEBUG)
     write(stdout, *) 'chksum '//trim(field%name)//':', sum(field%data_array)

@@ -26,7 +26,7 @@ The model tracks two datetime variables throughout a run:
 Typically these two datetimes will have the same month, day, hour, minute, and second but may differ in the year. For example a Repeat Year Forcing experiment may start with experiment and forcing datetime of 1990-01-01T00:00:00 but as the run progresses to the second year the experiment datetime will be 1991 but the forcing datetime will go back to 1990.
 
 Here is a description of all the namelist variables used to control datetime variables:
-    * forcing\_period\_start\_datetime, forcing\_period\_end\_datetime: the start and end of the forcing period. The model will be forced by a continuous repetition of the forcing period.
+    * forcing\_start\_datetime, forcing\_end\_datetime: the start and end of the forcing period. The model will be forced by a continuous repetition of the forcing period.
     * restart\_period: interval of time between successive model restarts. This is provided as a tuple: years, months, seconds. This breaks the entire experiment into a collection of segments.
 
 Other key variables in datetime management are:
@@ -37,5 +37,8 @@ Other key variables in datetime management are:
 
 # What am I doing now
 
-Simplify datetime handling.
-
+CI tests (in priority):
+    - Reproducing previous results (e.g. compare against current ACCESS-OM2 output).
+    - RYF and IAF dates
+    - RYF and IAF restarts
+    - minimal fields this looks tricky because the dest is masked.

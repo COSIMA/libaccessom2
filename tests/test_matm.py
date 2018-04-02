@@ -1,7 +1,7 @@
 
 import pytest
 
-class TestAtm:
+class TestYatm:
 
     def test_forcing_checksums():
         """
