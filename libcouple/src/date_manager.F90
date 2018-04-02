@@ -29,10 +29,17 @@ contains
     procedure, pass(self), public :: deinit => date_manager_deinit
     procedure, pass(self), public :: progress_date => &
                                         date_manager_progress_date
+
     procedure, pass(self), public :: get_cur_forcing_date => &
                                         date_manager_get_cur_forcing_date
     procedure, pass(self), public :: get_cur_exp_date => &
                                         date_manager_get_cur_exp_date
+
+    procedure, pass(self), public :: get_cur_forcing_date_str => &
+                                        date_manager_get_cur_forcing_date_str
+    procedure, pass(self), public :: get_cur_exp_date_str => &
+                                        date_manager_get_cur_exp_date_str
+
     procedure, pass(self), public :: run_finished => date_manager_run_finished
     procedure, pass(self) :: calc_run_end_date
     procedure, pass(self), public :: get_total_runtime_in_seconds => &
@@ -40,7 +47,7 @@ contains
     procedure, pass(self), public :: get_cur_runtime_in_seconds => &
                                      date_manager_get_cur_runtime_in_seconds
 endtype date_manager
-    
+
 integer, parameter :: CALENDAR_NOLEAP = 1, CALENDAR_GREGORIAN = 2
 character(*), parameter :: restart_file = 'accessom2_restart_datetime.nml'
 character(*), parameter :: config_file = 'accessom2.nml'
@@ -50,7 +57,7 @@ character(len=19) :: exp_cur_date, forcing_cur_date
 character(len=9) :: calendar
 integer, dimension(3) :: restart_period
 
-namelist /time_manager_nml/ forcing_start_date, forcing_end_date, restart_period, &
+namelist /date_manager_nml/ forcing_start_date, forcing_end_date, restart_period, &
                             calendar
 namelist /do_not_edit_nml/ forcing_cur_date, exp_cur_date
 
@@ -70,7 +77,7 @@ subroutine date_manager_init(self, model_name)
     inquire(file=config_file, exist=file_exists)
     call assert(file_exists, 'Input accessom2.nml does not exist.')
     open(newunit=tmp_unit, file='accessom2.nml')
-    read(tmp_unit, nml=time_manager_nml)
+    read(tmp_unit, nml=date_manager_nml)
     close(tmp_unit)
 
     if (trim(calendar) == 'noleap') then
@@ -231,6 +238,17 @@ function date_manager_get_cur_forcing_date(self)
 
 endfunction date_manager_get_cur_forcing_date
 
+function date_manager_get_cur_forcing_date_str(self)
+    class(date_manager), intent(inout) :: self
+
+    character(len=19) :: date_manager_get_cur_forcing_date_str
+    type(datetime) :: date
+
+    date = self%get_cur_forcing_date()
+    date_manager_get_cur_forcing_date_str = date%isoformat()
+
+endfunction date_manager_get_cur_forcing_date_str
+
 function date_manager_get_cur_exp_date(self)
     class(date_manager), intent(inout) :: self
 
@@ -239,6 +257,17 @@ function date_manager_get_cur_exp_date(self)
     date_manager_get_cur_exp_date = self%exp_cur_date
 
 endfunction date_manager_get_cur_exp_date
+
+function date_manager_get_cur_exp_date_str(self)
+    class(date_manager), intent(inout) :: self
+
+    character(len=19) :: date_manager_get_cur_exp_date_str
+    type(datetime) :: date
+
+    date = self%get_cur_exp_date()
+    date_manager_get_cur_exp_date_str = date%isoformat()
+
+endfunction date_manager_get_cur_exp_date_str
 
 function date_manager_get_total_runtime_in_seconds(self)
     class(date_manager), intent(inout) :: self

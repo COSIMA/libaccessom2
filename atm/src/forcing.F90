@@ -16,12 +16,12 @@ private
 
 type, public :: forcing
     type(datetime) :: start_date
-    integer :: period
     type(json_file) :: json
     type(json_core) :: core
     type(json_value), pointer :: inputs
 contains
     procedure, pass(self), public :: init => forcing_init
+    procedure, pass(self), public :: deinit => forcing_deinit
     procedure, pass(self), public :: init_fields => forcing_init_fields
     procedure, pass(self), public :: update_field => forcing_update_field
 endtype forcing
@@ -37,7 +37,6 @@ subroutine forcing_init(self, config, start_date, nfields)
     integer, intent(out) :: nfields
 
     type(json_value), pointer :: root
-    logical :: found
 
     self%start_date = start_date
 
@@ -63,11 +62,11 @@ subroutine forcing_init_fields(self, fields, min_dt)
     type(field_type), dimension(:), intent(inout) :: fields
     integer, intent(out) :: min_dt
 
-    type(json_value), pointer :: root, fp
+    type(json_value), pointer :: fp
     integer :: ncid, varid
     integer :: nx, ny, ndims, time, i
     character(kind=CK, len=:), allocatable :: cname, fieldname, filename
-    character(len=64) :: fname
+    character(len=1024) :: fname
     logical :: found
 
     min_dt = huge(min_dt)
@@ -114,7 +113,7 @@ subroutine forcing_update_field(self, forcing_date, fld)
     type(field_type), intent(inout) :: fld
 
     integer :: indx, ncid, varid
-    character(len=256) :: filename, varname
+    character(len=1024) :: filename, varname
 
     ! Check whether any work needs to be done
     if (fld%timestamp == forcing_date) then
@@ -133,7 +132,8 @@ subroutine forcing_update_field(self, forcing_date, fld)
         fld%nc_idx_guess = 1
         indx = forcing_index(ncid, forcing_date, fld%nc_idx_guess)
     endif
-    call assert(indx /= -1, "Could not find forcing index")
+    call assert(indx /= -1, &
+                "Could not find forcing date "//forcing_date%isoformat())
     ! Update the guess for next time.
     fld%nc_idx_guess = indx + 1
 

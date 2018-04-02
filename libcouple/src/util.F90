@@ -95,10 +95,12 @@ subroutine get_nc_start_date(ncid, varid, nc_start_date)
 
 end subroutine get_nc_start_date
 
+!> Get dt between subsequent values in time variable
 function get_var_dt(ncid)
     integer, intent(in) :: ncid
     integer :: get_var_dt
 
+    real :: tmp
     integer :: num_times, varid, idx
     real, dimension(:), allocatable :: times
     character(len=256) :: time_str
@@ -119,7 +121,9 @@ function get_var_dt(ncid)
     call ncheck(nf90_get_var(ncid, varid, times), &
                  'get_var_dt: nf90_get_var')
 
-    get_var_dt = (times(2) - times(1))*86400
+    tmp = (times(2) - times(1))*86400
+    call assert(tmp == int(tmp), "get_var_dt: dt is not an integer")
+    get_var_dt = int(tmp)
 
 endfunction get_var_dt
 

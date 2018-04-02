@@ -39,7 +39,7 @@ program atm
                       num_coupling_fields)
     allocate(fields(num_coupling_fields))
     call forcing%init_fields(fields, min_dt)
-    ! FIXME: use dt from atm.nml instead of min_dt for the time being. 
+    ! FIXME: use dt from atm.nml instead of min_dt for the time being.
     min_dt = param%dt
 
     ! Get information about the ice grid needed for runoff remapping.
@@ -66,6 +66,11 @@ program atm
     call coupler%init_end()
 
     do while (.not. date_manager%run_finished())
+
+        if (param%verbose) then
+            print*, 'cur_exp_date '//date_manager%get_cur_exp_date_str()
+            print*, 'cur_forcing_date '//date_manager%get_cur_forcing_date_str()
+        endif
 
         cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
 
@@ -96,5 +101,6 @@ program atm
 
     call coupler%deinit(date_manager%get_cur_exp_date())
     call date_manager%deinit()
+    call forcing%deinit()
 
 end program atm
