@@ -21,11 +21,18 @@ class TestYatm:
 
     def test_forcing_checksums(self, helper, exp):
         """
-        Test that atmospheric forcing checksums have not changed.
+        Test that checksums have not changed.
         """
 
         ret, output = helper.run_exp(exp)
         assert ret == 0
+
+        import pdb
+        pdb.set_trace()
+
+        run_checksums = helper.filter_checksums(output)
+        import pdb
+        pdb.set_trace()
 
 
     def test_restart(self, helper, exp):

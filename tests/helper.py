@@ -4,6 +4,7 @@ import sys
 import shutil
 import glob
 import shlex
+import ast
 import subprocess as sp
 
 run_cmd = 'mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 --mca btl self,sm -np 1 {atm_exe} : -np 1 {ice_exe} : -np 1 {ocean_exe}'
@@ -31,13 +32,26 @@ class Helper:
         Return checksums for experiment in exp_dir.
         """
 
-        checksums = os.path.join(self.test_dir, exp_dir, 'checksums.txt')
+        checksums_file = os.path.join(self.test_dir, exp_dir, 'checksums.txt')
+        with open(checksums_file) as f:
+            checksums = self.filter_checksums(f.read())
+
+        return checksums
+
 
     def filter_checksums(self, output):
         """
         Filter out and return checksums from output.
         """
-        pass
+
+        checksums = filter(lambda x : 'checksum' in x, output.splitlines())
+
+        checksums_dict = {}
+        for chk in checksums:
+            checksums_dict.update(ast.literal_eval(chk.strip()))
+
+        return checksums_dict
+
 
     def filter_dates(self, output):
         """
@@ -68,11 +82,11 @@ class Helper:
                                          ocean_exe=self.ocean_exe))
         retcode = 0
         try:
-            output = sp.run(cmd)
-        except CalledProcessError as e:
+            output = sp.check_output(cmd)
+        except sp.CalledProcessError as e:
             retcode = e.returncode
 
-        return retcode, output
+        return retcode, output.decode('utf-8')
 
 if __name__ == '__main__':
     sys.exit(run_exp('JRA55_RYF'))

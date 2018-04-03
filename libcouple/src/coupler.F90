@@ -156,8 +156,12 @@ subroutine coupler_put(self, field, timestamp, err)
     integer, intent(in) :: timestamp
     integer, intent(out) :: err
 
+    character(len=6) :: timestamp_str
+
     if (self%debug_output) then
-        write(stdout, *) '[chksum] coupler_put '//trim(self%model_name)//' '//trim(field%name)//' at '//timestamp.isoformat()//': ', sum(field%data_array)
+        write(timestamp_str, '(I6.6)') timestamp
+        call write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
+                            field%data_array)
     endif
 
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
@@ -171,10 +175,14 @@ subroutine coupler_get(self, field, timestamp, err)
     integer, intent(in) :: timestamp
     integer, intent(out) :: err
 
+    character(len=6) :: timestamp_str
+
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
 
     if (self%debug_output) then
-        write(stdout, *) '[chksum] coupler_get '//trim(self%model_name)//' '//trim(field%name)//' at '//timestamp.isoformat()//': ', sum(field%data_array)
+        write(timestamp_str, '(I6.6)') timestamp
+        call write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
+                            field%data_array)
     endif
 
 endsubroutine coupler_get
@@ -230,5 +238,17 @@ subroutine coupler_deinit(self, cur_date)
     call MPI_Finalize(err)
 
 endsubroutine coupler_deinit
+
+subroutine write_checksum(name, array)
+    character(len=*), intent(in) :: name
+    real, dimension(:,:), intent(in) :: array
+
+    real :: checksum
+
+    checksum = sum(array)
+
+    write(stdout, *) '{ "checksum-'//trim(name)//'":', checksum, '}'
+
+endsubroutine write_checksum
 
 endmodule coupler_mod
