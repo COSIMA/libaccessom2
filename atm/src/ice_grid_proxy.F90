@@ -67,7 +67,7 @@ endsubroutine ice_grid_proxy_recv
 function ice_grid_proxy_get_shape(self)
 
     class(ice_grid_proxy), intent(in) :: self
-    real, dimension(2) :: ice_grid_proxy_get_shape
+    integer, dimension(2) :: ice_grid_proxy_get_shape
 
     ice_grid_proxy_get_shape(1) = self%nx
     ice_grid_proxy_get_shape(2) = self%ny

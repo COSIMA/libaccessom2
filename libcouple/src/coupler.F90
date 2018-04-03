@@ -21,6 +21,7 @@ type coupler
 
     integer :: comp_id  ! Component ID
     integer :: size     ! Total number of processes
+    logical :: debug_output
 
     ! Intercommunicators
     integer :: monitor_intercomm, atm_intercomm, ice_intercomm, ocean_intercomm
@@ -45,10 +46,11 @@ endtype coupler
 contains
 
 subroutine coupler_init_begin(self, model_name, &
-                              total_runtime_in_seconds)
+                              total_runtime_in_seconds, debug_output)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
     integer, intent(in) :: total_runtime_in_seconds
+    logical, optional, intent(in) :: debug_output
 
     integer :: err
 
@@ -56,6 +58,12 @@ subroutine coupler_init_begin(self, model_name, &
                 .or. model_name == 'oceanx' .or. model_name == 'monito', &
                 'Bad model name')
     self%model_name = model_name
+
+    if (present(debug_output)) then
+        self%debug_output = debug_output
+    else
+        self%debug_output = .false.
+    endif
 
     call MPI_Init(err)
     call oasis_init_comp(self%comp_id, model_name, err, &
@@ -148,9 +156,9 @@ subroutine coupler_put(self, field, timestamp, err)
     integer, intent(in) :: timestamp
     integer, intent(out) :: err
 
-#if defined(DEBUG)
-    write(stdout, *) 'chksum '//trim(self%model_name)//' '//trim(field%name)//': ', sum(field%data_array)
-#endif
+    if (self%debug_output) then
+        write(stdout, *) 'chksum '//trim(self%model_name)//' '//trim(field%name)//': ', sum(field%data_array)
+    endif
 
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
 
@@ -165,9 +173,9 @@ subroutine coupler_get(self, field, timestamp, err)
 
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
 
-#if defined(DEBUG)
-    write(stdout, *) 'chksum '//trim(self%model_name)//' '//trim(field%name)//': ', sum(field%data_array)
-#endif
+    if (self%debug_output) then
+        write(stdout, *) 'chksum '//trim(self%model_name)//' '//trim(field%name)//': ', sum(field%data_array)
+    endif
 
 endsubroutine coupler_get
 

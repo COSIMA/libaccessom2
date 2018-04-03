@@ -1,4 +1,7 @@
 *.swp
+__pycache__
+*.pyc
+.cache
 build*
 building-errors.log
 debug.root.01

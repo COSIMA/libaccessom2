@@ -31,7 +31,8 @@ program atm
     call date_manager%init('matmxx')
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
-    call coupler%init_begin('matmxx', date_manager%get_total_runtime_in_seconds())
+    call coupler%init_begin('matmxx', date_manager%get_total_runtime_in_seconds(), &
+                            param%debug_output)
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
@@ -67,7 +68,7 @@ program atm
 
     do while (.not. date_manager%run_finished())
 
-        if (param%verbose) then
+        if (param%debug_output) then
             print*, 'cur_exp_date '//date_manager%get_cur_exp_date_str()
             print*, 'cur_forcing_date '//date_manager%get_cur_forcing_date_str()
         endif

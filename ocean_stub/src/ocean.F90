@@ -20,6 +20,7 @@ program ocean
     ! Namelist parameters
     integer :: dt, i, idx, tmp_unit, err
     integer, dimension(2) :: resolution
+    logical :: debug_output = .false.
     type(field_type), dimension(:), allocatable :: in_fields, out_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
         from_ice_field_names = '', to_ice_field_names = ''
@@ -27,7 +28,7 @@ program ocean
     integer :: cur_runtime_in_seconds
     logical :: file_exists
 
-    namelist /ocean_nml/ dt, resolution, &
+    namelist /ocean_nml/ dt, resolution, debug_output, &
                        from_ice_field_names, to_ice_field_names
 
     ! Read namelist which model resolution and names and
@@ -42,7 +43,8 @@ program ocean
     call date_manager%init('oceanx')
 
     ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('oceanx', date_manager%get_total_runtime_in_seconds())
+    call coupler%init_begin('oceanx', date_manager%get_total_runtime_in_seconds(), &
+                            debug_output)
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
