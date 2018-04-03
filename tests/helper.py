@@ -26,6 +26,24 @@ class Helper:
         self.ocean_exe = os.path.join(self.test_dir, '..',
                                       'build', 'bin', 'ocean_stub')
 
+    def checksums(self, exp_dir):
+        """
+        Return checksums for experiment in exp_dir.
+        """
+
+        checksums = os.path.join(self.test_dir, exp_dir, 'checksums.txt')
+
+    def filter_checksums(self, output):
+        """
+        Filter out and return checksums from output.
+        """
+        pass
+
+    def filter_dates(self, output):
+        """
+        Filter out and return checksums from dates.
+        """
+        pass
 
     def run_exp(self, exp_dir):
         """
@@ -48,8 +66,13 @@ class Helper:
         cmd = shlex.split(run_cmd.format(atm_exe=self.atm_exe,
                                          ice_exe=self.ice_exe,
                                          ocean_exe=self.ocean_exe))
-        ret = sp.run(cmd)
-        return ret
+        retcode = 0
+        try:
+            output = sp.run(cmd)
+        except CalledProcessError as e:
+            retcode = e.returncode
+
+        return retcode, output
 
 if __name__ == '__main__':
     sys.exit(run_exp('JRA55_RYF'))

@@ -157,7 +157,7 @@ subroutine coupler_put(self, field, timestamp, err)
     integer, intent(out) :: err
 
     if (self%debug_output) then
-        write(stdout, *) 'chksum '//trim(self%model_name)//' '//trim(field%name)//': ', sum(field%data_array)
+        write(stdout, *) '[chksum] coupler_put '//trim(self%model_name)//' '//trim(field%name)//' at '//timestamp.isoformat()//': ', sum(field%data_array)
     endif
 
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
@@ -174,7 +174,7 @@ subroutine coupler_get(self, field, timestamp, err)
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
 
     if (self%debug_output) then
-        write(stdout, *) 'chksum '//trim(self%model_name)//' '//trim(field%name)//': ', sum(field%data_array)
+        write(stdout, *) '[chksum] coupler_get '//trim(self%model_name)//' '//trim(field%name)//' at '//timestamp.isoformat()//': ', sum(field%data_array)
     endif
 
 endsubroutine coupler_get

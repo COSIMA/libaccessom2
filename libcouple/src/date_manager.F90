@@ -54,7 +54,7 @@ character(*), parameter :: config_file = 'accessom2.nml'
 
 character(len=19) :: forcing_start_date, forcing_end_date
 character(len=19) :: exp_cur_date, forcing_cur_date
-character(len=9) :: calendar
+character(len=9) :: calendar = 'gregorian'
 integer, dimension(3) :: restart_period
 
 namelist /date_manager_nml/ forcing_start_date, forcing_end_date, restart_period, &
