@@ -120,6 +120,7 @@ program ice
     do
         ! Send to ocean - non-blocking
         do i=1, size(to_ocean_fields)
+            to_ocean_fields(i)%data_array(:, :) = 0.0
             call coupler%put(to_ocean_fields(i), cur_runtime_in_seconds, err)
         enddo
 

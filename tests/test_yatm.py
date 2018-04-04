@@ -27,12 +27,18 @@ class TestYatm:
         ret, output = helper.run_exp(exp)
         assert ret == 0
 
-        import pdb
-        pdb.set_trace()
-
         run_checksums = helper.filter_checksums(output)
-        import pdb
-        pdb.set_trace()
+        stored_checksums = helper.checksums(exp)
+
+        # Check that keys are the same
+        assert set(run_checksums.keys()) == set(stored_checksums.keys())
+        # Check that everything is the same
+        assert run_checksums == stored_checksums
+
+
+    def test_dates(self, helper, exp):
+        """
+        """
 
 
     def test_restart(self, helper, exp):

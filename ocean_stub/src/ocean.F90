@@ -84,6 +84,7 @@ program ocean
 
         ! Send fields to ice
         do i=1, size(out_fields)
+            out_fields(i)%data_array(:, :) = 0.0
             call coupler%put(out_fields(i), cur_runtime_in_seconds, err)
         enddo
 

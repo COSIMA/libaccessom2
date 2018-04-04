@@ -6,4 +6,5 @@
     ice_grid_file = '../test_data/grid.nc'
     ice_mask_file = '../test_data/kmt.nc'
     dt = 3600
+    debug_output = .true.
 &end
