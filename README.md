@@ -37,6 +37,8 @@ Other key variables in datetime management are:
 
 # What am I doing now
 
+Reading time coordinates is very time consuming on raijin, working on caching this.
+
 CI tests (in priority):
     - Reproducing previous results (e.g. compare against current ACCESS-OM2 output).
     - Run with default settings

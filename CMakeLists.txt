@@ -36,13 +36,13 @@ include_directories(${NETCDF_F90_INCLUDE_DIRS})
 # compiler flags for gfortran
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -std=f2008 -Wall -fdefault-real-8 -ffpe-trap=invalid,zero,overflow")
-  set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -pg -fbounds-check -fbacktrace -DDEBUG")
+  set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -pg -fbounds-check -fbacktrace")
   set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
 endif()
 
 # compiler flags for ifort
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpe0")
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpe0 -fp-model precise")
   set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check all -traceback")
   set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
 endif()

@@ -106,44 +106,32 @@ subroutine forcing_init_fields(self, fields, min_dt)
 
 endsubroutine forcing_init_fields
 
-subroutine forcing_update_field(self, forcing_date, fld)
+subroutine forcing_update_field(self, forcing_date, fld, debug_output)
 
     class(forcing), intent(inout) :: self
     type(datetime), intent(in) :: forcing_date
     type(field_type), intent(inout) :: fld
+    logical, optional, intent(in) :: debug_output
 
     integer :: indx, ncid, varid
     character(len=1024) :: filename, varname
+    real :: start_time, end_time
 
     ! Check whether any work needs to be done
     if (fld%timestamp == forcing_date) then
         return
     endif
 
+    if (present(debug_output)) then
+        if (debug_output) then
+            print*, 'forcing_update_field at '//forcing_date%isoformat()
+        endif
+    endif
+
     filename = filename_for_year(fld%filename, forcing_date%getYear())
     call assert(trim(filename) /= '', "File not found: "//fld%filename)
 
-    ! Find the correct timeslice in the file.
-    call ncheck(nf90_open(trim(filename), NF90_NOWRITE, ncid), &
-                'Opening '//trim(filename))
-    indx = forcing_index(ncid, forcing_date, fld%nc_idx_guess)
-    if (indx == -1) then
-        ! Search from the beginning before failing
-        fld%nc_idx_guess = 1
-        indx = forcing_index(ncid, forcing_date, fld%nc_idx_guess)
-    endif
-    call assert(indx /= -1, &
-                "Could not find forcing date "//forcing_date%isoformat())
-    ! Update the guess for next time.
-    fld%nc_idx_guess = indx + 1
-
-    ! Get data
-    call ncheck(nf90_inq_varid(ncid, fld%ncname, varid), &
-                'Inquire: '//trim(varname))
-    call read_data(ncid, varid, varname, indx, fld%data_array)
-    call ncheck(nf90_close(ncid), 'Closing '//trim(filename))
-
-    fld%timestamp = forcing_date
+    fld%update_data_from_file(filename, forcing_date)
 
 endsubroutine forcing_update_field
 
@@ -163,74 +151,6 @@ function filename_for_year(filename, year)
         filename_for_year = with_year_replaced
     endif
 endfunction filename_for_year
-
-!> Return the time index of a particular date.
-! Starts looking from a guess index.
-function forcing_index(ncid, target_date, guess)
-
-    integer, intent(in) :: ncid
-    type(datetime), intent(in) :: target_date
-    integer, intent(in) :: guess
-    integer :: forcing_index
-
-    integer :: time_id, time_bnds_id, num_times, len
-    integer :: status
-    type(datetime) :: nc_start_date
-    type(timedelta) :: td, td_before, td_after
-    character(len=nf90_max_name) :: time_bnds_name, dimname
-    integer, dimension(2) :: dimids
-    real, dimension(:), allocatable :: times
-    real, dimension(:, :), allocatable :: time_bnds
-
-    call ncheck(nf90_inq_varid(ncid, "time", time_id), 'Inquire: time')
-    call get_nc_start_date(ncid, time_id, nc_start_date)
-
-    status = nf90_get_att(ncid, time_id, "bounds", time_bnds_name)
-    if (status == nf90_noerr) then
-        ! In this case find the time bounds index which the
-        ! target date falls within.
-        call ncheck(nf90_inq_varid(ncid, trim(time_bnds_name), time_bnds_id), &
-                    'Inquire varid: '//trim(time_bnds_name))
-        call ncheck(nf90_inquire_variable(ncid, time_bnds_id, dimids=dimids), &
-                    'Inquire dimids '//trim(time_bnds_name))
-        call ncheck(nf90_inquire_dimension(ncid, dimids(1), name=dimname, len=len), &
-                    'Inquire dimension 1 '//trim(time_bnds_name))
-        call assert(len == 2, 'Unexpected length for dimension '//dimname)
-        call ncheck(nf90_inquire_dimension(ncid, dimids(2), name=dimname, len=num_times), &
-                    'Inquire dimension 2 '//trim(time_bnds_name))
-
-        allocate(time_bnds(len, num_times))
-        call ncheck(nf90_get_var(ncid, time_bnds_id, time_bnds), &
-                    'Get '//trim(time_bnds_name))
-
-        do forcing_index=guess, num_times
-            td_before = timedelta(seconds=int(time_bnds(1, forcing_index)*86400))
-            td_after = timedelta(seconds=int(time_bnds(2, forcing_index)*86400))
-            if (target_date >= (nc_start_date + td_before) .and. &
-                target_date < (nc_start_date + td_after)) then
-                return
-            endif
-        enddo
-    else
-        ! In this case return index where there is an exact match between
-        ! target_date and a date in the time coordinate.
-        call ncheck(nf90_inquire_dimension(ncid, time_id, len=num_times))
-        allocate(times(num_times))
-        call ncheck(nf90_get_var(ncid, time_id, times))
-
-        ! Search using 'guess'
-        do forcing_index=guess, num_times
-            td = timedelta(seconds=int(times(forcing_index)*86400))
-            if (target_date == (nc_start_date + td)) then
-                return
-            endif
-        enddo
-    endif
-
-    ! The index was not found.
-    forcing_index = -1
-
-endfunction forcing_index
 
 subroutine forcing_deinit(self)
     class(forcing), intent(inout) :: self
