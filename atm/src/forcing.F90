@@ -66,7 +66,8 @@ subroutine forcing_init_fields(self, fields, min_dt)
     integer :: ncid, varid
     integer :: nx, ny, ndims, time, i
     character(kind=CK, len=:), allocatable :: cname, fieldname, filename
-    character(len=1024) :: fname
+    character(kind=CK, len=:), allocatable :: filename_template
+    character(len=1024) :: filename
     logical :: found
 
     min_dt = huge(min_dt)
@@ -74,7 +75,7 @@ subroutine forcing_init_fields(self, fields, min_dt)
         call self%core%get_child(self%inputs, i, fp, found)
         call assert(found, "Input not found in forcing config.")
 
-        call self%core%get(fp, "filename", filename, found)
+        call self%core%get(fp, "filename", filename_template, found)
         call assert(found, "Entry 'filename' not found in forcing config.")
 
         call self%core%get(fp, "fieldname", fieldname, found)
@@ -84,9 +85,9 @@ subroutine forcing_init_fields(self, fields, min_dt)
         call assert(found, "Entry 'cname' not found in forcing config.")
 
         ! Get the shape of forcing fields
-        fname  = filename_for_year(filename, self%start_date%getYear())
-        call ncheck(nf90_open(trim(fname), NF90_NOWRITE, ncid), &
-                    'Opening '//trim(fname))
+        filename  = filename_for_year(filename_template, self%start_date%getYear())
+        call ncheck(nf90_open(trim(filename), NF90_NOWRITE, ncid), &
+                    'Opening '//trim(filename))
         call ncheck(nf90_inq_varid(ncid, trim(fieldname), varid), &
                     'Inquire: '//trim(fieldname))
 
@@ -94,8 +95,8 @@ subroutine forcing_init_fields(self, fields, min_dt)
         call assert(nx /= 0 .and. ny /= 0, 'Bad var dimensions')
 
         ! Initialise a new field object.
-        call fields(i)%init(trim(cname), trim(filename), trim(fieldname), &
-                            nx, ny, get_var_dt(ncid))
+        call fields(i)%init(trim(cname), trim(filename_template), &
+                            trim(fieldname), nx, ny, get_var_dt(ncid))
 
         if (fields(i)%dt < min_dt) then
             min_dt = fields(i)%dt
