@@ -78,8 +78,9 @@ program atm
         ! Send each forcing field
         do i=1, num_coupling_fields
             if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
-                call forcing%update_field(date_manager%get_cur_forcing_date(), &
-                                          fields(i), param%debug_output)
+                call forcing%update_field(fields(i), &
+                                          date_manager%get_cur_forcing_date(), &
+                                          param%debug_output)
                 if (index(fields(i)%name, 'runoff') /= 0) then
                     call runoff%remap(fields(i)%data_array, &
                                       runoff_field%data_array, ice_grid%mask)

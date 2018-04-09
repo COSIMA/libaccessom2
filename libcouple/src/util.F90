@@ -95,4 +95,46 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
 
 end subroutine read_data
 
+! Return the spatial and time dimensions of a field.
+subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
+    integer, intent(in) :: ncid, varid
+
+    integer, intent(out) :: ndims, nx, ny, time
+
+    integer, dimension(:), allocatable :: dimids
+    integer :: i, len
+    character(len=nf90_max_name) :: dimname
+
+    ! Get dimensions used by this var.
+    call ncheck(nf90_inquire_variable(ncid, varid, ndims=ndims), &
+                'get_var_dims: Inquire ndims')
+    allocate(dimids(ndims))
+    call ncheck(nf90_inquire_variable(ncid, varid, dimids=dimids), &
+                'get_var_dims: Inquire dimids')
+
+    ! Only support dimension names: time, latitude, longitude for now.
+    nx = 0
+    ny = 0
+    time = 0
+    do i=1, ndims
+      call ncheck(nf90_inquire_dimension(ncid, dimids(i), &
+                                         name=dimname, len=len), &
+                    'get_var_dims: Inquire dimension '//dimname)
+      if (trim(dimname) == 'time' .or. trim(dimname) == 'AT') then
+        time = len
+      elseif (trim(dimname) == 'latitude' .or. trim(dimname) == 'AY' .or. &
+                trim(dimname) == 'ny') then
+        ny = len
+      elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX' .or. &
+                trim(dimname) == 'nx') then
+        nx = len
+      else
+        call assert(.false., 'get_var_dims: Unsupported dimension name '//trim(dimname))
+      endif
+    enddo
+
+    deallocate(dimids)
+
+endsubroutine get_var_dims
+
 end module util_mod

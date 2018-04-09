@@ -15,7 +15,6 @@ type, public :: restart
     character(len=256) :: restart_file
 contains
     procedure, pass(self), public :: init => restart_init
-    procedure, pass(self), public :: get_date => restart_get_date
     procedure, pass(self), public :: write => restart_write
     procedure, pass(self), public :: read => restart_read
 endtype restart

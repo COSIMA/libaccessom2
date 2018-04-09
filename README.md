@@ -37,7 +37,7 @@ Other key variables in datetime management are:
 
 # What am I doing now
 
-Reading time coordinates is very time consuming on raijin, working on caching this. Do this using a new ncvar class.
+Reading time coordinates is very time consuming on raijin, working on caching this. New ncvar class solves this.
 
 CI tests (in priority):
     - Reproducing previous results (e.g. compare against current ACCESS-OM2 output).

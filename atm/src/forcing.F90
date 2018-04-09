@@ -63,9 +63,8 @@ subroutine forcing_init_fields(self, fields, min_dt)
     integer, intent(out) :: min_dt
 
     type(json_value), pointer :: fp
-    integer :: ncid, varid
-    integer :: nx, ny, ndims, time, i
-    character(kind=CK, len=:), allocatable :: cname, fieldname, filename
+    integer :: i
+    character(kind=CK, len=:), allocatable :: cname, fieldname
     character(kind=CK, len=:), allocatable :: filename_template
     character(len=1024) :: filename
     logical :: found
@@ -85,11 +84,10 @@ subroutine forcing_init_fields(self, fields, min_dt)
         call assert(found, "Entry 'cname' not found in forcing config.")
 
         ! Get the shape of forcing fields
-        filename  = filename_for_year(filename_template, &
+        filename = filename_for_year(filename_template, &
                                       self%start_date%getYear())
         ! Initialise a new field object.
-        call fields(i)%init(trim(cname), trim(filename_template), &
-                            trim(fieldname), trim(filename))
+        call fields(i)%init(cname, fieldname, filename_template, filename)
 
         if (fields(i)%dt < min_dt) then
             min_dt = fields(i)%dt
@@ -105,9 +103,7 @@ subroutine forcing_update_field(self, fld, forcing_date, debug_output)
     type(datetime), intent(in) :: forcing_date
     logical, optional, intent(in) :: debug_output
 
-    integer :: indx, ncid, varid
-    character(len=1024) :: filename, varname
-    real :: start_time, end_time
+    character(len=1024) :: filename
 
     ! Check whether any work needs to be done
     if (fld%timestamp == forcing_date) then
@@ -123,7 +119,7 @@ subroutine forcing_update_field(self, fld, forcing_date, debug_output)
     filename = filename_for_year(fld%filename_template, forcing_date%getYear())
     call assert(trim(filename) /= '', "File not found: "//filename)
 
-    fld%update_data(filename, forcing_date)
+    call fld%update_data(filename, forcing_date)
 
 endsubroutine forcing_update_field
 

@@ -1,7 +1,9 @@
 module field_mod
 
 use netcdf, only : nf90_max_name
+use ncvar_mod, only : ncvar_type => ncvar
 use datetime_module, only : datetime
+use error_handler, only : assert
 
 implicit none
 
@@ -15,10 +17,11 @@ type, public :: field
     integer :: oasis_partid
 
     integer :: dt
-    type(ncvar) :: data_var
+    type(ncvar_type) :: ncvar
     real, dimension(:, :), allocatable :: data_array
 contains
     procedure, pass(self), public :: init => field_init
+    procedure, pass(self), public :: update_data => field_update_data
     procedure, pass(self), public :: get_shape
 endtype field
 
@@ -33,7 +36,7 @@ subroutine field_init(self, name, ncname, filename_template, filename)
     self%filename_template = filename_template
     self%timestamp = datetime(HUGE(1))
 
-    self%ncvar%init(ncname, filename)
+    call self%ncvar%init(ncname, filename)
     allocate(self%data_array(self%ncvar%nx, self%ncvar%ny))
     self%data_array(:, :) = HUGE(1.0)
     self%dt = self%ncvar%dt
@@ -45,8 +48,10 @@ subroutine field_update_data(self, filename, forcing_date)
     character(len=*), intent(in) :: filename
     type(datetime), intent(in) :: forcing_date
 
-    if (filename /= self%ncvar%filename) then
-        self%refresh(filename)
+    integer :: indx
+
+    if (trim(filename) /= trim(self%ncvar%filename)) then
+        call self%ncvar%refresh(filename)
     endif
 
     indx = self%ncvar%get_index_for_datetime(forcing_date)
@@ -58,7 +63,7 @@ subroutine field_update_data(self, filename, forcing_date)
                 "Could not find forcing date "//forcing_date%isoformat())
 
     call self%ncvar%read_data(indx, self%data_array)
-    fld%timestamp = forcing_date
+    self%timestamp = forcing_date
 
 end subroutine field_update_data
 
