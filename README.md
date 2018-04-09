@@ -37,11 +37,9 @@ Other key variables in datetime management are:
 
 # What am I doing now
 
-Reading time coordinates is very time consuming on raijin, working on caching this. New ncvar class solves this.
-
 CI tests (in priority):
     - Reproducing previous results (e.g. compare against current ACCESS-OM2 output).
     - Run with default settings
     - RYF and IAF dates
     - RYF and IAF restarts
-    - minimal fields this looks tricky because the dest is masked.
+    - minimal fields - this looks tricky because the dest is masked.

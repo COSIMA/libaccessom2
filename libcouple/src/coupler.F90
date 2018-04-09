@@ -26,7 +26,7 @@ type coupler
     ! Intercommunicators
     integer :: monitor_intercomm, atm_intercomm, ice_intercomm, ocean_intercomm
     integer :: localcomm
-    integer :: my_local_pe
+    integer :: my_local_pe, my_global_pe
 
     character(len=6) :: model_name
 
@@ -41,6 +41,7 @@ contains
     procedure, pass(self), public :: get => coupler_get
     procedure, pass(self), public :: atm_ice_sync => coupler_atm_ice_sync
     procedure, pass(self), public :: get_peer_intercomm
+    procedure, pass(self) :: write_checksum
 endtype coupler
 
 contains
@@ -73,6 +74,7 @@ subroutine coupler_init_begin(self, model_name, &
     call oasis_get_localcomm(self%localcomm, err)
     call assert(err == OASIS_OK, 'oasis_get_localcomm')
     call MPI_Comm_rank(self%localcomm, self%my_local_pe, err)
+    call MPI_Comm_rank(MPI_COMM_WORLD, self%my_global_pe, err)
 
     ! Get an intercommunicator with the peer.
     if (model_name == 'matmxx') then
@@ -160,7 +162,7 @@ subroutine coupler_put(self, field, timestamp, err)
 
     if (self%debug_output) then
         write(timestamp_str, '(I6.6)') timestamp
-        call write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
+        call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
                             field%data_array)
     endif
 
@@ -181,7 +183,7 @@ subroutine coupler_get(self, field, timestamp, err)
 
     if (self%debug_output) then
         write(timestamp_str, '(I6.6)') timestamp
-        call write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
+        call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
                             field%data_array)
     endif
 
@@ -239,15 +241,18 @@ subroutine coupler_deinit(self, cur_date)
 
 endsubroutine coupler_deinit
 
-subroutine write_checksum(name, array)
+subroutine write_checksum(self, name, array)
+    class(coupler), intent(in) :: self
     character(len=*), intent(in) :: name
     real, dimension(:,:), intent(in) :: array
 
+    character(len=5) :: pe_str
     real :: checksum
 
     checksum = sum(array)
 
-    write(stdout, *) '{ "checksum-'//trim(name)//'":', checksum, '}'
+    write(pe_str, '(I5.5)') self%my_global_pe
+    write(stdout, *) '{ "checksum-'//trim(pe_str)//'-'//trim(name)//'":', checksum, '}'
 
 endsubroutine write_checksum
 
