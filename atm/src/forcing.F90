@@ -3,8 +3,8 @@ module forcing_mod
 use error_handler, only : assert
 use json_module
 use json_kinds
-use datetime_module, only : datetime, timedelta
-use util_mod, only : ncheck, get_var_dims, replace_text, get_nc_start_date, get_var_dt, read_data
+use datetime_module, only : datetime
+use util_mod, only : ncheck, get_var_dims, replace_text
 use util_mod, only : first_file_matching_pattern
 use netcdf
 use field_mod, only : field_type => field
@@ -85,33 +85,24 @@ subroutine forcing_init_fields(self, fields, min_dt)
         call assert(found, "Entry 'cname' not found in forcing config.")
 
         ! Get the shape of forcing fields
-        filename  = filename_for_year(filename_template, self%start_date%getYear())
-        call ncheck(nf90_open(trim(filename), NF90_NOWRITE, ncid), &
-                    'Opening '//trim(filename))
-        call ncheck(nf90_inq_varid(ncid, trim(fieldname), varid), &
-                    'Inquire: '//trim(fieldname))
-
-        call get_var_dims(ncid, varid, ndims, nx, ny, time)
-        call assert(nx /= 0 .and. ny /= 0, 'Bad var dimensions')
-
+        filename  = filename_for_year(filename_template, &
+                                      self%start_date%getYear())
         ! Initialise a new field object.
         call fields(i)%init(trim(cname), trim(filename_template), &
-                            trim(fieldname), nx, ny, get_var_dt(ncid))
+                            trim(fieldname), trim(filename))
 
         if (fields(i)%dt < min_dt) then
             min_dt = fields(i)%dt
         endif
-
-        call ncheck(nf90_close(ncid), 'Closing '//trim(fname))
     enddo
 
 endsubroutine forcing_init_fields
 
-subroutine forcing_update_field(self, forcing_date, fld, debug_output)
+subroutine forcing_update_field(self, fld, forcing_date, debug_output)
 
     class(forcing), intent(inout) :: self
-    type(datetime), intent(in) :: forcing_date
     type(field_type), intent(inout) :: fld
+    type(datetime), intent(in) :: forcing_date
     logical, optional, intent(in) :: debug_output
 
     integer :: indx, ncid, varid
@@ -129,10 +120,10 @@ subroutine forcing_update_field(self, forcing_date, fld, debug_output)
         endif
     endif
 
-    filename = filename_for_year(fld%filename, forcing_date%getYear())
-    call assert(trim(filename) /= '', "File not found: "//fld%filename)
+    filename = filename_for_year(fld%filename_template, forcing_date%getYear())
+    call assert(trim(filename) /= '', "File not found: "//filename)
 
-    fld%update_data_from_file(filename, forcing_date)
+    fld%update_data(filename, forcing_date)
 
 endsubroutine forcing_update_field
 

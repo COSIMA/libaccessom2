@@ -1,6 +1,8 @@
 module restart_mod
 
-use util_mod, only : get_nc_start_date, ncheck, read_data
+! FIXME: rewrite using ncvar_mod
+
+use util_mod, only : ncheck, read_data
 use field_mod, only : field
 use datetime_module, only : datetime
 use netcdf
@@ -28,28 +30,6 @@ subroutine restart_init(self, restart_file)
     self%restart_file = trim(restart_file)
 
 endsubroutine
-
-!>
-! Read restart file and get current date
-type(datetime) function restart_get_date(self, default_date) result(cur_date)
-
-    class(restart), intent(in) :: self
-    type(datetime), intent(in) :: default_date
-
-    integer :: ncid, varid, status
-
-    cur_date = default_date
-
-    ! If restart file exists then read date
-    status = nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid)
-    if (status == nf90_noerr) then
-        status = nf90_inq_varid(ncid, "time", varid)
-        if (status == nf90_noerr) then
-            call get_nc_start_date(ncid, varid, cur_date)
-        endif
-    endif
-
-endfunction restart_get_date
 
 ! Save the atmosphere <-> ice coupling fields. This does two things:
 ! 1) save the datetime of the next forcing.
