@@ -177,12 +177,12 @@ subroutine coupler_get(self, field, timestamp, err)
     integer, intent(in) :: timestamp
     integer, intent(out) :: err
 
-    character(len=6) :: timestamp_str
+    character(len=10) :: timestamp_str
 
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
 
     if (self%debug_output) then
-        write(timestamp_str, '(I6.6)') timestamp
+        write(timestamp_str, '(I10.10)') timestamp
         call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
                             field%data_array)
     endif
@@ -217,20 +217,18 @@ subroutine coupler_deinit(self, cur_date)
     integer :: checksum
 
     checksum = date2num(cur_date)
+    tag = 831917
 
     ! Check that cur_date is the same between all models.
     if (self%model_name == 'matmxx') then
-        tag = MPI_ANY_TAG
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
         call assert(buf(1) == checksum, 'Models are out of sync.')
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
         call assert(buf(1) == checksum, 'Models are out of sync.')
     elseif (self%model_name == 'cicexx') then
-        tag = 0
         buf(1) = checksum
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
     elseif (self%model_name == 'oceanx') then
-        tag = 0
         buf(1) = checksum
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
     endif

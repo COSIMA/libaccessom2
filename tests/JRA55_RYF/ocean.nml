@@ -2,5 +2,5 @@
     from_ice_field_names = 'strsu_o', 'strsv_o', 'rain_o', 'snow_o', 'stflx_o', 'htflx_o', 'swflx_o', 'qflx_o', 'shflx_o', 'lwflx_o', 'runoff_o', 'press_o', 'melt_o', 'form_o'
     to_ice_field_names = 'sst_oi', 'sss_oi', 'ssu_oi', 'ssv_oi', 'frazil_oi', 'sslx_oi', 'ssly_oi'
     resolution(:) = 360,300
-    dt = 3600
+    dt = 5400
 &end
