@@ -158,10 +158,10 @@ subroutine coupler_put(self, field, timestamp, err)
     integer, intent(in) :: timestamp
     integer, intent(out) :: err
 
-    character(len=6) :: timestamp_str
+    character(len=10) :: timestamp_str
 
     if (self%debug_output) then
-        write(timestamp_str, '(I6.6)') timestamp
+        write(timestamp_str, '(I10.10)') timestamp
         call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
                             field%data_array)
     endif

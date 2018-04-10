@@ -62,6 +62,8 @@ subroutine field_update_data(self, filename, forcing_date)
     call assert(indx /= -1, &
                 "Could not find forcing date "//forcing_date%isoformat())
 
+    print*, 'reading from file', trim(filename)
+    print*, 'reading indx ', indx
     call self%ncvar%read_data(indx, self%data_array)
     self%timestamp = forcing_date
 

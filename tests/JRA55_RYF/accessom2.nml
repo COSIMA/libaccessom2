@@ -5,5 +5,5 @@
 
     ! Runtime for a single segment/job/submit, format is years, months, seconds,
     ! two of which must be zero.
-    restart_period = 0, 0, 86400
+    restart_period = 0, 0, 864000
 &end
