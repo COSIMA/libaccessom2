@@ -40,10 +40,10 @@ program ocean
     close(tmp_unit)
 
     ! Initialise time manager
-    call date_manager%init('oceanx')
+    call date_manager%init('mom5xx')
 
     ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('oceanx', date_manager%get_total_runtime_in_seconds(), &
+    call coupler%init_begin('mom5xx', date_manager%get_total_runtime_in_seconds(), &
                             debug_output)
 
     ! Count and allocate the coupling fields

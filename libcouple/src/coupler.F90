@@ -56,7 +56,7 @@ subroutine coupler_init_begin(self, model_name, &
     integer :: err
 
     call assert(model_name == 'matmxx' .or. model_name == 'cicexx' &
-                .or. model_name == 'oceanx' .or. model_name == 'monito', &
+                .or. model_name == 'mom5xx' .or. model_name == 'monito', &
                 'Bad model name')
     self%model_name = model_name
 
@@ -79,10 +79,10 @@ subroutine coupler_init_begin(self, model_name, &
     ! Get an intercommunicator with the peer.
     if (model_name == 'matmxx') then
         call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
-        call oasis_get_intercomm(self%ocean_intercomm, 'oceanx', err)
+        call oasis_get_intercomm(self%ocean_intercomm, 'mom5xx', err)
     elseif (model_name == 'cicexx') then
         call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
-    elseif (model_name == 'oceanx') then
+    elseif (model_name == 'mom5xx') then
         call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
     endif
 
@@ -228,7 +228,7 @@ subroutine coupler_deinit(self, cur_date)
     elseif (self%model_name == 'cicexx') then
         buf(1) = checksum
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
-    elseif (self%model_name == 'oceanx') then
+    elseif (self%model_name == 'mom5xx') then
         buf(1) = checksum
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
     endif
