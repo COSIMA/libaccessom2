@@ -52,7 +52,7 @@
 # Field 01 : swflx down
 ##########
 swfld_ai swfld_i 367 10800 3 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
@@ -63,7 +63,7 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 # Field 02 : lwflx down
 ##########
 lwfld_ai lwfld_i 366 10800 3 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
@@ -74,7 +74,7 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 # Field 03 : rainfall
 ##########
 rain_ai rain_i 26 10800 3 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
@@ -85,7 +85,7 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 # Field 04 : snowfall
 ##########
 snow_ai snow_i 26 10800 3 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
@@ -96,7 +96,7 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 # Field 05 : surface pressure
 ##########
 press_ai press_i 33 10800 3 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
@@ -106,8 +106,8 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.
 ##########
-runoff_ai runoff_i 297 10800 1 a2i.nc EXPORTED
-cict cict LAG=+3600 SEQ=+1
+runof_ai runof_i 297 10800 1 a2i.nc EXPORTED
+cict cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 LOCTRANS
@@ -116,7 +116,7 @@ INSTANT
 # Field 07 : near surface (2m) air temp
 ##########
 tair_ai tair_i 110 10800 3 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
@@ -127,7 +127,7 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 # Field 08 : 2m air humidity
 ##########
 qair_ai qair_i 339 10800 3 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
@@ -138,7 +138,7 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 # Field 09 : 10m wind (u)
 ##########
 uwnd_ai uwnd_i 56 10800 2 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 MAPPING SCRIPR
@@ -148,7 +148,7 @@ DISTWGT LR VECTOR LATLON 10 4 vwnd_ai
 # Field 10 : 10m wind (v)
 ##########
 vwnd_ai vwnd_i 56 10800 2 a2i.nc EXPORTED
-jrat cict LAG=+3600 SEQ=+1
+jrat cict LAG=+5400 SEQ=+1
 P  0  P  0
 #
 MAPPING SCRIPR

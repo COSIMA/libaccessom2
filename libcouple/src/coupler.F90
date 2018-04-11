@@ -3,14 +3,13 @@ module coupler_mod
 use mpi
 use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_intercomm, &
                       oasis_def_partition, oasis_enddef, OASIS_OK, OASIS_REAL, &
-                      OASIS_RECVD, OASIS_SENT, OASIS_TOREST, &
-                      OASIS_IN, OASIS_OUT, oasis_put, oasis_get, oasis_terminate, &
-                      oasis_get_localcomm
+                      OASIS_RECVD, OASIS_SENT, OASIS_SENTOUT, OASIS_TOREST, &
+                      OASIS_TORESTOUT, OASIS_IN, OASIS_OUT, &
+                      oasis_put, oasis_get, oasis_terminate, oasis_get_localcomm
 use datetime_module, only : datetime, date2num
 use error_handler, only : assert
+use logger_mod, only : logger_type => logger
 use field_mod, only : field_type => field
-
-use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
 
 implicit none
 private
@@ -30,6 +29,7 @@ type coupler
 
     character(len=6) :: model_name
 
+    type(logger_type) :: logger
 
 contains
     private
@@ -47,11 +47,12 @@ endtype coupler
 contains
 
 subroutine coupler_init_begin(self, model_name, &
-                              total_runtime_in_seconds, debug_output)
+                              total_runtime_in_seconds, debug_output, logger)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
     integer, intent(in) :: total_runtime_in_seconds
     logical, optional, intent(in) :: debug_output
+    type(logger_type), optional, intent(in) :: logger
 
     integer :: err
 
@@ -67,6 +68,13 @@ subroutine coupler_init_begin(self, model_name, &
     endif
 
     call MPI_Init(err)
+
+    if (present(logger)) then
+        self%logger = logger
+    else
+        call self%logger%init(trim(model_name)//'-coupler')
+    endif
+
     call oasis_init_comp(self%comp_id, model_name, err, &
                          total_runtime_in_seconds)
     call assert(err == OASIS_OK, 'oasis_init_comp')
@@ -79,12 +87,13 @@ subroutine coupler_init_begin(self, model_name, &
     ! Get an intercommunicator with the peer.
     if (model_name == 'matmxx') then
         call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
-        ! FIXME: this hangs do both models need to call this
+        ! FIXME: this hangs, both models need to call this
         !call oasis_get_intercomm(self%ocean_intercomm, 'mom5xx', err)
     elseif (model_name == 'cicexx') then
         call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
     elseif (model_name == 'mom5xx') then
-        call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
+        ! FIXME: this hangs, both models need to call this
+        !call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
     endif
 
 endsubroutine coupler_init_begin
@@ -161,13 +170,17 @@ subroutine coupler_put(self, field, timestamp, err)
 
     character(len=10) :: timestamp_str
 
-    if (self%debug_output) then
-        write(timestamp_str, '(I10.10)') timestamp
-        call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
-                            field%data_array)
-    endif
 
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
+    if (self%debug_output) then
+        ! Only output field checksum if it is actually sent.
+        if (err == OASIS_SENT .or. err == OASIS_SENTOUT .or. err == OASIS_TOREST &
+               .or. err == OASIS_TORESTOUT) then
+            write(timestamp_str, '(I10.10)') timestamp
+            call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
+                                field%data_array)
+        endif
+    endif
 
 endsubroutine coupler_put
 
@@ -246,13 +259,14 @@ subroutine write_checksum(self, name, array)
     character(len=*), intent(in) :: name
     real, dimension(:,:), intent(in) :: array
 
-    character(len=5) :: pe_str
-    real :: checksum
+    integer :: checksum
+    character(len=10) checksum_str
 
-    checksum = sum(array)
+    ! FIXME: come up with a better way to do checksums
+    checksum = int(sum(array))
+    write(checksum_str, '(I10.10)') checksum
 
-    write(pe_str, '(I5.5)') self%my_global_pe
-    write(stdout, *) '{ "checksum-'//trim(pe_str)//'-'//trim(name)//'":', checksum, '}'
+    call self%logger%write('{ "checksum-'//trim(name)//'": '//checksum_str//'}')
 
 endsubroutine write_checksum
 

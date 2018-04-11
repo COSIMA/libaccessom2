@@ -29,7 +29,7 @@
     {
       "filename": "../test_data/RYF/v1-3/RYF.runoff_all.1990_1991.nc",
       "fieldname": "friver",
-      "cname": "runoff_ai"
+      "cname": "runof_ai"
     },
     {
       "filename": "../test_data/RYF/v1-3/RYF.t_10.1990_1991.nc",

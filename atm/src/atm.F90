@@ -9,10 +9,12 @@ program atm
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
     use date_manager_mod, only : date_manager_type => date_manager
+    use logger_mod, only : logger_type => logger
 
     implicit none
 
     type(params) :: param
+    type(logger_type) :: logger
     type(date_manager_type) :: date_manager
     type(coupler_type) :: coupler
     type(forcing_type) :: forcing
@@ -32,7 +34,11 @@ program atm
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
     call coupler%init_begin('matmxx', date_manager%get_total_runtime_in_seconds(), &
-                            param%debug_output)
+                            param%log_level)
+
+    ! Initialise the logger, needs to be done after MPI_INIT
+    ! FIXME: this may not be good because the coupler needs access to the logger
+    call logger%init('matmxx', param%log_level)
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
@@ -69,8 +75,8 @@ program atm
     do while (.not. date_manager%run_finished())
 
         if (param%debug_output) then
-            print*, 'cur_exp_date '//date_manager%get_cur_exp_date_str()
-            print*, 'cur_forcing_date '//date_manager%get_cur_forcing_date_str()
+            call logger%write('cur_exp_date '//date_manager%get_cur_exp_date_str())
+            call logger%write('cur_forcing_date '//date_manager%get_cur_forcing_date_str())
         endif
 
         cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()

@@ -53,7 +53,7 @@
 # last active oasis put of the previous run.
 ##########
 swfld_ai swfld_i 367 10800 3 a2i.nc EXPOUT
-640 320 360 300 jrat cict LAG=+3600 SEQ=+1
+640 320 360 300 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
@@ -63,8 +63,8 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.
 ##########
-runoff_ai runoff_i 297 10800 1 a2i.nc EXPOUT
-360 300 360 300 cict cict LAG=+3600 SEQ=+1
+runof_ai runof_i 297 10800 1 a2i.nc EXPOUT
+360 300 360 300 cict cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS
@@ -74,13 +74,13 @@ INSTANT
 #                      ICE --->>> OCEAN
 #                      ----------------
 ##########
-swflx_io swflx_o 170 3600 1 i2o.nc IGNORED
+swflx_io swflx_o 170 5400 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
 INSTANT
 ##########
-runoff_io runoff_o 175 3600 1 i2o.nc IGNORED
+runof_io runof_o 175 5400 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
@@ -90,7 +90,7 @@ INSTANT
 #                      OCEAN --->>> ICE
 #                      ----------------
 ##########
-sst_oi sst_i 1 3600 1 o2i.nc IGNORED
+sst_oi sst_i 1 5400 1 o2i.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
 LOCTRANS

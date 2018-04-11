@@ -8,6 +8,7 @@ use util_mod, only : ncheck, get_var_dims, replace_text
 use util_mod, only : first_file_matching_pattern
 use netcdf
 use field_mod, only : field_type => field
+use logger_mod, only : logger_type => logger
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
 implicit none
@@ -29,16 +30,18 @@ endtype forcing
 contains
 
 !> Open forcing file and find fields
-subroutine forcing_init(self, config, start_date, nfields)
+subroutine forcing_init(self, config, start_date, nfields, logger)
 
     class(forcing), intent(inout) :: self
     character(len=*), intent(in) :: config
     type(datetime), intent(in) :: start_date
     integer, intent(out) :: nfields
+    type(logger_type), intent(in) :: logger
 
     type(json_value), pointer :: root
 
     self%start_date = start_date
+    self%logger = logger
 
     call self%json%initialize()
     call self%json%load_file(filename=trim(config))
@@ -87,7 +90,8 @@ subroutine forcing_init_fields(self, fields, min_dt)
         filename = filename_for_year(filename_template, &
                                       self%start_date%getYear())
         ! Initialise a new field object.
-        call fields(i)%init(cname, fieldname, filename_template, filename)
+        call fields(i)%init(cname, fieldname, filename_template, filename, &
+                            self%logger)
 
         if (fields(i)%dt < min_dt) then
             min_dt = fields(i)%dt
@@ -112,7 +116,7 @@ subroutine forcing_update_field(self, fld, forcing_date, debug_output)
 
     if (present(debug_output)) then
         if (debug_output) then
-            print*, 'forcing_update_field at '//forcing_date%isoformat()
+            self%logger%write('forcing_update_field at '//forcing_date%isoformat())
         endif
     endif
 
