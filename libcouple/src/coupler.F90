@@ -79,7 +79,8 @@ subroutine coupler_init_begin(self, model_name, &
     ! Get an intercommunicator with the peer.
     if (model_name == 'matmxx') then
         call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
-        call oasis_get_intercomm(self%ocean_intercomm, 'mom5xx', err)
+        ! FIXME: this hangs do both models need to call this
+        !call oasis_get_intercomm(self%ocean_intercomm, 'mom5xx', err)
     elseif (model_name == 'cicexx') then
         call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
     elseif (model_name == 'mom5xx') then
@@ -220,18 +221,19 @@ subroutine coupler_deinit(self, cur_date)
     tag = 831917
 
     ! Check that cur_date is the same between all models.
-    if (self%model_name == 'matmxx') then
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-        call assert(buf(1) == checksum, 'Models are out of sync.')
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
-        call assert(buf(1) == checksum, 'Models are out of sync.')
-    elseif (self%model_name == 'cicexx') then
-        buf(1) = checksum
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
-    elseif (self%model_name == 'mom5xx') then
-        buf(1) = checksum
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
-    endif
+    ! FIXME: this needs support from the other models.
+    !if (self%model_name == 'matmxx') then
+    !    call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
+    !    call assert(buf(1) == checksum, 'Models are out of sync.')
+    !    call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
+    !    call assert(buf(1) == checksum, 'Models are out of sync.')
+    !elseif (self%model_name == 'cicexx') then
+    !    buf(1) = checksum
+    !    call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
+    !elseif (self%model_name == 'mom5xx') then
+    !    buf(1) = checksum
+    !    call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
+    !endif
 
     call oasis_terminate(err)
     call assert(err == OASIS_OK, 'oasis_terminate')

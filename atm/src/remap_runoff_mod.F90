@@ -56,7 +56,8 @@ contains
     integer :: n_s, n_a, n_b
 
     ! Initialise remapping weights arrays
-    call ncheck(nf90_open(weights, NF90_NOWRITE, ncid), "Can't open weights")
+    call ncheck(nf90_open(trim(weights), NF90_NOWRITE, ncid), &
+                "remap_runoff_new: can't open weights file: "//trim(weights))
     call read_weight_dims(ncid, n_s, n_a, n_b)
 
     allocate(this%row(n_s), this%col(n_s), this%s(n_s))
