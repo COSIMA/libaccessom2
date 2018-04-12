@@ -249,11 +249,12 @@ subroutine write_checksum(self, name, array)
     character(len=*), intent(in) :: name
     real, dimension(:,:), intent(in) :: array
 
-    integer :: checksum
+    real :: checksum
+    character(len=17) :: checksum_str
 
     ! FIXME: come up with a better way to do checksums
-    checksum = int(sum(array))
-    call self%logger%write(LOG_DEBUG, '{ "checksum-'//trim(name)//'": ', checksum)
+    write(checksum_str, '(E17.10E3)') sum(array)
+    call self%logger%write(LOG_DEBUG, '{ "checksum-'//trim(name)//'": '//checksum_str//' }')
 
 endsubroutine write_checksum
 

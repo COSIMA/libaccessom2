@@ -68,18 +68,18 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
     open(newunit=self%fp, file=trim(self%logfilename))
 endsubroutine
 
-subroutine logger_write(self, loglevel, str, num)
+subroutine logger_write(self, loglevel, str, intnum)
     class(logger), intent(in) :: self
     integer, intent(in) :: loglevel
     character(len=*), intent(in) :: str
-    integer, optional, intent(in) :: num
+    integer, optional, intent(in) :: intnum
 
-    character(len=10) :: num_str
+    character(len=10) :: intnum_str
 
     if (loglevel >= self%loglevel) then
-        if (present(num)) then
-            write(num_str, '(I10.10)') num
-            write(self%fp, *) trim(str)//' '//num_str
+        if (present(intnum)) then
+            write(intnum_str, '(I10.10)') intnum
+            write(self%fp, *) trim(str)//' '//intnum_str
         else
             write(self%fp, *) trim(str)
         endif
