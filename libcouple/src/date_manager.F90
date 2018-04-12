@@ -17,6 +17,7 @@ type date_manager
     ! These are set by the user.
     type(datetime) :: forcing_start_date, forcing_end_date
     integer, dimension(3) :: restart_period
+    ! FIXME: this should be read from the forcing file.
     integer :: calendar
 
     ! These are internal
@@ -208,7 +209,7 @@ subroutine date_manager_progress_date(self, timestep)
         self%calendar == CALENDAR_NOLEAP) then
 
         self%forcing_cur_date = self%forcing_cur_date + timedelta(days=1)
-    endif        
+    endif
 
     if (self%forcing_cur_date >= self%run_end_date) then
         self%forcing_cur_date = self%forcing_start_date

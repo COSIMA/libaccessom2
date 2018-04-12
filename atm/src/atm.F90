@@ -24,7 +24,7 @@ program atm
     type(field_type) :: runoff_field
     integer, dimension(2) :: ice_shape
     integer :: i, err
-    integer :: num_coupling_fields, min_dt, cur_runtime_in_seconds
+    integer :: num_coupling_fields, dt, cur_runtime_in_seconds
 
     ! Initialise run settings and logger
     call param%init()
@@ -42,9 +42,7 @@ program atm
     call forcing%init("forcing.json", date_manager%get_cur_forcing_date(), &
                       num_coupling_fields, logger)
     allocate(fields(num_coupling_fields))
-    call forcing%init_fields(fields, min_dt)
-    ! FIXME: use dt from atm.nml instead of min_dt for the time being.
-    min_dt = param%dt
+    call forcing%init_fields(fields, dt)
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(coupler%get_peer_intercomm())
@@ -98,7 +96,7 @@ program atm
         ! after receiving the above fields. This prevents the atm from sending continuously.
         call coupler%atm_ice_sync()
 
-        call date_manager%progress_date(min_dt)
+        call date_manager%progress_date(dt)
     enddo
 
     call coupler%deinit(date_manager%get_cur_exp_date())
