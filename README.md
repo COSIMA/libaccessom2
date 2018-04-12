@@ -37,7 +37,7 @@ Other key variables in datetime management are:
 
 # What am I doing now
 
-Fixing logging. Running ACCESS-OM2 tests. Update payu for yatm.
+Running ACCESS-OM2 tests. Update payu for yatm. Add model level module, accessom2_mod. Set path to namcouple.
 
 CI tests (in priority):
     - Reproducing previous results (e.g. compare against current ACCESS-OM2 output).

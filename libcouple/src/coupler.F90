@@ -70,6 +70,7 @@ subroutine coupler_init_begin(self, model_name, total_runtime_in_seconds, logger
         call self%logger%init(model_name//'-coupler', 'ERROR')
     endif
 
+    ! FIXME: set the path to the namcouple
     call oasis_init_comp(self%comp_id, model_name, err, &
                          total_runtime_in_seconds)
     call assert(err == OASIS_OK, 'oasis_init_comp')

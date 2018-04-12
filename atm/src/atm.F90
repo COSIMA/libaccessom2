@@ -26,23 +26,25 @@ program atm
     integer :: i, err
     integer :: num_coupling_fields, dt, cur_runtime_in_seconds
 
-    ! Initialise run settings and logger
-    call param%init()
+    ! Initialise model-level init, config and sync/tracking module
+    call accessom2%init('matmxx')
+    ! Logger needs MPI_Init to have been called (above) and can now start
     call logger%init('matmxx', logfiledir='log', loglevel=param%log_level)
 
-    ! Initialise time manager
+    ! Initialise atm run settings and datetime manager
+    call param%init()
     call date_manager%init('matmxx')
+
+    ! Initialise forcing object and fields, involves reading details of each
+    ! field from disk.
+    call forcing%init(param%forcing_file, date_manager%get_cur_forcing_date(), &
+                      num_coupling_fields, logger)
+    allocate(fields(num_coupling_fields))
+    call forcing%init_fields(fields, dt, calendar)
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
     call coupler%init_begin('matmxx', &
                             date_manager%get_total_runtime_in_seconds(), logger)
-
-    ! Initialise forcing object and fields, involves reading details of each
-    ! field from disk.
-    call forcing%init("forcing.json", date_manager%get_cur_forcing_date(), &
-                      num_coupling_fields, logger)
-    allocate(fields(num_coupling_fields))
-    call forcing%init_fields(fields, dt)
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(coupler%get_peer_intercomm())
