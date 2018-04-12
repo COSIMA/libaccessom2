@@ -8,7 +8,7 @@ use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_intercomm, &
                       oasis_put, oasis_get, oasis_terminate, oasis_get_localcomm
 use datetime_module, only : datetime, date2num
 use error_handler, only : assert
-use logger_mod, only : logger_type => logger
+use logger_mod, only : logger_type => logger, LOG_DEBUG
 use field_mod, only : field_type => field
 
 implicit none
@@ -20,7 +20,6 @@ type coupler
 
     integer :: comp_id  ! Component ID
     integer :: size     ! Total number of processes
-    logical :: debug_output
 
     ! Intercommunicators
     integer :: monitor_intercomm, atm_intercomm, ice_intercomm, ocean_intercomm
@@ -46,33 +45,29 @@ endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, &
-                              total_runtime_in_seconds, debug_output, logger)
+subroutine coupler_init_begin(self, model_name, total_runtime_in_seconds, logger)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
     integer, intent(in) :: total_runtime_in_seconds
-    logical, optional, intent(in) :: debug_output
     type(logger_type), optional, intent(in) :: logger
 
     integer :: err
+    logical :: initialized
 
     call assert(model_name == 'matmxx' .or. model_name == 'cicexx' &
                 .or. model_name == 'mom5xx' .or. model_name == 'monito', &
                 'Bad model name')
     self%model_name = model_name
 
-    if (present(debug_output)) then
-        self%debug_output = debug_output
-    else
-        self%debug_output = .false.
+    call MPI_Initialized(initialized, err)
+    if (.not. initialized) then
+        call MPI_Init(err)
     endif
-
-    call MPI_Init(err)
 
     if (present(logger)) then
         self%logger = logger
     else
-        call self%logger%init(trim(model_name)//'-coupler')
+        call self%logger%init(model_name//'-coupler', 'ERROR')
     endif
 
     call oasis_init_comp(self%comp_id, model_name, err, &
@@ -172,14 +167,12 @@ subroutine coupler_put(self, field, timestamp, err)
 
 
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
-    if (self%debug_output) then
-        ! Only output field checksum if it is actually sent.
-        if (err == OASIS_SENT .or. err == OASIS_SENTOUT .or. err == OASIS_TOREST &
-               .or. err == OASIS_TORESTOUT) then
-            write(timestamp_str, '(I10.10)') timestamp
-            call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
-                                field%data_array)
-        endif
+    ! Only output field checksum if it is actually sent.
+    if (err == OASIS_SENT .or. err == OASIS_SENTOUT .or. err == OASIS_TOREST &
+           .or. err == OASIS_TORESTOUT) then
+        write(timestamp_str, '(I10.10)') timestamp
+        call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
+                            field%data_array)
     endif
 
 endsubroutine coupler_put
@@ -194,12 +187,9 @@ subroutine coupler_get(self, field, timestamp, err)
     character(len=10) :: timestamp_str
 
     call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
-
-    if (self%debug_output) then
-        write(timestamp_str, '(I10.10)') timestamp
-        call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
-                            field%data_array)
-    endif
+    write(timestamp_str, '(I10.10)') timestamp
+    call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
+                             field%data_array)
 
 endsubroutine coupler_get
 
@@ -260,13 +250,10 @@ subroutine write_checksum(self, name, array)
     real, dimension(:,:), intent(in) :: array
 
     integer :: checksum
-    character(len=10) checksum_str
 
     ! FIXME: come up with a better way to do checksums
     checksum = int(sum(array))
-    write(checksum_str, '(I10.10)') checksum
-
-    call self%logger%write('{ "checksum-'//trim(name)//'": '//checksum_str//'}')
+    call self%logger%write(LOG_DEBUG, '{ "checksum-'//trim(name)//'": ', checksum)
 
 endsubroutine write_checksum
 

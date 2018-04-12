@@ -8,7 +8,7 @@ use util_mod, only : ncheck, get_var_dims, replace_text
 use util_mod, only : first_file_matching_pattern
 use netcdf
 use field_mod, only : field_type => field
-use logger_mod, only : logger_type => logger
+use logger_mod, only : logger_type => logger, LOG_DEBUG
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
 implicit none
@@ -16,6 +16,7 @@ implicit none
 private
 
 type, public :: forcing
+    type(logger_type) :: logger
     type(datetime) :: start_date
     type(json_file) :: json
     type(json_core) :: core
@@ -100,12 +101,11 @@ subroutine forcing_init_fields(self, fields, min_dt)
 
 endsubroutine forcing_init_fields
 
-subroutine forcing_update_field(self, fld, forcing_date, debug_output)
+subroutine forcing_update_field(self, fld, forcing_date)
 
     class(forcing), intent(inout) :: self
     type(field_type), intent(inout) :: fld
     type(datetime), intent(in) :: forcing_date
-    logical, optional, intent(in) :: debug_output
 
     character(len=1024) :: filename
 
@@ -114,11 +114,8 @@ subroutine forcing_update_field(self, fld, forcing_date, debug_output)
         return
     endif
 
-    if (present(debug_output)) then
-        if (debug_output) then
-            self%logger%write('forcing_update_field at '//forcing_date%isoformat())
-        endif
-    endif
+    call self%logger%write(LOG_DEBUG, &
+                           'forcing_update_field at '//forcing_date%isoformat())
 
     filename = filename_for_year(fld%filename_template, forcing_date%getYear())
     call assert(trim(filename) /= '', "File not found: "//filename)

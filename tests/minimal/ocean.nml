@@ -3,5 +3,4 @@
     to_ice_field_names = 'sst_oi'
     resolution(:) = 360,300
     dt = 5400
-    debug_output = .true.
 &end

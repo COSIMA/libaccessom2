@@ -4,7 +4,7 @@ use netcdf, only : nf90_max_name
 use ncvar_mod, only : ncvar_type => ncvar
 use datetime_module, only : datetime
 use error_handler, only : assert
-use logger_mod, only : logger_type => logger
+use logger_mod, only : logger_type => logger, LOG_DEBUG
 
 implicit none
 
@@ -67,8 +67,8 @@ subroutine field_update_data(self, filename, forcing_date)
     call assert(indx /= -1, &
                 "Could not find forcing date "//forcing_date%isoformat())
 
-    call self%logger%write('field_update_data: file '//trim(filename))
-    call self%logger%write('field_update_data: index ', indx)
+    call self%logger%write(LOG_DEBUG, 'field_update_data: file '//trim(filename))
+    call self%logger%write(LOG_DEBUG, 'field_update_data: index ', indx)
     call self%ncvar%read_data(indx, self%data_array)
     self%timestamp = forcing_date
 

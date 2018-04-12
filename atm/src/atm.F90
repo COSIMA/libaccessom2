@@ -9,7 +9,7 @@ program atm
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
     use date_manager_mod, only : date_manager_type => date_manager
-    use logger_mod, only : logger_type => logger
+    use logger_mod, only : logger_type => logger, LOG_INFO
 
     implicit none
 
@@ -26,24 +26,21 @@ program atm
     integer :: i, err
     integer :: num_coupling_fields, min_dt, cur_runtime_in_seconds
 
-    ! Initialise run settings
+    ! Initialise run settings and logger
     call param%init()
+    call logger%init('matmxx', logfiledir='log', loglevel=param%log_level)
 
     ! Initialise time manager
     call date_manager%init('matmxx')
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
-    call coupler%init_begin('matmxx', date_manager%get_total_runtime_in_seconds(), &
-                            param%log_level)
-
-    ! Initialise the logger, needs to be done after MPI_INIT
-    ! FIXME: this may not be good because the coupler needs access to the logger
-    call logger%init('matmxx', param%log_level)
+    call coupler%init_begin('matmxx', &
+                            date_manager%get_total_runtime_in_seconds(), logger)
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
     call forcing%init("forcing.json", date_manager%get_cur_forcing_date(), &
-                      num_coupling_fields)
+                      num_coupling_fields, logger)
     allocate(fields(num_coupling_fields))
     call forcing%init_fields(fields, min_dt)
     ! FIXME: use dt from atm.nml instead of min_dt for the time being.
@@ -74,10 +71,8 @@ program atm
 
     do while (.not. date_manager%run_finished())
 
-        if (param%debug_output) then
-            call logger%write('cur_exp_date '//date_manager%get_cur_exp_date_str())
-            call logger%write('cur_forcing_date '//date_manager%get_cur_forcing_date_str())
-        endif
+        call logger%write(LOG_INFO, 'cur_exp_date '//date_manager%get_cur_exp_date_str())
+        call logger%write(LOG_INFO, 'cur_forcing_date '//date_manager%get_cur_forcing_date_str())
 
         cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
 
@@ -85,8 +80,7 @@ program atm
         do i=1, num_coupling_fields
             if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
                 call forcing%update_field(fields(i), &
-                                          date_manager%get_cur_forcing_date(), &
-                                          param%debug_output)
+                                          date_manager%get_cur_forcing_date())
                 if (index(fields(i)%name, 'runof') /= 0) then
                     call runoff%remap(fields(i)%data_array, &
                                       runoff_field%data_array, ice_grid%mask)

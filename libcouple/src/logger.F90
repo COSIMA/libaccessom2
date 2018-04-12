@@ -2,13 +2,17 @@ module logger_mod
 
 use mpi
 use error_handler, only : assert
-
 implicit none
-
 private
+
+integer, parameter, public :: LOG_DEBUG = 10
+integer, parameter, public :: LOG_INFO = 20
+integer, parameter, public :: LOG_WARNING = 30
+integer, parameter, public :: LOG_ERROR = 40
 
 type, public :: logger
 
+    integer :: loglevel
     character(len=6) :: model_name
     character(len=1024) :: logfilename
     integer :: fp
@@ -21,17 +25,38 @@ endtype logger
 
 contains
 
-subroutine logger_init(self, basename, logfiledir)
+subroutine logger_init(self, basename, logfiledir, loglevel)
     class(logger), intent(inout) :: self
     character(len=*), intent(in) :: basename
     character(len=*), optional, intent(in) :: logfiledir
+    character(len=*), optional, intent(in) :: loglevel
 
     character(len=5) :: pe_str
     integer :: pe, err
-    logical :: file_exists
+    logical :: initialized, file_exists
 
+    if (present(loglevel)) then
+        if (trim(loglevel) == 'DEBUG') then
+            self%loglevel = LOG_DEBUG
+        elseif (trim(loglevel) == 'INFO') then
+            self%loglevel = LOG_INFO
+        elseif (trim(loglevel) == 'WARNING') then
+            self%loglevel = LOG_WARNING
+        elseif (trim(loglevel) == 'ERROR') then
+            self%loglevel = LOG_ERROR
+        else
+            call assert(.false., 'logger_init: bad log level')
+        endif
+    else
+        self%loglevel = LOG_ERROR
+    endif
+
+    ! We need MPI to get form the log output filename.
+    call MPI_Initialized(initialized, err)
+    if (.not. initialized) then
+        call MPI_Init(err)
+    endif
     call MPI_Comm_rank(MPI_COMM_WORLD, pe, err)
-    call assert(err == 0, 'logger cannot get PE')
     write(pe_str, '(I5.5)') pe
 
     self%logfilename = trim(basename)//'.pe'//pe_str//'.log'
@@ -40,16 +65,25 @@ subroutine logger_init(self, basename, logfiledir)
     endif
 
     inquire(file=trim(self%logfilename), exist=file_exists)
-    call assert(.not. file_exists, &
-                'Log file already exists: '//trim(self%logfilename))
     open(newunit=self%fp, file=trim(self%logfilename))
 endsubroutine
 
-subroutine logger_write(self, str)
+subroutine logger_write(self, loglevel, str, num)
     class(logger), intent(in) :: self
+    integer, intent(in) :: loglevel
     character(len=*), intent(in) :: str
+    integer, optional, intent(in) :: num
 
-    write(self%fp, *) trim(str)
+    character(len=10) :: num_str
+
+    if (loglevel >= self%loglevel) then
+        if (present(num)) then
+            write(num_str, '(I10.10)') num
+            write(self%fp, *) trim(str)//' '//num_str
+        else
+            write(self%fp, *) trim(str)
+        endif
+    endif
 
 endsubroutine logger_write
 

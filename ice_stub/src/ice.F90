@@ -8,12 +8,14 @@ program ice
     use restart_mod, only : restart_type => restart
     use mod_oasis, only : OASIS_IN, OASIS_OUT
     use date_manager_mod, only : date_manager_type => date_manager
+    use logger_mod, only : logger_type => logger
 
     implicit none
 
     integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128, &
                           MAX_FILE_NAME_LEN = 256
 
+    type(logger_type) :: logger
     type(ice_grid_type) :: ice_grid
     type(date_manager_type) :: date_manager
     type(coupler_type) :: coupler
@@ -22,7 +24,6 @@ program ice
     ! Namelist parameters
     integer :: dt, i, tmp_unit, err
     integer, dimension(2) :: resolution
-    logical :: debug_output = .false.
     type(field_type), dimension(:), allocatable :: from_atm_fields, &
         from_ocean_fields, to_ocean_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
@@ -33,7 +34,7 @@ program ice
     character(len=MAX_FILE_NAME_LEN) :: ice_grid_file, ice_mask_file
     logical :: file_exists
 
-    namelist /ice_nml/ dt, resolution, debug_output, &
+    namelist /ice_nml/ dt, resolution, &
                        from_atm_field_names, from_ocean_field_names, &
                        to_ocean_field_names, ice_grid_file, ice_mask_file
 
@@ -47,11 +48,12 @@ program ice
 
     ! Initialise time manager
     call date_manager%init('cicexx')
+    call logger%init('cicexx', logfiledir='log', loglevel='DEBUG')
 
     ! Initialise coupler, this needs to be done before the ice grid is
     ! sent to the atmosphere.
-    call coupler%init_begin('cicexx', date_manager%get_total_runtime_in_seconds(), &
-                            debug_output)
+    call coupler%init_begin('cicexx', &
+                            date_manager%get_total_runtime_in_seconds(), logger)
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0

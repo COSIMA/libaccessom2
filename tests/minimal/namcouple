@@ -52,7 +52,7 @@
 # oasis get at time=0 will come from a coupling restart file written by the
 # last active oasis put of the previous run.
 ##########
-swfld_ai swfld_i 367 10800 3 a2i.nc EXPOUT
+swfld_ai swfld_i 367 10800 3 a2i.nc EXPORTED
 640 320 360 300 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
@@ -63,7 +63,7 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.
 ##########
-runof_ai runof_i 297 10800 1 a2i.nc EXPOUT
+runof_ai runof_i 297 10800 1 a2i.nc EXPORTED
 360 300 360 300 cict cict LAG=0 SEQ=+1
 P  0  P  0
 #

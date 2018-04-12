@@ -7,12 +7,14 @@ program ocean
     use restart_mod, only : restart_type => restart
     use date_manager_mod, only : date_manager_type => date_manager
     use mod_oasis, only : OASIS_IN, OASIS_OUT
+    use logger_mod, only : logger_type => logger
 
     implicit none
 
     integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128, &
                           MAX_FILE_NAME_LEN = 256
 
+    type(logger_type) :: logger
     type(coupler_type) :: coupler
     type(restart_type) :: restart
     type(date_manager_type) :: date_manager
@@ -20,7 +22,6 @@ program ocean
     ! Namelist parameters
     integer :: dt, i, idx, tmp_unit, err
     integer, dimension(2) :: resolution
-    logical :: debug_output = .false.
     type(field_type), dimension(:), allocatable :: in_fields, out_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
         from_ice_field_names = '', to_ice_field_names = ''
@@ -28,8 +29,7 @@ program ocean
     integer :: cur_runtime_in_seconds
     logical :: file_exists
 
-    namelist /ocean_nml/ dt, resolution, debug_output, &
-                       from_ice_field_names, to_ice_field_names
+    namelist /ocean_nml/ dt, resolution, from_ice_field_names, to_ice_field_names
 
     ! Read namelist which model resolution and names and
     ! direction of coupling fields.
@@ -41,10 +41,11 @@ program ocean
 
     ! Initialise time manager
     call date_manager%init('mom5xx')
+    call logger%init('mom5xx', logfiledir='log', loglevel='DEBUG')
 
     ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('mom5xx', date_manager%get_total_runtime_in_seconds(), &
-                            debug_output)
+    call coupler%init_begin('mom5xx', &
+                            date_manager%get_total_runtime_in_seconds(), logger)
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
