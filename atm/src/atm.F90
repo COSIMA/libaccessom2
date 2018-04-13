@@ -8,14 +8,14 @@ program atm
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
-    use date_manager_mod, only : date_manager_type => date_manager
+    use accessom2_mod, only : accessom2_type => accessom2
     use logger_mod, only : logger_type => logger, LOG_INFO
 
     implicit none
 
     type(params) :: param
     type(logger_type) :: logger
-    type(date_manager_type) :: date_manager
+    type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
     type(forcing_type) :: forcing
     type(ice_grid_type) :: ice_grid
@@ -31,27 +31,27 @@ program atm
     ! Logger needs MPI_Init to have been called (above) and can now start
     call logger%init('matmxx', logfiledir='log', loglevel=param%log_level)
 
-    ! Initialise atm run settings and datetime manager
-    call param%init()
-    call date_manager%init('matmxx')
-
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
-    call forcing%init(param%forcing_file, date_manager%get_cur_forcing_date(), &
-                      num_coupling_fields, logger)
+    call forcing%init(param%forcing_file, logger, num_coupling_fields)
     allocate(fields(num_coupling_fields))
-    call forcing%init_fields(fields, dt, calendar)
+    call forcing%init_fields(fields, forcing_cur_date, dt, calendar)
+    ! 'calendar' is a global config, tell accessom2 about it.
+    call accessom2%set_calendar(calendar)
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
     call coupler%init_begin('matmxx', &
-                            date_manager%get_total_runtime_in_seconds(), logger)
+                            accessom2%get_total_runtime_in_seconds(), logger)
+    ! Synchronise accessom2 'state' (i.e. configuration) between all models.
+    call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
+                               coupler%ocean_intercomm)
 
     ! Get information about the ice grid needed for runoff remapping.
-    call ice_grid%init(coupler%get_peer_intercomm())
+    call ice_grid%init(coupler%ice_intercomm)
     call ice_grid%recv()
 
     ! Initialise the runoff remapping object with ice grid information.
-    call runoff%init(ice_grid, param%runoff_remap_weights_file)
+    call runoff%init(accessom2%ice_grid, param%runoff_remap_weights_file)
     ice_shape = ice_grid%get_shape()
 
     ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
@@ -69,18 +69,18 @@ program atm
     enddo
     call coupler%init_end()
 
-    do while (.not. date_manager%run_finished())
+    do while (.not. accessom2%run_finished())
 
-        call logger%write(LOG_INFO, 'cur_exp_date '//date_manager%get_cur_exp_date_str())
-        call logger%write(LOG_INFO, 'cur_forcing_date '//date_manager%get_cur_forcing_date_str())
+        call logger%write(LOG_INFO, 'cur_exp_date '//accessom2%get_cur_exp_date_str())
+        call logger%write(LOG_INFO, 'cur_forcing_date '//accessom2%get_cur_forcing_date_str())
 
-        cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
+        cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
 
         ! Send each forcing field
         do i=1, num_coupling_fields
             if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
                 call forcing%update_field(fields(i), &
-                                          date_manager%get_cur_forcing_date())
+                                          accessom2%get_cur_forcing_date())
                 if (index(fields(i)%name, 'runof') /= 0) then
                     call runoff%remap(fields(i)%data_array, &
                                       runoff_field%data_array, ice_grid%mask)
@@ -98,11 +98,11 @@ program atm
         ! after receiving the above fields. This prevents the atm from sending continuously.
         call coupler%atm_ice_sync()
 
-        call date_manager%progress_date(dt)
+        call accessom2%progress_date(dt)
     enddo
 
-    call coupler%deinit(date_manager%get_cur_exp_date())
-    call date_manager%deinit()
+    call coupler%deinit(accessom2%get_cur_exp_date())
+    call accessom2%deinit()
     call forcing%deinit()
 
 end program atm

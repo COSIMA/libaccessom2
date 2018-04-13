@@ -71,6 +71,7 @@ subroutine coupler_init_begin(self, model_name, total_runtime_in_seconds, logger
     endif
 
     ! FIXME: set the path to the namcouple
+    ! What about setting the model timestep as well?
     call oasis_init_comp(self%comp_id, model_name, err, &
                          total_runtime_in_seconds)
     call assert(err == OASIS_OK, 'oasis_init_comp')

@@ -31,17 +31,15 @@ endtype forcing
 contains
 
 !> Open forcing file and find fields
-subroutine forcing_init(self, config, start_date, nfields, logger)
+subroutine forcing_init(self, config, logger, nfields)
 
     class(forcing), intent(inout) :: self
     character(len=*), intent(in) :: config
-    type(datetime), intent(in) :: start_date
-    integer, intent(out) :: nfields
     type(logger_type), intent(in) :: logger
+    integer, intent(out) :: nfields
 
     type(json_value), pointer :: root
 
-    self%start_date = start_date
     self%logger = logger
 
     call self%json%initialize()
@@ -60,10 +58,11 @@ subroutine forcing_init(self, config, start_date, nfields, logger)
 endsubroutine forcing_init
 
 !> Parse forcing file into a dictionary.
-subroutine forcing_init_fields(self, fields, min_dt)
+subroutine forcing_init_fields(self, fields, forcing_date, min_dt)
 
     class(forcing), intent(inout) :: self
     type(field_type), dimension(:), intent(inout) :: fields
+    type(datetime), intent(in) :: forcing_date
     integer, intent(out) :: min_dt
 
     type(json_value), pointer :: fp
@@ -88,8 +87,7 @@ subroutine forcing_init_fields(self, fields, min_dt)
         call assert(found, "Entry 'cname' not found in forcing config.")
 
         ! Get the shape of forcing fields
-        filename = filename_for_year(filename_template, &
-                                      self%start_date%getYear())
+        filename = filename_for_year(filename_template, forcing_date%getYear())
         ! Initialise a new field object.
         call fields(i)%init(cname, fieldname, filename_template, filename, &
                             self%logger)

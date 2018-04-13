@@ -1,8 +1,3 @@
-&atm_nml
-    runoff_remap_weights_file = '../test_data/rmp_jra55_runoff_cice_conserve.nc'
-    dt = 10800
-    log_level = 'DEBUG'
-&end
-
 &runoff_nml
+    runoff_remap_weights_file = '../test_data/rmp_jra55_runoff_cice_conserve.nc'
 &end

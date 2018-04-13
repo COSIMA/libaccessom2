@@ -7,7 +7,7 @@ program ice
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
     use mod_oasis, only : OASIS_IN, OASIS_OUT
-    use date_manager_mod, only : date_manager_type => date_manager
+    use accessom2_mod, only : accessom2_type => accessom2
     use logger_mod, only : logger_type => logger
 
     implicit none
@@ -17,7 +17,7 @@ program ice
 
     type(logger_type) :: logger
     type(ice_grid_type) :: ice_grid
-    type(date_manager_type) :: date_manager
+    type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
     type(restart_type) :: i2o_restart, o2i_restart
 
@@ -47,13 +47,13 @@ program ice
     close(tmp_unit)
 
     ! Initialise time manager
-    call date_manager%init('cicexx')
+    call accessom2%init('cicexx')
     call logger%init('cicexx', logfiledir='log', loglevel='DEBUG')
 
     ! Initialise coupler, this needs to be done before the ice grid is
     ! sent to the atmosphere.
     call coupler%init_begin('cicexx', &
-                            date_manager%get_total_runtime_in_seconds(), logger)
+                            accessom2%get_total_runtime_in_seconds(), logger)
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0
@@ -105,11 +105,11 @@ program ice
     call i2o_restart%read(to_ocean_fields)
 
     ! Get from atmosphere
-    cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
+    cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
     do i=1, size(from_atm_fields)
         call coupler%get(from_atm_fields(i), cur_runtime_in_seconds, err)
     enddo
-    call coupler%atm_ice_sync()
+    call accessom2%atm_ice_sync()
     ! Update atmospheric forcing halos - expensive operation.
 
     ! Note the structure of the following loop:
@@ -128,11 +128,11 @@ program ice
 
         ! Do work
 
-        call date_manager%progress_date(dt)
-        if (date_manager%run_finished()) then
+        call accessom2%progress_date(dt)
+        if (accessom2%run_finished()) then
             exit
         endif
-        cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
+        cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
 
         ! Get from atmos - fast because atmos should have already sent.
         do i=1, size(from_atm_fields)
@@ -142,7 +142,7 @@ program ice
         ! atm is blocked, unblock it. This prevents the atm from sending
         ! continuously and means that the next set of coupling fields
         ! will arrive while we're doing work.
-        call coupler%atm_ice_sync()
+        call accessom2%atm_ice_sync()
 
         ! Update atmospheric forcing halos - expensive operation.
 
@@ -155,8 +155,8 @@ program ice
     enddo
 
     ! Write out restart.
-    call i2o_restart%write(date_manager%get_cur_exp_date(), to_ocean_fields)
-    call coupler%deinit(date_manager%get_cur_exp_date())
-    call date_manager%deinit()
+    call i2o_restart%write(accessom2%get_cur_exp_date(), to_ocean_fields)
+    call coupler%deinit(accessom2%get_cur_exp_date())
+    call accessom2%deinit()
 
 end program
