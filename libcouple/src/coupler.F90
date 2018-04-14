@@ -6,7 +6,7 @@ use mod_oasis, only : oasis_init_comp, oasis_def_var, oasis_get_intercomm, &
                       OASIS_RECVD, OASIS_SENT, OASIS_SENTOUT, OASIS_TOREST, &
                       OASIS_TORESTOUT, OASIS_IN, OASIS_OUT, &
                       oasis_put, oasis_get, oasis_terminate, oasis_get_localcomm
-use datetime_module, only : datetime, date2num
+use datetime_module, only : datetime
 use error_handler, only : assert
 use logger_mod, only : logger_type => logger, LOG_DEBUG
 use field_mod, only : field_type => field
@@ -22,7 +22,7 @@ type coupler
     integer :: size     ! Total number of processes
 
     ! Intercommunicators
-    integer :: monitor_intercomm, atm_intercomm, ice_intercomm, ocean_intercomm
+    integer, public :: monitor_intercomm, atm_intercomm, ice_intercomm, ocean_intercomm
     integer :: localcomm
     integer :: my_local_pe, my_global_pe
 
@@ -38,17 +38,15 @@ contains
     procedure, pass(self), public :: init_field => coupler_init_field
     procedure, pass(self), public :: put => coupler_put
     procedure, pass(self), public :: get => coupler_get
-    procedure, pass(self), public :: atm_ice_sync => coupler_atm_ice_sync
     procedure, pass(self), public :: get_peer_intercomm
     procedure, pass(self) :: write_checksum
 endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, total_runtime_in_seconds, logger)
+subroutine coupler_init_begin(self, model_name, logger)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
-    integer, intent(in) :: total_runtime_in_seconds
     type(logger_type), optional, intent(in) :: logger
 
     integer :: err
@@ -72,8 +70,7 @@ subroutine coupler_init_begin(self, model_name, total_runtime_in_seconds, logger
 
     ! FIXME: set the path to the namcouple
     ! What about setting the model timestep as well?
-    call oasis_init_comp(self%comp_id, model_name, err, &
-                         total_runtime_in_seconds)
+    call oasis_init_comp(self%comp_id, model_name, err)
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
     call oasis_get_localcomm(self%localcomm, err)
@@ -84,13 +81,11 @@ subroutine coupler_init_begin(self, model_name, total_runtime_in_seconds, logger
     ! Get an intercommunicator with the peer.
     if (model_name == 'matmxx') then
         call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
-        ! FIXME: this hangs, both models need to call this
-        !call oasis_get_intercomm(self%ocean_intercomm, 'mom5xx', err)
+        call oasis_get_intercomm(self%ocean_intercomm, 'mom5xx', err)
     elseif (model_name == 'cicexx') then
         call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
     elseif (model_name == 'mom5xx') then
-        ! FIXME: this hangs, both models need to call this
-        !call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
+        call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
     endif
 
 endsubroutine coupler_init_begin
@@ -150,12 +145,13 @@ subroutine coupler_init_field(self, field, direction)
 
 endsubroutine coupler_init_field
 
-subroutine coupler_init_end(self)
+subroutine coupler_init_end(self, total_runtime_in_seconds)
     class(coupler), intent(in) :: self
+    integer, intent(in) :: total_runtime_in_seconds
 
     integer :: err
 
-    call oasis_enddef(err)
+    call oasis_enddef(err, runtime=total_runtime_in_seconds)
 endsubroutine coupler_init_end
 
 subroutine coupler_put(self, field, timestamp, err)
@@ -195,54 +191,13 @@ subroutine coupler_get(self, field, timestamp, err)
 
 endsubroutine coupler_get
 
-subroutine coupler_atm_ice_sync(self)
-
-    class(coupler), intent(inout) :: self
-
-    integer :: stat(MPI_STATUS_SIZE)
-    integer, dimension(1) :: buf
-    integer :: err, tag, request
-
-    if (self%model_name == 'matmxx') then
-        tag = MPI_ANY_TAG
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-    elseif (self%model_name == 'cicexx') then
-        tag = 0
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
-    endif
-
-endsubroutine coupler_atm_ice_sync
-
-subroutine coupler_deinit(self, cur_date)
+subroutine coupler_deinit(self)
     class(coupler), intent(in) :: self
-    type(datetime), intent(in) :: cur_date
 
-    integer :: stat(MPI_STATUS_SIZE)
-    integer, dimension(1) :: buf
-    integer :: err, tag, request
-    integer :: checksum
-
-    checksum = date2num(cur_date)
-    tag = 831917
-
-    ! Check that cur_date is the same between all models.
-    ! FIXME: this needs support from the other models.
-    !if (self%model_name == 'matmxx') then
-    !    call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-    !    call assert(buf(1) == checksum, 'Models are out of sync.')
-    !    call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
-    !    call assert(buf(1) == checksum, 'Models are out of sync.')
-    !elseif (self%model_name == 'cicexx') then
-    !    buf(1) = checksum
-    !    call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
-    !elseif (self%model_name == 'mom5xx') then
-    !    buf(1) = checksum
-    !    call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
-    !endif
+    integer :: err
 
     call oasis_terminate(err)
     call assert(err == OASIS_OK, 'oasis_terminate')
-    call MPI_Finalize(err)
 
 endsubroutine coupler_deinit
 

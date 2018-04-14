@@ -4,9 +4,6 @@
 &end
 
 &date_manager_nml
-    start_date = '1900-01-01T00:00:00'
-    end_date = '2000-01-01T00:00:00'
-
     forcing_start_date = '1900-01-01T00:00:00'
     forcing_end_date = '1901-01-01T00:00:00'
 
@@ -14,5 +11,4 @@
     ! two of which must be zero.
     restart_period = 0, 0, 86400
 &end
-
 

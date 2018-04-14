@@ -1,3 +1,4 @@
+*.log
 *.swp
 __pycache__
 *.pyc
@@ -10,7 +11,7 @@ debug.02.000000
 debug.03.000000
 nout.000000
 a2i.nc
-accessom2_restart_datetime.nml
+accessom2_restart.nml
 i2o.nc
 o2i.nc
 test_data

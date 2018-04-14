@@ -18,6 +18,7 @@ type, public :: field
     integer :: oasis_partid
 
     integer :: dt
+    character(len=9) :: calendar
     type(ncvar_type) :: ncvar
     real, dimension(:, :), allocatable :: data_array
 
@@ -45,6 +46,7 @@ subroutine field_init(self, name, ncname, filename_template, filename, logger)
     allocate(self%data_array(self%ncvar%nx, self%ncvar%ny))
     self%data_array(:, :) = HUGE(1.0)
     self%dt = self%ncvar%dt
+    self%calendar = self%ncvar%calendar
 
 end subroutine
 

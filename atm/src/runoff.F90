@@ -18,6 +18,8 @@ end type runoff
 
 type(remap_runoff_class) :: remap_runoff
 
+character(len=1024) :: remap_weights_file
+
 ! Conservatively redistribute runoff exceeding runoff_cap in specified regions.
 ! Regions specify grid points that will be checked for whether they exceed the cap;
 ! excess runoff from those grid points may be redistributed outside the specified region.
@@ -32,6 +34,7 @@ integer, dimension(max_caps) :: runoff_caps_js = (/ 0, 0, 0, 0 /) ! starting j i
 integer, dimension(max_caps) :: runoff_caps_je = (/ 1000000, -1, -1, -1 /) ! ending j index for each runoff region (count from 1)
 
 namelist /runoff_nml/ &
+    remap_weights_file, &
     num_runoff_caps, &
     runoff_caps, &
     runoff_caps_is, &
@@ -41,11 +44,10 @@ namelist /runoff_nml/ &
 
 contains
 
-subroutine init(self, target_grid, weights_file)
+subroutine init(self, target_grid)
 
     class(runoff), intent(inout) :: self
     class(ice_grid_proxy), intent(in) :: target_grid
-    character(len=*), intent(in) :: weights_file
 
     ! Rean input namelist
     open(unit=99, file="atm.nml", form="formatted", status="old")
@@ -53,7 +55,7 @@ subroutine init(self, target_grid, weights_file)
     close(unit=99)
     num_runoff_caps = max(0, min(num_runoff_caps, max_caps))
 
-    call remap_runoff_new(remap_runoff, trim(weights_file), &
+    call remap_runoff_new(remap_runoff, trim(remap_weights_file), &
                           target_grid%lats, target_grid%lons, target_grid%mask, &
                           num_runoff_caps, runoff_caps, &
                           runoff_caps_is, runoff_caps_ie, &

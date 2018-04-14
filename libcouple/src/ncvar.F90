@@ -19,6 +19,7 @@ type, public :: ncvar
     type(datetime) :: start_date
     integer :: nx, ny
     integer :: dt
+    character(len=9) :: calendar
 
     integer :: idx_guess
 
@@ -30,7 +31,7 @@ contains
     procedure, pass(self), public :: refresh => ncvar_refresh
     procedure, pass(self), public :: read_data => ncvar_read_data
     procedure, pass(self) :: get_index_for_datetime
-    procedure, pass(self) :: get_start_date
+    procedure, pass(self) :: get_start_date_and_calendar
 endtype ncvar
 
 contains
@@ -80,9 +81,8 @@ subroutine ncvar_refresh(self, filename)
     call ncheck(nf90_get_var(self%ncid, time_id, self%times))
 
     self%dt = int((self%times(2) - self%times(1))*86400)
-    ! Initialise start date
-    self%start_date = self%get_start_date(time_id)
-
+    ! Initialise start date and calendar
+    call self%get_start_date_and_calendar(time_id, self%start_date, self%calendar)
 
     status = nf90_get_att(self%ncid, time_id, "bounds", time_bnds_name)
     if (status == nf90_noerr) then
@@ -107,19 +107,26 @@ subroutine ncvar_refresh(self, filename)
 
 endsubroutine
 
-
-function get_start_date(self, time_varid)
+subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
     class(ncvar), intent(in) :: self
-    integer :: time_varid
-    type(datetime) :: get_start_date
+    integer, intent(in) :: time_varid
+    type(datetime), intent(out) :: start_date
+    character(len=9), intent(out) :: calendar
 
     character(len=256) :: time_str
     type(tm_struct) :: ctime
     integer :: rc, idx
 
+    ! Getcalendar
+    call ncheck(nf90_get_att(self%ncid, time_varid, "calendar", calendar), &
+                'get_start_date_and_calendar: nf90_get_att: '//calendar)
+    call assert(trim(calendar) == 'noleap' .or. trim(calendar) == 'gregorian', &
+                'get_start_date_and_calendar: unrecognized calendar type')
+
     ! Get start date
     call ncheck(nf90_get_att(self%ncid, time_varid, "units", time_str), &
-                'get_start_date: nf90_get_att: '//time_str)
+                'get_start_date_and_calendar: nf90_get_att: '//time_str)
+
 
     ! See whether it has the expected format
     idx = index(trim(time_str), "days since")
@@ -133,10 +140,10 @@ function get_start_date(self, time_varid)
     else
         rc = c_strptime(trim(time_str)//" 00:00:00", "%Y-%m-%d %H:%M:%S"//char(0), ctime)
     endif
-    call assert(rc /= 0, 'strptime in get_start_date failed on '//time_str)
-    get_start_date = tm2date(ctime)
+    call assert(rc /= 0, 'strptime in get_start_date_and_calendar failed on '//time_str)
+    start_date = tm2date(ctime)
 
-endfunction get_start_date
+endsubroutine get_start_date_and_calendar
 
 !> Return the time index of a particular date.
 function get_index_for_datetime(self, target_date, from_beginning)

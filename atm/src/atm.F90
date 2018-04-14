@@ -4,7 +4,6 @@ program atm
     use forcing_mod, only : forcing_type => forcing
     use field_mod, only : field_type => field
     use coupler_mod, only : coupler_type => coupler
-    use params_mod, only : params
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
@@ -13,7 +12,6 @@ program atm
 
     implicit none
 
-    type(params) :: param
     type(logger_type) :: logger
     type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
@@ -22,26 +20,38 @@ program atm
     type(runoff_type) :: runoff
     type(field_type), dimension(:), allocatable :: fields
     type(field_type) :: runoff_field
+    character(len=1024) :: forcing_file
+    character(len=9) :: calendar
     integer, dimension(2) :: ice_shape
-    integer :: i, err
+    integer :: i, err, tmp_unit
+    logical :: file_exists
     integer :: num_coupling_fields, dt, cur_runtime_in_seconds
+
+    namelist /atm_nml/ forcing_file
+
+    ! Read input namelist
+    forcing_file = 'forcing.json'
+    inquire(file='atm.nml', exist=file_exists)
+    call assert(file_exists, 'Input atm.nml does not exist.')
+    open(newunit=tmp_unit, file='atm.nml')
+    read(tmp_unit, nml=atm_nml)
+    close(tmp_unit)
 
     ! Initialise model-level init, config and sync/tracking module
     call accessom2%init('matmxx')
     ! Logger needs MPI_Init to have been called (above) and can now start
-    call logger%init('matmxx', logfiledir='log', loglevel=param%log_level)
+    call logger%init('matmxx', logfiledir='log', loglevel=accessom2%log_level)
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
-    call forcing%init(param%forcing_file, logger, num_coupling_fields)
+    call forcing%init(forcing_file, logger, num_coupling_fields)
     allocate(fields(num_coupling_fields))
-    call forcing%init_fields(fields, forcing_cur_date, dt, calendar)
+    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), dt, calendar)
     ! 'calendar' is a global config, tell accessom2 about it.
     call accessom2%set_calendar(calendar)
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
-    call coupler%init_begin('matmxx', &
-                            accessom2%get_total_runtime_in_seconds(), logger)
+    call coupler%init_begin('matmxx', logger)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
     call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
                                coupler%ocean_intercomm)
@@ -51,7 +61,7 @@ program atm
     call ice_grid%recv()
 
     ! Initialise the runoff remapping object with ice grid information.
-    call runoff%init(accessom2%ice_grid, param%runoff_remap_weights_file)
+    call runoff%init(ice_grid)
     ice_shape = ice_grid%get_shape()
 
     ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
@@ -67,7 +77,7 @@ program atm
             call coupler%init_field(fields(i), OASIS_OUT)
         endif
     enddo
-    call coupler%init_end()
+    call coupler%init_end(accessom2%get_total_runtime_in_seconds())
 
     do while (.not. accessom2%run_finished())
 
@@ -96,12 +106,12 @@ program atm
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
         ! after receiving the above fields. This prevents the atm from sending continuously.
-        call coupler%atm_ice_sync()
+        call accessom2%atm_ice_sync()
 
         call accessom2%progress_date(dt)
     enddo
 
-    call coupler%deinit(accessom2%get_cur_exp_date())
+    call coupler%deinit()
     call accessom2%deinit()
     call forcing%deinit()
 

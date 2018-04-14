@@ -58,21 +58,25 @@ subroutine forcing_init(self, config, logger, nfields)
 endsubroutine forcing_init
 
 !> Parse forcing file into a dictionary.
-subroutine forcing_init_fields(self, fields, forcing_date, min_dt)
+subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
 
     class(forcing), intent(inout) :: self
     type(field_type), dimension(:), intent(inout) :: fields
     type(datetime), intent(in) :: forcing_date
     integer, intent(out) :: min_dt
+    character(len=8), intent(out) :: calendar
 
     type(json_value), pointer :: fp
     integer :: i
     character(kind=CK, len=:), allocatable :: cname, fieldname
     character(kind=CK, len=:), allocatable :: filename_template
     character(len=1024) :: filename
+    character(len=9) :: calendar_str
     logical :: found
 
     min_dt = huge(min_dt)
+    calendar_str = ''
+
     do i=1, size(fields)
         call self%core%get_child(self%inputs, i, fp, found)
         call assert(found, "Input not found in forcing config.")
@@ -95,7 +99,16 @@ subroutine forcing_init_fields(self, fields, forcing_date, min_dt)
         if (fields(i)%dt < min_dt) then
             min_dt = fields(i)%dt
         endif
+
+        if (calendar_str == '') then
+            calendar_str = fields(i)%calendar
+        else
+            call assert(trim(calendar_str) == trim(fields(i)%calendar), &
+                        "Inconsistent calendar")
+        endif
     enddo
+
+    calendar = calendar_str
 
 endsubroutine forcing_init_fields
 

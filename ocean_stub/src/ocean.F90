@@ -5,7 +5,7 @@ program ocean
     use error_handler, only : assert
     use field_mod, only : field_type => field
     use restart_mod, only : restart_type => restart
-    use date_manager_mod, only : date_manager_type => date_manager
+    use accessom2_mod, only : accessom2_type => accessom2
     use mod_oasis, only : OASIS_IN, OASIS_OUT
     use logger_mod, only : logger_type => logger
 
@@ -17,7 +17,7 @@ program ocean
     type(logger_type) :: logger
     type(coupler_type) :: coupler
     type(restart_type) :: restart
-    type(date_manager_type) :: date_manager
+    type(accessom2_type) :: accessom2
 
     ! Namelist parameters
     integer :: dt, i, idx, tmp_unit, err
@@ -40,12 +40,13 @@ program ocean
     close(tmp_unit)
 
     ! Initialise time manager
-    call date_manager%init('mom5xx')
+    call accessom2%init('mom5xx')
     call logger%init('mom5xx', logfiledir='log', loglevel='DEBUG')
 
-    ! Initialise coupler, adding coupling fields
-    call coupler%init_begin('mom5xx', &
-                            date_manager%get_total_runtime_in_seconds(), logger)
+    call coupler%init_begin('mom5xx',  logger)
+    ! Synchronise accessom2 'state' (i.e. configuration) between all models.
+    call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
+                               coupler%ocean_intercomm)
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
@@ -71,10 +72,10 @@ program ocean
         allocate(out_fields(i)%data_array(resolution(1), resolution(2)))
         call coupler%init_field(out_fields(i), OASIS_OUT)
     enddo
-    call coupler%init_end()
+    call coupler%init_end(accessom2%get_total_runtime_in_seconds())
 
-    do while (.not. date_manager%run_finished())
-        cur_runtime_in_seconds = date_manager%get_cur_runtime_in_seconds()
+    do while (.not. accessom2%run_finished())
+        cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
 
         ! Get fields from ice
         do i=1, size(in_fields)
@@ -89,7 +90,7 @@ program ocean
             call coupler%put(out_fields(i), cur_runtime_in_seconds, err)
         enddo
 
-        call date_manager%progress_date(dt)
+        call accessom2%progress_date(dt)
     enddo
 
     ! Write out restart.
@@ -104,8 +105,8 @@ program ocean
     enddo
 
     ! Write out restart.
-    call restart%write(date_manager%get_cur_exp_date(), out_fields)
-    call coupler%deinit(date_manager%get_cur_exp_date())
-    call date_manager%deinit()
+    call restart%write(accessom2%get_cur_exp_date(), out_fields)
+    call coupler%deinit()
+    call accessom2%deinit()
 
 end program ocean

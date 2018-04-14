@@ -33,8 +33,9 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
 
     character(len=5) :: pe_str
     integer :: pe, err
-    logical :: initialized, file_exists
+    logical :: file_exists
 
+    print*, loglevel
     if (present(loglevel)) then
         if (trim(loglevel) == 'DEBUG') then
             self%loglevel = LOG_DEBUG
@@ -51,11 +52,6 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
         self%loglevel = LOG_ERROR
     endif
 
-    ! We need MPI to get form the log output filename.
-    call MPI_Initialized(initialized, err)
-    if (.not. initialized) then
-        call MPI_Init(err)
-    endif
     call MPI_Comm_rank(MPI_COMM_WORLD, pe, err)
     write(pe_str, '(I5.5)') pe
 
