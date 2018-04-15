@@ -70,9 +70,10 @@ namelist /do_not_edit_nml/ forcing_cur_date, exp_cur_date
 
 contains
 
-subroutine accessom2_init(self, model_name)
+subroutine accessom2_init(self, model_name, config_dir)
     class(accessom2), intent(inout) :: self
     character(len=6), intent(in) :: model_name
+    character(len=*), intent(in) :: config_dir
 
     integer :: tmp_unit, rc, err
     type(tm_struct) :: ctime
@@ -83,7 +84,7 @@ subroutine accessom2_init(self, model_name)
     ! Read namelist which includes information about the forcing start and end date
     inquire(file=config_file, exist=file_exists)
     call assert(file_exists, 'Input accessom2.nml does not exist.')
-    open(newunit=tmp_unit, file='accessom2.nml')
+    open(newunit=tmp_unit, file=trim(config_dir)//'accessom2.nml')
     read(tmp_unit, nml=accessom2_nml)
     read(tmp_unit, nml=date_manager_nml)
     close(tmp_unit)

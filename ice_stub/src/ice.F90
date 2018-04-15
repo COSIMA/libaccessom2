@@ -13,7 +13,7 @@ program ice
     implicit none
 
     integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128, &
-                          MAX_FILE_NAME_LEN = 256
+                          MAX_FILE_NAME_LEN = 1024
 
     type(logger_type) :: logger
     type(ice_grid_type) :: ice_grid
@@ -32,11 +32,13 @@ program ice
     integer :: num_from_atm_fields, num_from_ocean_fields, num_to_ocean_fields
     integer :: cur_runtime_in_seconds
     character(len=MAX_FILE_NAME_LEN) :: ice_grid_file, ice_mask_file
+    character(len=MAX_FILE_NAME_LEN) :: accessom2_config_dir
     logical :: file_exists
 
-    namelist /ice_nml/ dt, resolution, &
+    namelist /ice_nml/ dt, resolution, accessom2_config_dir, &
                        from_atm_field_names, from_ocean_field_names, &
                        to_ocean_field_names, ice_grid_file, ice_mask_file
+    accessom2_config_dir = './'
 
     ! Read namelist which includes information
     ! model resolution and names and direction of coupling fields.
@@ -47,12 +49,12 @@ program ice
     close(tmp_unit)
 
     ! Initialise time manager
-    call accessom2%init('cicexx')
+    call accessom2%init('cicexx', config_dir=accessom2_config_dir)
     call logger%init('cicexx', logfiledir='log', loglevel='DEBUG')
 
     ! Initialise coupler, this needs to be done before the ice grid is
     ! sent to the atmosphere.
-    call coupler%init_begin('cicexx', logger)
+    call coupler%init_begin('cicexx', logger, config_dir=accessom2_config_dir)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
     call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
                                coupler%ocean_intercomm)

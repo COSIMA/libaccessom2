@@ -44,10 +44,11 @@ endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, logger)
+subroutine coupler_init_begin(self, model_name, logger, config_dir)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
     type(logger_type), optional, intent(in) :: logger
+    character(len=*), optional, intent(in) :: config_dir
 
     integer :: err
     logical :: initialized
@@ -70,7 +71,7 @@ subroutine coupler_init_begin(self, model_name, logger)
 
     ! FIXME: set the path to the namcouple
     ! What about setting the model timestep as well?
-    call oasis_init_comp(self%comp_id, model_name, err)
+    call oasis_init_comp(self%comp_id, model_name, err, config_dir=config_dir)
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
     call oasis_get_localcomm(self%localcomm, err)

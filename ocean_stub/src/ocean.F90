@@ -12,7 +12,7 @@ program ocean
     implicit none
 
     integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128, &
-                          MAX_FILE_NAME_LEN = 256
+                          MAX_FILE_NAME_LEN = 1024
 
     type(logger_type) :: logger
     type(coupler_type) :: coupler
@@ -28,8 +28,11 @@ program ocean
     integer :: num_from_ice_fields, num_to_ice_fields
     integer :: cur_runtime_in_seconds
     logical :: file_exists
+    character(len=MAX_FILE_NAME_LEN) :: accessom2_config_dir
 
-    namelist /ocean_nml/ dt, resolution, from_ice_field_names, to_ice_field_names
+    namelist /ocean_nml/ dt, resolution, accessom2_config_dir, &
+                         from_ice_field_names, to_ice_field_names
+    accessom2_config_dir = './'
 
     ! Read namelist which model resolution and names and
     ! direction of coupling fields.
@@ -40,10 +43,10 @@ program ocean
     close(tmp_unit)
 
     ! Initialise time manager
-    call accessom2%init('mom5xx')
+    call accessom2%init('mom5xx', config_dir=accessom2_config_dir)
     call logger%init('mom5xx', logfiledir='log', loglevel='DEBUG')
 
-    call coupler%init_begin('mom5xx',  logger)
+    call coupler%init_begin('mom5xx',  logger, config_dir=accessom2_config_dir)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
     call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
                                coupler%ocean_intercomm)

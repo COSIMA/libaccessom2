@@ -35,7 +35,6 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
     integer :: pe, err
     logical :: file_exists
 
-    print*, loglevel
     if (present(loglevel)) then
         if (trim(loglevel) == 'DEBUG') then
             self%loglevel = LOG_DEBUG

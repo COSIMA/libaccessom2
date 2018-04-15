@@ -12,6 +12,9 @@ program atm
 
     implicit none
 
+    integer, parameter :: MAX_FILE_NAME_LEN = 1024
+
+
     type(logger_type) :: logger
     type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
@@ -20,17 +23,18 @@ program atm
     type(runoff_type) :: runoff
     type(field_type), dimension(:), allocatable :: fields
     type(field_type) :: runoff_field
-    character(len=1024) :: forcing_file
+    character(len=MAX_FILE_NAME_LEN) :: forcing_file, accessom2_config_dir
     character(len=9) :: calendar
     integer, dimension(2) :: ice_shape
     integer :: i, err, tmp_unit
     logical :: file_exists
     integer :: num_coupling_fields, dt, cur_runtime_in_seconds
 
-    namelist /atm_nml/ forcing_file
+    namelist /atm_nml/ forcing_file, accessom2_config_dir
 
     ! Read input namelist
     forcing_file = 'forcing.json'
+    accessom2_config_dir = './'
     inquire(file='atm.nml', exist=file_exists)
     call assert(file_exists, 'Input atm.nml does not exist.')
     open(newunit=tmp_unit, file='atm.nml')
@@ -38,7 +42,7 @@ program atm
     close(tmp_unit)
 
     ! Initialise model-level init, config and sync/tracking module
-    call accessom2%init('matmxx')
+    call accessom2%init('matmxx', config_dir=accessom2_config_dir)
     ! Logger needs MPI_Init to have been called (above) and can now start
     call logger%init('matmxx', logfiledir='log', loglevel=accessom2%log_level)
 
@@ -51,7 +55,7 @@ program atm
     call accessom2%set_calendar(calendar)
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
-    call coupler%init_begin('matmxx', logger)
+    call coupler%init_begin('matmxx', logger, config_dir=accessom2_config_dir)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
     call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
                                coupler%ocean_intercomm)
