@@ -1,0 +1,8 @@
+&atm_nml
+    runoff_remap_weights_file = '../test_data/rmp_jra55_runoff_cice_conserve.nc'
+    dt = 5400
+    debug_output = .true.
+&end
+
+&runoff_nml
+&end

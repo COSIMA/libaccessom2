@@ -1,0 +1,16 @@
+{
+  "description": "JRA55-do V1.3 RYF 1990-91 forcing",
+  "inputs": [
+    {
+      "filename": "../test_data/RYF/v1-3/RYF.rsds.1990_1991.nc",
+      "fieldname": "rsds",
+      "cname": "swfld_ai"
+    },
+    {
+      "filename": "../test_data/RYF/v1-3/RYF.runoff_all.1990_1991.nc",
+      "fieldname": "friver",
+      "cname": "runof_ai"
+    },
+  ]
+}
+

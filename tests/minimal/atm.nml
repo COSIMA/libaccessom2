@@ -1,0 +1,6 @@
+&atm_nml
+&end
+
+&runoff_nml
+    remap_weights_file = '../test_data/rmp_jra55_runoff_cice_conserve.nc'
+&end

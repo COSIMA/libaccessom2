@@ -56,7 +56,8 @@ contains
     integer :: n_s, n_a, n_b
 
     ! Initialise remapping weights arrays
-    call ncheck(nf90_open(weights, NF90_NOWRITE, ncid), "Can't open weights")
+    call ncheck(nf90_open(trim(weights), NF90_NOWRITE, ncid), &
+                "remap_runoff_new: can't open weights file: "//trim(weights))
     call read_weight_dims(ncid, n_s, n_a, n_b)
 
     allocate(this%row(n_s), this%col(n_s), this%s(n_s))
@@ -69,7 +70,7 @@ contains
     this%n_s = n_s
     this%n_a = n_a
     this%n_b = n_b
-    
+
     call kdrunoff_new(this%kdrunoff, mask, lons, lats, &
                       this%num_land_pts, this%num_ocean_pts, &
                       num_runoff_caps, runoff_caps, &
@@ -268,8 +269,8 @@ contains
 
     ! Apply weights
     do i=1, this%n_s
-       dst_field(this%row(i)) = dst_field(this%row(i)) + &
-                                  this%S(i)*src_field(this%col(i))
+       dst_field(int(this%row(i))) = dst_field(int(this%row(i))) + &
+                                  this%S(i)*src_field(int(this%col(i)))
     enddo
 
     ! Adjust destination field by fraction. Not strictly needed for global

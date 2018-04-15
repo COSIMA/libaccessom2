@@ -1,0 +1,7 @@
+&date_manager_nml
+    forcing_start_date = '1958-12-30T00:00:00'
+    forcing_end_date = '1960-01-01T00:00:00'
+    ! Runtime for a single job/submit, format is years, months, seconds,
+    ! two of which must be zero.
+    restart_period = 0, 0, 86400
+&end
