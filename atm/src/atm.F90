@@ -34,7 +34,7 @@ program atm
 
     ! Read input namelist
     forcing_file = 'forcing.json'
-    accessom2_config_dir = './'
+    accessom2_config_dir = '../global'
     inquire(file='atm.nml', exist=file_exists)
     call assert(file_exists, 'Input atm.nml does not exist.')
     open(newunit=tmp_unit, file='atm.nml')
@@ -43,8 +43,10 @@ program atm
 
     ! Initialise model-level init, config and sync/tracking module
     call accessom2%init('matmxx', config_dir=accessom2_config_dir)
+    print*, 'ATM 1'
     ! Logger needs MPI_Init to have been called (above) and can now start
     call logger%init('matmxx', logfiledir='log', loglevel=accessom2%log_level)
+    print*, 'ATM 2'
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
@@ -54,11 +56,15 @@ program atm
     ! 'calendar' is a global config, tell accessom2 about it.
     call accessom2%set_calendar(calendar)
 
+    print*, 'ATM 3'
+
     ! Initialise the coupler. It needs to tell oasis how long the run is.
     call coupler%init_begin('matmxx', logger, config_dir=accessom2_config_dir)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
+    print*, 'ATM 4'
     call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
                                coupler%ocean_intercomm)
+    print*, 'ATM 5'
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(coupler%ice_intercomm)

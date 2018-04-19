@@ -69,9 +69,11 @@ subroutine coupler_init_begin(self, model_name, logger, config_dir)
         call self%logger%init(model_name//'-coupler', 'ERROR')
     endif
 
-    ! FIXME: set the path to the namcouple
-    ! What about setting the model timestep as well?
-    call oasis_init_comp(self%comp_id, model_name, err, config_dir=config_dir)
+    if (present(config_dir)) then
+        call oasis_init_comp(self%comp_id, model_name, err, config_dir=config_dir)
+    else
+        call oasis_init_comp(self%comp_id, model_name, err)
+    endif
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
     call oasis_get_localcomm(self%localcomm, err)

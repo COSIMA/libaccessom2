@@ -22,6 +22,8 @@ type accessom2
     ! These are set by the user.
     type(datetime) :: forcing_start_date, forcing_end_date
     integer, dimension(3) :: restart_period
+
+    character(len=9) :: calendar_str
     integer :: calendar
 
     ! These are internal
@@ -42,6 +44,11 @@ contains
     procedure, pass(self), public :: get_cur_exp_date => &
                                         accessom2_get_cur_exp_date
 
+    procedure, pass(self), public :: get_cur_exp_date_array => &
+                                        accessom2_get_cur_exp_date_array
+    procedure, pass(self), public :: get_seconds_since_cur_exp_year => &
+                                        accessom2_get_seconds_since_cur_exp_year
+
     procedure, pass(self), public :: get_cur_forcing_date_str => &
                                         accessom2_get_cur_forcing_date_str
     procedure, pass(self), public :: get_cur_exp_date_str => &
@@ -53,11 +60,14 @@ contains
                                      accessom2_get_total_runtime_in_seconds
     procedure, pass(self), public :: get_cur_runtime_in_seconds => &
                                      accessom2_get_cur_runtime_in_seconds
+    procedure, pass(self), public :: get_calendar_type => accessom2_get_calendar_type
+
+    procedure, pass(self), public :: get_ice_timestep => accessom2_get_ice_timestep
 endtype accessom2
 
 integer, parameter :: CALENDAR_NOLEAP = 1, CALENDAR_GREGORIAN = 2
-character(*), parameter :: restart_file = 'accessom2_restart.nml'
-character(*), parameter :: config_file = 'accessom2.nml'
+character(len=*), parameter :: restart_file = 'accessom2_restart.nml'
+character(len=*), parameter :: config_file = 'accessom2.nml'
 
 character(len=19) :: forcing_start_date, forcing_end_date
 character(len=19) :: exp_cur_date, forcing_cur_date
@@ -73,18 +83,27 @@ contains
 subroutine accessom2_init(self, model_name, config_dir)
     class(accessom2), intent(inout) :: self
     character(len=6), intent(in) :: model_name
-    character(len=*), intent(in) :: config_dir
+    character(len=*), optional, intent(in) :: config_dir
 
     integer :: tmp_unit, rc, err
     type(tm_struct) :: ctime
     logical :: initialized, file_exists
+    character(len=1024) :: config
 
     self%model_name = model_name
 
     ! Read namelist which includes information about the forcing start and end date
-    inquire(file=config_file, exist=file_exists)
-    call assert(file_exists, 'Input accessom2.nml does not exist.')
-    open(newunit=tmp_unit, file=trim(config_dir)//'accessom2.nml')
+    if (present(config_dir)) then
+        config = trim(config_dir)//'/'//trim(config_file)
+        inquire(file=config, exist=file_exists)
+        call assert(file_exists, trim(model_name)//' cannot find: '//config)
+        open(newunit=tmp_unit, file=config)
+    else
+        config = '../global/'//trim(config_file)
+        inquire(file=config, exist=file_exists)
+        call assert(file_exists, trim(model_name)//' cannot find: '//config)
+        open(newunit=tmp_unit, file=config)
+    endif
     read(tmp_unit, nml=accessom2_nml)
     read(tmp_unit, nml=date_manager_nml)
     close(tmp_unit)
@@ -123,11 +142,12 @@ subroutine accessom2_init(self, model_name, config_dir)
         self%exp_cur_date = self%forcing_start_date
     endif
 
-    ! We need MPI to get form the log output filename.
+    print*, 'accessom2_init 1 '//trim(model_name)
     call MPI_Initialized(initialized, err)
     if (.not. initialized) then
         call MPI_Init(err)
     endif
+    print*, 'accessom2_init 2 '//trim(model_name)
 
 endsubroutine accessom2_init
 
@@ -155,6 +175,14 @@ subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, &
     else
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, stat, err)
         self%calendar = buf(1)
+    endif
+
+    if (self%calendar == CALENDAR_NOLEAP) then
+        self%calendar_str = 'noleap'
+    else
+        call assert(self%calendar == CALENDAR_GREGORIAN, &
+                    'accessom2_set_calendar: Unsupported calendar type')
+        self%calendar_str = 'gregorian'
     endif
 
     ! Not we can use self%calendar
@@ -185,6 +213,7 @@ subroutine accessom2_set_calendar(self, calendar)
     class(accessom2), intent(inout) :: self
     character(len=*), intent(in) :: calendar
 
+    self%calendar_str = calendar
     if (index(trim(calendar), 'noleap') /= 0) then
         self%calendar = CALENDAR_NOLEAP
     else
@@ -330,6 +359,34 @@ function accessom2_get_cur_exp_date(self)
 
 endfunction accessom2_get_cur_exp_date
 
+!> As above but return an array rather than datetime object
+function accessom2_get_cur_exp_date_array(self)
+    class(accessom2), intent(inout) :: self
+
+    integer, dimension(5) :: accessom2_get_cur_exp_date_array
+
+    accessom2_get_cur_exp_date_array[1] = self%exp_cur_date%getYear()
+    accessom2_get_cur_exp_date_array[2] = self%exp_cur_date%getMonth()
+    accessom2_get_cur_exp_date_array[3] = self%exp_cur_date%getDay()
+    accessom2_get_cur_exp_date_array[4] = self%exp_cur_date%getMinute()
+    accessom2_get_cur_exp_date_array[5] = self%exp_cur_date%getSecond()
+
+endfunction accessom2_get_cur_exp_date_array
+
+!> Return the number of seconds since the beginning of the current year.
+! CICE needs this.
+function accessom2_get_seconds_since_cur_exp_year(self)
+    class(accessom2), intent(inout) :: self
+
+    integer :: accessom2_get_seconds_since_cur_exp_year
+
+    type(timedelta) :: td
+
+    td = self%exp_cur_date - datetime(self%exp_cur_date%getYear())
+    accessom2_get_seconds_since_cur_exp_year = td%total_seconds()
+
+function accessom2_get_seconds_since_cur_exp_year
+
 function accessom2_get_cur_exp_date_str(self)
     class(accessom2), intent(inout) :: self
 
@@ -348,7 +405,7 @@ function accessom2_get_total_runtime_in_seconds(self)
 
     type(timedelta) :: td
 
-    td = self%run_end_date - self%run_start_date
+    td = noleap_timedelta(self%run_end_date, self%run_start_date, self%calendar)
     accessom2_get_total_runtime_in_seconds = td%total_seconds()
 
 endfunction accessom2_get_total_runtime_in_seconds
@@ -360,10 +417,24 @@ function accessom2_get_cur_runtime_in_seconds(self)
 
     type(timedelta) :: td
 
-    td = self%exp_cur_date - self%run_start_date
+    td = noleap_timedelta(self%exp_cur_date, self%run_start_date, self%calendar)
     accessom2_get_cur_runtime_in_seconds = td%total_seconds()
 
 endfunction accessom2_get_cur_runtime_in_seconds
+
+function accessom2_get_calendar_type(self)
+    class(accessom2), intent(inout) :: self
+    character(len=9) :: accessom2_get_calendar_type
+
+    accessom2_get_calendar_type = self%calendar_str
+endfunction
+
+function accessom2_get_ice_timestep(self)
+    class(accessom2), intent(inout) :: self
+    integer :: accessom2_get_ice_timestep
+
+    accessom2_get_ice_timestep = 5400
+endfunction
 
 function accessom2_run_finished(self)
     class(accessom2), intent(inout) :: self
@@ -387,6 +458,7 @@ subroutine accessom2_deinit(self, cur_date)
     integer, dimension(1) :: buf
     integer :: err, tag, request
     integer :: checksum
+    logical :: initialized
 
     if (present(cur_date)) then
         checksum = date2num(cur_date)
@@ -422,8 +494,57 @@ subroutine accessom2_deinit(self, cur_date)
         close(tmp_unit)
     endif
 
-    call MPI_Finalize(err)
+    call MPI_Initialized(initialized, err)
+    if (initialized) then
+        call MPI_Finalize(err)
+    endif
 
 end subroutine accessom2_deinit
+
+!> Return difference between two dates as a timedelta object taking the calendar
+! into account. This is a hack around the fact that datetime does not support
+! noleap calendars.
+function noleap_timedelta(a, b, calendar)
+    type(date), intent(in) :: a, b
+    integer, intent(in) :: calendar
+
+    type(timedelta) :: noleap_timedelta, td
+
+    noleap_timedelta = a - b
+    if (calendar == CALENDAR_NOLEAP) then
+        call assert(.not. (a%getMonth() == 2 .and. a%getDay() == 29), &
+                    'noleap_timedelta : bad date in argument a')
+        call assert(.not. (b%getMonth() == 2 .and. b%getDay() == 29), &
+                    'noleap_timedelta : bad date in argument a')
+
+        ! Remove the leap days
+        noleap_timedelta = noleap_timedelta - &
+                            timedelta(days=leap_days_between_dates(b, a))
+    endif
+
+endfunction noleap_timedelta
+
+!> Count the number of leap days between two dates.
+function leap_days_between_dates(init_date, final_date)
+    type(date), intent(in) :: init_date, final_date
+
+    integer :: leap_days_between_dates
+    type(datetime) :: cur_date
+
+    leap_days_between_dates = 0
+    cur_date = init_date
+
+    call assert(init_date <= final_date, 'leap_days_between_dates: bad args')
+
+    while (.not. (cur_date%getYear() == final_date%getYear() .and. &
+                  cur_date%getMonth() == final_date%getMonth() .and. &
+                  cur_date%getDay() == final_date%getDay()))
+        if (cur_date%getMonth() == 2 .and. cur_date%getDay() == 29) then
+            leap_days_between_dates = leap_days_between_dates + 1
+        endif
+        cur_date = cur_date + timedelta(days=1)
+    enddo
+
+endfunction leap_days_between_dates
 
 end module accessom2_mod

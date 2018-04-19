@@ -78,7 +78,7 @@ set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/lib
 # json-fortran external project
 ExternalProject_Add(oasis3-mct
     GIT_REPOSITORY    https://github.com/OceansAus/oasis3-mct.git
-    GIT_TAG           de12f4370b6dbfaf254186702feb690213eaec29
+    GIT_TAG           e2db93727d507fe884a7f5dacd1aea18c9481574
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make ubuntu
@@ -104,10 +104,32 @@ file(GLOB LIB_SOURCES libcouple/src/*.F90)
 add_library(couple ${LIB_SOURCES})
 add_dependencies(couple datetime oasis3-mct)
 
+# Join all of the above together to make libaccesom2
+# See https://stackoverflow.com/questions/37924383/combining-several-static-libraries-into-one-using-cmake
+set(LIBACCESSOM2 ${CMAKE_BINARY_DIR}/lib/libaccessom2.a)
+
+add_custom_target(combined
+        COMMAND ar -x $<TARGET_FILE:datetime>
+        COMMAND ar -x $<TARGET_FILE:jsonfortran>
+        COMMAND ar -x $<TARGET_FILE:mct>
+        COMMAND ar -x $<TARGET_FILE:mpeu>
+        COMMAND ar -x $<TARGET_FILE:psmile.MPI1>
+        COMMAND ar -x $<TARGET_FILE:scrip>
+        COMMAND ar -x $<TARGET_FILE:couple>
+        COMMAND ar -qcs ${LIBACCESSOM2} *.o
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        DEPENDS datetime jsonfortran mct mpeu psmile.MPI1 scrip couple
+        )
+
+add_library(accessom2 STATIC IMPORTED GLOBAL)
+add_dependencies(accessom2 combined)
+set_target_properties(accessom2 PROPERTIES IMPORTED_LOCATION ${LIBACCESSOM2})
+
 # atm executable
 file(GLOB ATM_SOURCES atm/src/*.F90)
 add_executable(atm ${ATM_SOURCES})
-target_link_libraries(atm couple datetime jsonfortran psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(atm accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+#target_link_libraries(atm couple datetime jsonfortran psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ice stub executable
 file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
