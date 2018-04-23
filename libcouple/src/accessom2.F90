@@ -18,6 +18,7 @@ type accessom2
     integer, public :: atm_intercomm, ice_intercomm, ocean_intercomm
 
     character(len=6) :: model_name
+    character(len=1024) :: config_dir
 
     ! These are set by the user.
     type(datetime) :: forcing_start_date, forcing_end_date
@@ -88,22 +89,20 @@ subroutine accessom2_init(self, model_name, config_dir)
     integer :: tmp_unit, rc, err
     type(tm_struct) :: ctime
     logical :: initialized, file_exists
-    character(len=1024) :: config
+    character(len=1024) :: path
 
     self%model_name = model_name
+    if (present(config_dir)) then
+        self%config_dir = config_dir
+    else
+        self%config_dir = '../globabl/'
+    endif
 
     ! Read namelist which includes information about the forcing start and end date
-    if (present(config_dir)) then
-        config = trim(config_dir)//'/'//trim(config_file)
-        inquire(file=config, exist=file_exists)
-        call assert(file_exists, trim(model_name)//' cannot find: '//config)
-        open(newunit=tmp_unit, file=config)
-    else
-        config = '../global/'//trim(config_file)
-        inquire(file=config, exist=file_exists)
-        call assert(file_exists, trim(model_name)//' cannot find: '//config)
-        open(newunit=tmp_unit, file=config)
-    endif
+    path = trim(config_dir)//'/'//trim(config_file)
+    inquire(file=path, exist=file_exists)
+    call assert(file_exists, trim(model_name)//' cannot find: '//path)
+    open(newunit=tmp_unit, file=path)
     read(tmp_unit, nml=accessom2_nml)
     read(tmp_unit, nml=date_manager_nml)
     close(tmp_unit)
@@ -123,19 +122,20 @@ subroutine accessom2_init(self, model_name, config_dir)
     self%restart_period = restart_period
 
     ! Read in exp_cur_date and focing_cur_date from restart file.
-    inquire(file=restart_file, exist=file_exists)
+    path = trim(config_dir)//'/'//trim(restart_file)
+    inquire(file=path, exist=file_exists)
     if (file_exists) then
-        open(newunit=tmp_unit, file=restart_file)
+        open(newunit=tmp_unit, file=path)
         read(tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)
         rc = c_strptime(forcing_cur_date//c_null_char, &
                         "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
-        call assert(rc /= 0, 'Bad forcing_cur_date format in '//restart_file)
+        call assert(rc /= 0, 'Bad forcing_cur_date format in '//path)
         self%forcing_cur_date = tm2date(ctime)
 
         rc = c_strptime(exp_cur_date//c_null_char, &
                         "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
-        call assert(rc /= 0, 'Bad exp_cur_date format in '//restart_file)
+        call assert(rc /= 0, 'Bad exp_cur_date format in '//path)
         self%exp_cur_date = tm2date(ctime)
     else
         self%forcing_cur_date = self%forcing_start_date
@@ -492,7 +492,8 @@ subroutine accessom2_deinit(self, cur_date, finalize)
     forcing_cur_date = self%forcing_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
 
     if (self%model_name == 'matmxx') then
-        open(newunit=tmp_unit, file=restart_file)
+        open(newunit=tmp_unit, &
+             file=trim(self%config_dir)//'/'//trim(restart_file))
         write(unit=tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)
     endif
