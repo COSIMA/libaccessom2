@@ -43,10 +43,8 @@ program atm
 
     ! Initialise model-level init, config and sync/tracking module
     call accessom2%init('matmxx', config_dir=accessom2_config_dir)
-    print*, 'ATM 1'
     ! Logger needs MPI_Init to have been called (above) and can now start
     call logger%init('matmxx', logfiledir='log', loglevel=accessom2%log_level)
-    print*, 'ATM 2'
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
@@ -56,15 +54,11 @@ program atm
     ! 'calendar' is a global config, tell accessom2 about it.
     call accessom2%set_calendar(calendar)
 
-    print*, 'ATM 3'
-
     ! Initialise the coupler. It needs to tell oasis how long the run is.
     call coupler%init_begin('matmxx', logger, config_dir=accessom2_config_dir)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
-    print*, 'ATM 4'
     call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
                                coupler%ocean_intercomm)
-    print*, 'ATM 5'
 
     ! Get information about the ice grid needed for runoff remapping.
     call ice_grid%init(coupler%ice_intercomm)
@@ -91,9 +85,6 @@ program atm
 
     do while (.not. accessom2%run_finished())
 
-        call logger%write(LOG_INFO, 'cur_exp_date '//accessom2%get_cur_exp_date_str())
-        call logger%write(LOG_INFO, 'cur_forcing_date '//accessom2%get_cur_forcing_date_str())
-
         cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
 
         ! Send each forcing field
@@ -119,10 +110,15 @@ program atm
         call accessom2%atm_ice_sync()
 
         call accessom2%progress_date(dt)
+
+        call logger%write(LOG_INFO, 'cur_exp_date '//accessom2%get_cur_exp_date_str())
+        call logger%write(LOG_INFO, 'cur_forcing_date '//accessom2%get_cur_forcing_date_str())
     enddo
 
+    call logger%write(LOG_INFO, 'Run complete, calling deinit')
+
     call coupler%deinit()
-    call accessom2%deinit()
+    call accessom2%deinit(finalize=.true.)
     call forcing%deinit()
 
 end program atm

@@ -142,12 +142,10 @@ subroutine accessom2_init(self, model_name, config_dir)
         self%exp_cur_date = self%forcing_start_date
     endif
 
-    print*, 'accessom2_init 1 '//trim(model_name)
     call MPI_Initialized(initialized, err)
     if (.not. initialized) then
         call MPI_Init(err)
     endif
-    print*, 'accessom2_init 2 '//trim(model_name)
 
 endsubroutine accessom2_init
 
@@ -185,7 +183,7 @@ subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, &
         self%calendar_str = 'gregorian'
     endif
 
-    ! Not we can use self%calendar
+    ! Now we can use self%calendar
     self%run_start_date = self%exp_cur_date
     self%run_end_date = self%calc_run_end_date()
 
@@ -363,13 +361,14 @@ endfunction accessom2_get_cur_exp_date
 function accessom2_get_cur_exp_date_array(self)
     class(accessom2), intent(inout) :: self
 
-    integer, dimension(5) :: accessom2_get_cur_exp_date_array
+    integer, dimension(6) :: accessom2_get_cur_exp_date_array
 
-    accessom2_get_cur_exp_date_array[1] = self%exp_cur_date%getYear()
-    accessom2_get_cur_exp_date_array[2] = self%exp_cur_date%getMonth()
-    accessom2_get_cur_exp_date_array[3] = self%exp_cur_date%getDay()
-    accessom2_get_cur_exp_date_array[4] = self%exp_cur_date%getMinute()
-    accessom2_get_cur_exp_date_array[5] = self%exp_cur_date%getSecond()
+    accessom2_get_cur_exp_date_array(1) = self%exp_cur_date%getYear()
+    accessom2_get_cur_exp_date_array(2) = self%exp_cur_date%getMonth()
+    accessom2_get_cur_exp_date_array(3) = self%exp_cur_date%getDay()
+    accessom2_get_cur_exp_date_array(4) = self%exp_cur_date%getHour()
+    accessom2_get_cur_exp_date_array(5) = self%exp_cur_date%getMinute()
+    accessom2_get_cur_exp_date_array(6) = self%exp_cur_date%getSecond()
 
 endfunction accessom2_get_cur_exp_date_array
 
@@ -382,10 +381,11 @@ function accessom2_get_seconds_since_cur_exp_year(self)
 
     type(timedelta) :: td
 
-    td = self%exp_cur_date - datetime(self%exp_cur_date%getYear())
+    td = noleap_timedelta(self%exp_cur_date, &
+                          datetime(self%exp_cur_date%getYear()), self%calendar)
     accessom2_get_seconds_since_cur_exp_year = td%total_seconds()
 
-function accessom2_get_seconds_since_cur_exp_year
+endfunction accessom2_get_seconds_since_cur_exp_year
 
 function accessom2_get_cur_exp_date_str(self)
     class(accessom2), intent(inout) :: self
@@ -449,9 +449,10 @@ function accessom2_run_finished(self)
 
 endfunction accessom2_run_finished
 
-subroutine accessom2_deinit(self, cur_date)
+subroutine accessom2_deinit(self, cur_date, finalize)
     class(accessom2), intent(inout) :: self
     type(datetime), optional, intent(in) :: cur_date
+    logical, optional, intent(in) :: finalize
 
     integer :: tmp_unit
     integer :: stat(MPI_STATUS_SIZE)
@@ -482,6 +483,8 @@ subroutine accessom2_deinit(self, cur_date)
     elseif (self%model_name == 'mom5xx') then
         buf(1) = checksum
         call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
+    else
+        call assert(.false., 'accessom2_deinit: unknown model: '//self%model_name)
     endif
 
     ! Write out restart.
@@ -494,9 +497,13 @@ subroutine accessom2_deinit(self, cur_date)
         close(tmp_unit)
     endif
 
-    call MPI_Initialized(initialized, err)
-    if (initialized) then
-        call MPI_Finalize(err)
+    if (present(finalize)) then
+        if (finalize) then
+            call MPI_Initialized(initialized, err)
+            if (initialized) then
+                call MPI_Finalize(err)
+            endif
+        endif
     endif
 
 end subroutine accessom2_deinit
@@ -505,7 +512,7 @@ end subroutine accessom2_deinit
 ! into account. This is a hack around the fact that datetime does not support
 ! noleap calendars.
 function noleap_timedelta(a, b, calendar)
-    type(date), intent(in) :: a, b
+    type(datetime), intent(in) :: a, b
     integer, intent(in) :: calendar
 
     type(timedelta) :: noleap_timedelta, td
@@ -526,7 +533,7 @@ endfunction noleap_timedelta
 
 !> Count the number of leap days between two dates.
 function leap_days_between_dates(init_date, final_date)
-    type(date), intent(in) :: init_date, final_date
+    type(datetime), intent(in) :: init_date, final_date
 
     integer :: leap_days_between_dates
     type(datetime) :: cur_date
@@ -536,7 +543,7 @@ function leap_days_between_dates(init_date, final_date)
 
     call assert(init_date <= final_date, 'leap_days_between_dates: bad args')
 
-    while (.not. (cur_date%getYear() == final_date%getYear() .and. &
+    do while (.not. (cur_date%getYear() == final_date%getYear() .and. &
                   cur_date%getMonth() == final_date%getMonth() .and. &
                   cur_date%getDay() == final_date%getDay()))
         if (cur_date%getMonth() == 2 .and. cur_date%getDay() == 29) then
