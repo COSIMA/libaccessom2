@@ -122,7 +122,13 @@ subroutine accessom2_init(self, model_name, config_dir)
     self%restart_period = restart_period
 
     ! Read in exp_cur_date and focing_cur_date from restart file.
+    ! Try to read from config dir first.
     path = trim(config_dir)//'/'//trim(restart_file)
+    inquire(file=path, exist=file_exists)
+    if (.not. file_exists) then
+        ! Try to read from INPUT dir next (for payu compatibility)
+        path = trim(config_dir)//'/INPUT/'//trim(restart_file)
+    endif
     inquire(file=path, exist=file_exists)
     if (file_exists) then
         open(newunit=tmp_unit, file=path)
@@ -309,7 +315,7 @@ subroutine accessom2_progress_date(self, timestep)
         self%forcing_cur_date = self%forcing_cur_date + timedelta(days=1)
     endif
 
-    if (self%forcing_cur_date >= self%run_end_date) then
+    if (self%forcing_cur_date >= self%forcing_end_date) then
         self%forcing_cur_date = self%forcing_start_date
     endif
 
@@ -322,7 +328,7 @@ subroutine accessom2_progress_date(self, timestep)
         self%exp_cur_date = self%exp_cur_date + timedelta(days=1)
     endif
 
-    if (self%exp_cur_date > self%run_end_date) then
+    if (self%exp_cur_date >= self%run_end_date) then
         self%exp_cur_date = self%run_end_date
     endif
 
@@ -459,7 +465,8 @@ subroutine accessom2_deinit(self, cur_date, finalize)
     integer, dimension(1) :: buf
     integer :: err, tag, request
     integer :: checksum
-    logical :: initialized
+    logical :: initialized, dir_exists
+    character(len=1024) :: path
 
     if (present(cur_date)) then
         checksum = date2num(cur_date)
@@ -492,8 +499,15 @@ subroutine accessom2_deinit(self, cur_date, finalize)
     forcing_cur_date = self%forcing_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
 
     if (self%model_name == 'matmxx') then
-        open(newunit=tmp_unit, &
-             file=trim(self%config_dir)//'/'//trim(restart_file))
+        ! Write to RESTART dir if it exists. FIXME: a clearer approach.
+        inquire(directory=trim(self%config_dir)//'/RESTART', exist=dir_exists)
+        if (dir_exists) then
+            path = trim(self%config_dir)//'/RESTART/'//trim(restart_file)
+        else
+            path = trim(self%config_dir)//'/'//trim(restart_file)
+        endif
+
+        open(newunit=tmp_unit, file=trim(path))
         write(unit=tmp_unit, nml=do_not_edit_nml)
         close(tmp_unit)
     endif

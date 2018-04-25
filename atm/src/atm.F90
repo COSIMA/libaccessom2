@@ -34,7 +34,7 @@ program atm
 
     ! Read input namelist
     forcing_file = 'forcing.json'
-    accessom2_config_dir = '../global'
+    accessom2_config_dir = '../'
     inquire(file='atm.nml', exist=file_exists)
     call assert(file_exists, 'Input atm.nml does not exist.')
     open(newunit=tmp_unit, file='atm.nml')
@@ -42,7 +42,7 @@ program atm
     close(tmp_unit)
 
     ! Initialise model-level init, config and sync/tracking module
-    call accessom2%init('matmxx', config_dir=accessom2_config_dir)
+    call accessom2%init('matmxx', config_dir=trim(accessom2_config_dir))
     ! Logger needs MPI_Init to have been called (above) and can now start
     call logger%init('matmxx', logfiledir='log', loglevel=accessom2%log_level)
 
@@ -55,7 +55,7 @@ program atm
     call accessom2%set_calendar(calendar)
 
     ! Initialise the coupler. It needs to tell oasis how long the run is.
-    call coupler%init_begin('matmxx', logger, config_dir=accessom2_config_dir)
+    call coupler%init_begin('matmxx', logger, config_dir=trim(accessom2_config_dir))
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
     call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
                                coupler%ocean_intercomm)
