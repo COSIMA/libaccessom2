@@ -113,6 +113,8 @@ program atm
 
         call logger%write(LOG_INFO, 'cur_exp_date '//accessom2%get_cur_exp_date_str())
         call logger%write(LOG_INFO, 'cur_forcing_date '//accessom2%get_cur_forcing_date_str())
+        call logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
+                            accessom2%get_cur_runtime_in_seconds())
     enddo
 
     call logger%write(LOG_INFO, 'Run complete, calling deinit')
