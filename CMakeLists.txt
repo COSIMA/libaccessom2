@@ -125,24 +125,18 @@ add_library(accessom2 STATIC IMPORTED GLOBAL)
 add_dependencies(accessom2 combined)
 set_target_properties(accessom2 PROPERTIES IMPORTED_LOCATION ${LIBACCESSOM2})
 
-# atm executable
+# yatm executable
 file(GLOB ATM_SOURCES atm/src/*.F90)
-add_executable(atm ${ATM_SOURCES})
-target_link_libraries(atm accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
-#target_link_libraries(atm couple datetime jsonfortran psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+add_executable(yatm.exe ${ATM_SOURCES})
+target_link_libraries(yatm.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ice stub executable
 file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
-add_executable(ice_stub ${ICE_STUB_SOURCES})
-target_link_libraries(ice_stub couple datetime psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+add_executable(ice_stub.exe ${ICE_STUB_SOURCES})
+target_link_libraries(ice_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ocean stub executable
 file(GLOB OCEAN_STUB_SOURCES ocean_stub/src/*.F90)
-add_executable(ocean_stub ${OCEAN_STUB_SOURCES})
-target_link_libraries(ocean_stub couple datetime psmile.MPI1 mct mpeu scrip ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+add_executable(ocean_stub.exe ${OCEAN_STUB_SOURCES})
+target_link_libraries(ocean_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
-# tests
-# enable_testing()
-# add_executable(matm_tests tests/matm_tests.F90)
-# target_link_libraries(matm_tests matm)
-# add_test(datetime_tests bin/datetime_tests)
