@@ -8,7 +8,7 @@ program atm
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
     use accessom2_mod, only : accessom2_type => accessom2
-    use logger_mod, only : logger_type => logger, LOG_INFO
+    use logger_mod, only : logger_type => logger, LOG_INFO, LOG_DEBUG
 
     implicit none
 
@@ -85,7 +85,7 @@ program atm
 
     do while (.not. accessom2%run_finished())
 
-        cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
+        cur_runtime_in_seconds = int(accessom2%get_cur_runtime_in_seconds())
 
         ! Send each forcing field
         do i=1, num_coupling_fields
@@ -114,7 +114,7 @@ program atm
         call logger%write(LOG_INFO, 'cur_exp_date '//accessom2%get_cur_exp_date_str())
         call logger%write(LOG_INFO, 'cur_forcing_date '//accessom2%get_cur_forcing_date_str())
         call logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
-                            accessom2%get_cur_runtime_in_seconds())
+                            int(accessom2%get_cur_runtime_in_seconds()))
     enddo
 
     call logger%write(LOG_INFO, 'Run complete, calling deinit')
