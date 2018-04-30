@@ -185,7 +185,7 @@ subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, &
         self%calendar_str = 'noleap'
     else
         call assert(self%calendar == CALENDAR_GREGORIAN, &
-                    'accessom2_set_calendar: Unsupported calendar type')
+                    'accessom2_sync_config: Unsupported calendar type')
         self%calendar_str = 'gregorian'
     endif
 
@@ -222,7 +222,7 @@ subroutine accessom2_set_calendar(self, calendar)
         self%calendar = CALENDAR_NOLEAP
     else
         call assert(index(trim(calendar), 'gregorian') /= 0, &
-                    'accessom2_set_calendar: Unsupported calendar type')
+                    'accessom2_set_calendar: Unsupported calendar type: '//trim(calendar))
         self%calendar = CALENDAR_GREGORIAN
     endif
 

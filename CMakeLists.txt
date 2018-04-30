@@ -51,9 +51,11 @@ endif()
 include(ExternalProject)
 
 # datetime-fortran external project
+# We use a forked version because of this behaviour:
+# https://github.com/wavebitscientific/datetime-fortran/issues/51
 ExternalProject_Add(datetime-fortran
-    GIT_REPOSITORY    https://github.com/wavebitscientific/datetime-fortran.git
-    GIT_TAG          914d21e497a29a85c9ac6ec8c269aeada244d285
+    GIT_REPOSITORY   https://github.com/nicjhan/datetime-fortran.git
+    GIT_TAG          e02501d9973f4d8eec5dc2de21816e9c4adb4f7f
     INSTALL_COMMAND cmake -E echo "Skipping datetime-fortran install step."
 )
 ExternalProject_Get_property(datetime-fortran BINARY_DIR)

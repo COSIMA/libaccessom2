@@ -64,7 +64,7 @@ subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
     type(field_type), dimension(:), intent(inout) :: fields
     type(datetime), intent(in) :: forcing_date
     integer, intent(out) :: min_dt
-    character(len=8), intent(out) :: calendar
+    character(len=9), intent(out) :: calendar
 
     type(json_value), pointer :: fp
     integer :: i
