@@ -15,6 +15,7 @@ type accessom2
     private
 
     character(len=8), public :: log_level
+    integer :: ice_ocean_timestep
     integer, public :: atm_intercomm, ice_intercomm, ocean_intercomm
 
     character(len=6) :: model_name
@@ -63,7 +64,7 @@ contains
                                      accessom2_get_cur_runtime_in_seconds
     procedure, pass(self), public :: get_calendar_type => accessom2_get_calendar_type
 
-    procedure, pass(self), public :: get_ice_timestep => accessom2_get_ice_timestep
+    procedure, pass(self), public :: get_ice_ocean_timestep => accessom2_get_ice_ocean_timestep
 endtype accessom2
 
 integer, parameter :: CALENDAR_NOLEAP = 1, CALENDAR_GREGORIAN = 2
@@ -74,8 +75,9 @@ character(len=19) :: forcing_start_date, forcing_end_date
 character(len=19) :: exp_cur_date, forcing_cur_date
 integer, dimension(3) :: restart_period
 character(len=8) :: log_level
+integer :: ice_ocean_timestep
 
-namelist /accessom2_nml/ log_level
+namelist /accessom2_nml/ log_level, ice_ocean_timestep
 namelist /date_manager_nml/ forcing_start_date, forcing_end_date, restart_period
 namelist /do_not_edit_nml/ forcing_cur_date, exp_cur_date
 
@@ -108,6 +110,7 @@ subroutine accessom2_init(self, model_name, config_dir)
     close(tmp_unit)
 
     self%log_level = log_level
+    self%ice_ocean_timestep = ice_ocean_timestep
 
     rc = c_strptime(forcing_start_date//c_null_char, &
                     "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
@@ -435,12 +438,12 @@ function accessom2_get_calendar_type(self)
     accessom2_get_calendar_type = self%calendar_str
 endfunction
 
-function accessom2_get_ice_timestep(self)
+function accessom2_get_ice_ocean_timestep(self)
     class(accessom2), intent(inout) :: self
-    integer :: accessom2_get_ice_timestep
+    integer :: accessom2_get_ice_ocean_timestep
 
-    accessom2_get_ice_timestep = 5400
-endfunction
+    accessom2_get_ice_ocean_timestep = self%ice_ocean_timestep
+endfunction accessom2_get_ice_ocean_timestep
 
 function accessom2_run_finished(self)
     class(accessom2), intent(inout) :: self
