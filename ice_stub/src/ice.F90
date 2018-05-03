@@ -100,7 +100,8 @@ program ice
         allocate(to_ocean_fields(i)%data_array(resolution(1), resolution(2)))
         call coupler%init_field(to_ocean_fields(i), OASIS_OUT)
     enddo
-    call coupler%init_end(accessom2%get_total_runtime_in_seconds())
+    call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
+                          accessom2%get_coupling_field_timesteps())
 
     ! Read in o2i and i2o coupling field restart files.
     call o2i_restart%init('o2i.nc')

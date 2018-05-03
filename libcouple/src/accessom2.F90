@@ -15,7 +15,11 @@ type accessom2
     private
 
     character(len=8), public :: log_level
-    integer :: ice_ocean_timestep
+    integer :: atm_ice_timestep, ice_ocean_timestep
+
+    integer :: num_cpl_fields, num_atm_to_ice_fields, num_ice_to_ocean_fields, &
+               num_ocean_to_ice_fields
+
     integer, public :: atm_intercomm, ice_intercomm, ocean_intercomm
 
     character(len=6) :: model_name
@@ -37,6 +41,11 @@ contains
     procedure, pass(self), public :: init => accessom2_init
     procedure, pass(self), public :: deinit => accessom2_deinit
     procedure, pass(self), public :: set_calendar => accessom2_set_calendar
+    procedure, pass(self), public :: set_atm_timestep => &
+                                        accessom2_set_atm_timestep
+    procedure, pass(self), public :: set_cpl_field_counts => &
+                                        accessom2_set_cpl_field_counts
+
     procedure, pass(self), public :: sync_config => accessom2_sync_config
     procedure, pass(self), public :: atm_ice_sync => accessom2_atm_ice_sync
     procedure, pass(self), public :: progress_date => &
@@ -63,11 +72,15 @@ contains
     procedure, pass(self), public :: get_cur_runtime_in_seconds => &
                                      accessom2_get_cur_runtime_in_seconds
     procedure, pass(self), public :: get_calendar_type => accessom2_get_calendar_type
+    procedure, pass(self), public :: get_coupling_field_timesteps => &
+                                        accessom2_get_coupling_field_timesteps
 
-    procedure, pass(self), public :: get_ice_ocean_timestep => accessom2_get_ice_ocean_timestep
+    procedure, pass(self), public :: get_ice_ocean_timestep => &
+                                        accessom2_get_ice_ocean_timestep
 endtype accessom2
 
 integer, parameter :: CALENDAR_NOLEAP = 1, CALENDAR_GREGORIAN = 2
+integer, parameter :: CONIG_NOT_INITIALISED = -1
 character(len=*), parameter :: restart_file = 'accessom2_restart.nml'
 character(len=*), parameter :: config_file = 'accessom2.nml'
 
@@ -92,6 +105,15 @@ subroutine accessom2_init(self, model_name, config_dir)
     type(tm_struct) :: ctime
     logical :: initialized, file_exists
     character(len=1024) :: path
+
+    ! Shared config
+    self%num_atm_to_ice_fields = CONIG_NOT_INITIALISED
+    self%num_ice_to_ocean_fields = CONIG_NOT_INITIALISED
+    self%num_ocean_to_ice_fields = CONIG_NOT_INITIALISED
+    self%num_cpl_fields = CONIG_NOT_INITIALISED
+    self%atm_ice_timestep = CONIG_NOT_INITIALISED
+    self%ice_ocean_timestep = CONIG_NOT_INITIALISED
+    self%calendar = CONIG_NOT_INITIALISED
 
     self%model_name = model_name
     if (present(config_dir)) then
@@ -158,31 +180,148 @@ subroutine accessom2_init(self, model_name, config_dir)
 
 endsubroutine accessom2_init
 
+subroutine accessom2_set_calendar(self, calendar)
+    class(accessom2), intent(inout) :: self
+    character(len=*), intent(in) :: calendar
+
+    self%calendar_str = calendar
+    if (index(trim(calendar), 'noleap') /= 0) then
+        self%calendar = CALENDAR_NOLEAP
+    else
+        call assert(index(trim(calendar), 'gregorian') /= 0, &
+                    'accessom2_set_calendar: Unsupported calendar type: '//trim(calendar))
+        self%calendar = CALENDAR_GREGORIAN
+    endif
+
+endsubroutine accessom2_set_calendar
+
+subroutine accessom2_set_atm_timestep(self, atm_timestep)
+    class(accessom2), intent(inout) :: self
+    integer, intent(in) :: atm_timestep
+
+    self%atm_ice_timestep = atm_timestep
+
+endsubroutine accessom2_set_atm_timestep
+
+subroutine accessom2_set_cpl_field_counts(self, num_atm_to_ice_fields, &
+        num_ice_to_ocean_fields, num_ocean_to_ice_fields)
+    class(accessom2), intent(inout) :: self
+    integer, optional, intent(in) :: num_atm_to_ice_fields, &
+        num_ice_to_ocean_fields, num_ocean_to_ice_fields
+
+    if (present(num_atm_to_ice_fields)) then
+        self%num_atm_to_ice_fields = num_atm_to_ice_fields
+    endif
+    if (present(num_ice_to_ocean_fields)) then
+        self%num_ice_to_ocean_fields = num_ice_to_ocean_fields
+    endif
+    if (present(num_ocean_to_ice_fields)) then
+        self%num_ocean_to_ice_fields = num_ocean_to_ice_fields
+    endif
+
+endsubroutine accessom2_set_cpl_field_counts
+
 !> Synchronise shared configuration between models.
-subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, &
-                                 ocean_intercomm)
+! 
+subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, ocean_intercomm)
     class(accessom2), intent(inout) :: self
     integer, intent(in) :: atm_intercomm, ice_intercomm, ocean_intercomm
 
+    integer, parameter :: NUM_CONFIGS = 6
     integer :: stat(MPI_STATUS_SIZE)
-    integer, dimension(1) :: buf
-    integer :: err, tag, request
-
-    tag = 5792
+    integer :: err, tag, request, i
+    integer :: my_global_pe, my_atm_comm_pe
+    integer, dimension(NUM_CONFIGS) :: buf, buf_from_ice, buf_from_ocean
 
     self%atm_intercomm = atm_intercomm
     self%ice_intercomm = ice_intercomm
     self%ocean_intercomm = ocean_intercomm
 
-    ! Atm share calendar with other models.
+    ! Pack configs
+    buf(1) = self%num_atm_to_ice_fields
+    buf(2) = self%num_ice_to_ocean_fields
+    buf(3) = self%num_ocean_to_ice_fields
+    buf(4) = self%atm_ice_timestep
+    buf(5) = self%ice_ocean_timestep
+    buf(6) = self%calendar
+    tag = 5792
+
+    call MPI_Comm_Rank(MPI_COMM_WORLD, my_global_pe, err)
+    call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
+
     if (self%model_name == 'matmxx') then
-        buf(1) = self%calendar
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, request, err)
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, request, err)
+        call assert(my_global_pe == 0, 'matmxx does not have global PE == 0')
+
+        ! Receive configs from root processes of different models.
+        call MPI_recv(buf_from_ice, NUM_CONFIGS, MPI_INTEGER, 0, tag, &
+                      self%ice_intercomm, stat, err)
+        call assert(err == MPI_SUCCESS, &
+                    'accessom2_sync_config: MPI_recv ice_intercomm error')
+        call MPI_recv(buf_from_ocean, NUM_CONFIGS, MPI_INTEGER, 0, tag, &
+                      self%ocean_intercomm, stat, err)
+        call assert(err == MPI_SUCCESS, &
+                    'accessom2_sync_config: MPI_recv ocean_intercomm error')
+
+        ! Consolidate configuration.
+        do i=1, NUM_CONFIGS
+            if (buf(i) == CONIG_NOT_INITIALISED) then
+                if (buf_from_ice(i) /= CONIG_NOT_INITIALISED) then
+                    buf(i) = buf_from_ice(i)
+                elseif (buf_from_ocean(i) /= CONIG_NOT_INITIALISED) then
+                    buf(i) = buf_from_ocean(i)
+                else
+                    call assert(.false., 'accessom2_sync_config: missing config')
+                endif
+            else
+                if (buf_from_ice(i) /= CONIG_NOT_INITIALISED) then
+                    call assert(buf(i) == buf_from_ice(i), &
+                            'accessom2_sync_config incompatible configs '// &
+                            'between atm and ice')
+                endif
+                if (buf_from_ocean(i) /= CONIG_NOT_INITIALISED) then
+                    call assert(buf(i) == buf_from_ocean(i), &
+                            'accessom2_sync_config incompatible configs '// &
+                            'between atm and ocean')
+                endif
+            endif
+        enddo
+
+        ! Broadcast to all processes
+        call MPI_Bcast(buf, NUM_CONFIGS, MPI_INTEGER, 0, MPI_COMM_WORLD, err)
+        call assert(err == MPI_SUCCESS, &
+                    'accessom2_sync_config: MPI_Bcast error')
     else
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, stat, err)
-        self%calendar = buf(1)
+        ! Send from ice and ocean
+        call MPI_Comm_Rank(self%atm_intercomm, my_atm_comm_pe, err)
+        call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
+
+        if (my_atm_comm_pe == 0) then
+            call MPI_isend(buf, NUM_CONFIGS, MPI_INTEGER, 0, tag, &
+                            self%atm_intercomm, request, err)
+            call assert(err == MPI_SUCCESS, &
+                       'accessom2_sync_config: MPI_isend ice_intercomm error')
+        endif
+
+        ! Broadcast recv
+        call MPI_Bcast(buf, NUM_CONFIGS, MPI_INTEGER, 0, MPI_COMM_WORLD, err)
+        call assert(err == MPI_SUCCESS, &
+                    'accessom2_sync_config: MPI_Bcast error')
     endif
+
+    print*, 'my_global_pe: ', my_global_pe
+    print*, 'buf: ', buf
+
+    ! Unpack configs
+    self%num_atm_to_ice_fields = buf(1)
+    self%num_ice_to_ocean_fields = buf(2)
+    self%num_ocean_to_ice_fields = buf(3)
+    self%atm_ice_timestep = buf(4)
+    self%ice_ocean_timestep = buf(5)
+    self%calendar = buf(6)
+
+    self%num_cpl_fields = self%num_atm_to_ice_fields + &
+                          self%num_ice_to_ocean_fields + &
+                          self%num_ocean_to_ice_fields
 
     if (self%calendar == CALENDAR_NOLEAP) then
         self%calendar_str = 'noleap'
@@ -215,21 +354,6 @@ subroutine accessom2_atm_ice_sync(self)
     endif
 
 endsubroutine accessom2_atm_ice_sync
-
-subroutine accessom2_set_calendar(self, calendar)
-    class(accessom2), intent(inout) :: self
-    character(len=*), intent(in) :: calendar
-
-    self%calendar_str = calendar
-    if (index(trim(calendar), 'noleap') /= 0) then
-        self%calendar = CALENDAR_NOLEAP
-    else
-        call assert(index(trim(calendar), 'gregorian') /= 0, &
-                    'accessom2_set_calendar: Unsupported calendar type: '//trim(calendar))
-        self%calendar = CALENDAR_GREGORIAN
-    endif
-
-endsubroutine accessom2_set_calendar
 
 function calc_run_end_date(self)
     class(accessom2), intent(inout) :: self
@@ -438,6 +562,14 @@ function accessom2_get_calendar_type(self)
     accessom2_get_calendar_type = self%calendar_str
 endfunction
 
+function accessom2_get_coupling_field_timesteps(self)
+    class(accessom2), intent(inout) :: self
+    integer, dimension(self%num_cpl_fields) :: accessom2_get_coupling_field_timesteps
+
+    accessom2_get_coupling_field_timesteps(1:self%num_atm_to_ice_fields) = self%atm_ice_timestep
+    accessom2_get_coupling_field_timesteps(self%num_atm_to_ice_fields+1:) = self%ice_ocean_timestep
+endfunction
+
 function accessom2_get_ice_ocean_timestep(self)
     class(accessom2), intent(inout) :: self
     integer :: accessom2_get_ice_ocean_timestep
@@ -468,6 +600,7 @@ subroutine accessom2_deinit(self, cur_date, finalize)
     integer, dimension(1) :: buf
     integer :: err, tag, request
     integer :: checksum
+    integer :: my_atm_comm_pe
     logical :: initialized, dir_exists
     character(len=1024) :: path
 
@@ -480,28 +613,28 @@ subroutine accessom2_deinit(self, cur_date, finalize)
     tag = 831917
 
     ! We don't have a lot of trust for the models' internal timekeeping.  They
-    ! may not be using libaccessom2 (yet). Check that cur_date is the same
-    ! between all models.
+    ! may not be using libaccessom2 to do this (yet). Check that cur_date is the
+    ! same between all models.
     if (self%model_name == 'matmxx') then
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
         call assert(buf(1) == checksum, 'Models are out of sync.')
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
         call assert(buf(1) == checksum, 'Models are out of sync.')
-    elseif (self%model_name == 'cicexx') then
-        buf(1) = checksum
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
-    elseif (self%model_name == 'mom5xx') then
-        buf(1) = checksum
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
     else
-        call assert(.false., 'accessom2_deinit: unknown model: '//self%model_name)
+        call MPI_Comm_Rank(self%atm_intercomm, my_atm_comm_pe, err)
+        call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
+
+        if (my_atm_comm_pe == 0) then
+            buf(1) = checksum
+            call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
+        endif
     endif
 
     ! Write out restart.
-    exp_cur_date = self%exp_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
-    forcing_cur_date = self%forcing_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
-
     if (self%model_name == 'matmxx') then
+        exp_cur_date = self%exp_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
+        forcing_cur_date = self%forcing_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
+
         ! Write to RESTART dir if it exists. FIXME: a clearer approach.
         inquire(directory=trim(self%config_dir)//'/RESTART', exist=dir_exists)
         if (dir_exists) then

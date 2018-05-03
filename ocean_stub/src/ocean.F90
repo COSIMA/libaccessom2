@@ -75,7 +75,8 @@ program ocean
         allocate(out_fields(i)%data_array(resolution(1), resolution(2)))
         call coupler%init_field(out_fields(i), OASIS_OUT)
     enddo
-    call coupler%init_end(accessom2%get_total_runtime_in_seconds())
+    call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
+                          accessom2%get_coupling_field_timesteps())
 
     do while (.not. accessom2%run_finished())
         cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()

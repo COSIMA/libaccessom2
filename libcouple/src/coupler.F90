@@ -24,7 +24,7 @@ type coupler
     ! Intercommunicators
     integer, public :: monitor_intercomm, atm_intercomm, ice_intercomm, ocean_intercomm
     integer :: localcomm
-    integer :: my_local_pe, my_global_pe
+    integer, public :: my_local_pe, my_global_pe
 
     character(len=6) :: model_name
 
@@ -148,13 +148,16 @@ subroutine coupler_init_field(self, field, direction)
 
 endsubroutine coupler_init_field
 
-subroutine coupler_init_end(self, total_runtime_in_seconds)
+subroutine coupler_init_end(self, total_runtime_in_seconds, &
+                            coupling_field_timesteps)
     class(coupler), intent(in) :: self
     integer, intent(in) :: total_runtime_in_seconds
+    integer, dimension(:), intent(in) :: coupling_field_timesteps
 
     integer :: err
 
-    call oasis_enddef(err, runtime=total_runtime_in_seconds)
+    call oasis_enddef(err, runtime=total_runtime_in_seconds, &
+                      coupling_field_timesteps=coupling_field_timesteps)
 endsubroutine coupler_init_end
 
 subroutine coupler_put(self, field, timestamp, err)

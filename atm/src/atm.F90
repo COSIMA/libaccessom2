@@ -28,7 +28,7 @@ program atm
     integer, dimension(2) :: ice_shape
     integer :: i, err, tmp_unit
     logical :: file_exists
-    integer :: num_coupling_fields, dt, cur_runtime_in_seconds
+    integer :: num_atm_to_ice_fields, dt, cur_runtime_in_seconds
 
     namelist /atm_nml/ forcing_file, accessom2_config_dir
 
@@ -48,15 +48,18 @@ program atm
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
-    call forcing%init(forcing_file, logger, num_coupling_fields)
-    allocate(fields(num_coupling_fields))
+    call forcing%init(forcing_file, logger, num_atm_to_ice_fields)
+    allocate(fields(num_atm_to_ice_fields))
     call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), dt, calendar)
-    ! 'calendar' is a global config, tell accessom2 about it.
-    call accessom2%set_calendar(calendar)
 
-    ! Initialise the coupler. It needs to tell oasis how long the run is.
+    ! Initialise the coupler.
     call coupler%init_begin('matmxx', logger, config_dir=trim(accessom2_config_dir))
-    ! Synchronise accessom2 'state' (i.e. configuration) between all models.
+
+    ! Tell libaccessom2 about any global configs/state
+    call accessom2%set_calendar(calendar)
+    call accessom2%set_atm_timestep(dt)
+    call accessom2%set_cpl_field_counts(num_atm_to_ice_fields=num_atm_to_ice_fields)
+    ! Synchronise accessom2 'state' (i.e. configuration) between all PEs of all models.
     call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
                                coupler%ocean_intercomm)
 
@@ -69,7 +72,7 @@ program atm
     ice_shape = ice_grid%get_shape()
 
     ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
-    do i=1, num_coupling_fields
+    do i=1, num_atm_to_ice_fields
         if (index(fields(i)%name, 'runof') /= 0) then
             call assert(.not. allocated(runoff_field%data_array), &
                         'Runoff already associated')
@@ -81,14 +84,17 @@ program atm
             call coupler%init_field(fields(i), OASIS_OUT)
         endif
     enddo
-    call coupler%init_end(accessom2%get_total_runtime_in_seconds())
+    ! Finish coupler initialisation. Tell oasis how long the run is and the
+    ! coupling timesteps.
+    call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
+                          accessom2%get_coupling_field_timesteps())
 
     do while (.not. accessom2%run_finished())
 
         cur_runtime_in_seconds = int(accessom2%get_cur_runtime_in_seconds())
 
         ! Send each forcing field
-        do i=1, num_coupling_fields
+        do i=1, num_atm_to_ice_fields
             if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
                 call forcing%update_field(fields(i), &
                                           accessom2%get_cur_forcing_date())
