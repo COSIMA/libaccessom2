@@ -80,6 +80,10 @@ subroutine logger_write(self, loglevel, str, intnum)
         endif
     endif
 
+    if (loglevel == LOG_ERROR) then
+        call flush(self%fp)
+    endif
+
 endsubroutine logger_write
 
 subroutine logger_deinit(self)
