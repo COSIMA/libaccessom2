@@ -308,9 +308,6 @@ subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, ocean_inter
                     'accessom2_sync_config: MPI_Bcast error')
     endif
 
-    print*, 'my_global_pe: ', my_global_pe
-    print*, 'buf: ', buf
-
     ! Unpack configs
     self%num_atm_to_ice_fields = buf(1)
     self%num_ice_to_ocean_fields = buf(2)
@@ -436,7 +433,7 @@ subroutine accessom2_progress_date(self, timestep)
     ! Forcing date
     self%forcing_cur_date = self%forcing_cur_date + timedelta(seconds=timestep)
     if (self%forcing_cur_date%getMonth() == 2 .and. &
-        self%forcing_cur_date%getMonth() == 29 .and. &
+        self%forcing_cur_date%getDay() == 29 .and. &
         self%calendar == CALENDAR_NOLEAP) then
 
         self%forcing_cur_date = self%forcing_cur_date + timedelta(days=1)
@@ -449,7 +446,7 @@ subroutine accessom2_progress_date(self, timestep)
     ! Experiment date
     self%exp_cur_date = self%exp_cur_date + timedelta(seconds=timestep)
     if (self%exp_cur_date%getMonth() == 2 .and. &
-        self%exp_cur_date%getMonth() == 29 .and. &
+        self%exp_cur_date%getDay() == 29 .and. &
         self%calendar == CALENDAR_NOLEAP) then
 
         self%exp_cur_date = self%exp_cur_date + timedelta(days=1)
@@ -660,7 +657,7 @@ subroutine accessom2_deinit(self, cur_date, finalize)
 end subroutine accessom2_deinit
 
 !> Return difference between two dates as a timedelta object taking the calendar
-! into account. This is a hack around the fact that datetime does not support
+! into account. This is a hack around the fact that fortran-datetime does not support
 ! noleap calendars.
 function noleap_timedelta(a, b, calendar)
     type(datetime), intent(in) :: a, b
