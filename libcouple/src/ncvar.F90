@@ -4,6 +4,7 @@ module ncvar_mod
 ! coordinate so that it does not have to be continuously reread.
 
 use util_mod, only : read_data, replace_text, ncheck, get_var_dims
+use util_mod, only : get_time_varid_and_dimid
 use netcdf
 use datetime_module, only : datetime, timedelta, c_strptime, tm2date, tm_struct
 use error_handler, only : assert
@@ -51,7 +52,7 @@ subroutine ncvar_refresh(self, filename)
     character(len=*), intent(in) :: filename
 
     character(len=nf90_max_name) :: time_bnds_name, dimname
-    integer :: time_id, time_bnds_id, len, ndims, num_times
+    integer :: time_varid, time_dimid, time_bnds_id, len, ndims, num_times
     integer, dimension(2) :: dimids
     integer :: status
 
@@ -73,18 +74,18 @@ subroutine ncvar_refresh(self, filename)
     call assert(self%nx /= 0 .and. self%ny /= 0, 'ncvar bad dimensions')
 
     ! Initialise and cache time variable
-    ! Warning: this assumes that there is only one time coordinate per file.
-    call ncheck(nf90_inq_varid(self%ncid, "time", time_id), &
-                'ncvar inquire: time')
-    call ncheck(nf90_inquire_dimension(self%ncid, time_id, len=num_times))
+    call get_time_varid_and_dimid(self%ncid, time_dimid, time_varid)
+    call ncheck(nf90_inquire_dimension(self%ncid, time_dimid, len=num_times), &
+                'ncvar inquire_dimension time in: '//trim(self%filename))
     allocate(self%times(num_times))
-    call ncheck(nf90_get_var(self%ncid, time_id, self%times))
+    call ncheck(nf90_get_var(self%ncid, time_varid, self%times), &
+                'ncvar get_var time in: '//trim(self%filename))
 
     self%dt = int((self%times(2) - self%times(1))*86400)
     ! Initialise start date and calendar
-    call self%get_start_date_and_calendar(time_id, self%start_date, self%calendar)
+    call self%get_start_date_and_calendar(time_varid, self%start_date, self%calendar)
 
-    status = nf90_get_att(self%ncid, time_id, "bounds", time_bnds_name)
+    status = nf90_get_att(self%ncid, time_varid, "bounds", time_bnds_name)
     if (status == nf90_noerr) then
         call ncheck(nf90_inq_varid(self%ncid, trim(time_bnds_name), &
                                    time_bnds_id), &
@@ -120,6 +121,9 @@ subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
     ! Getcalendar
     call ncheck(nf90_get_att(self%ncid, time_varid, "calendar", calendar), &
                 'get_start_date_and_calendar: nf90_get_att: '//calendar)
+    if (trim(calendar) == 'NOLEAP') then
+        calendar = 'noleap'
+    endif
     call assert(trim(calendar) == 'noleap' .or. trim(calendar) == 'gregorian', &
                 'get_start_date_and_calendar: unrecognized calendar type')
 

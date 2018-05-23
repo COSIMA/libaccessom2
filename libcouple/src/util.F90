@@ -95,6 +95,33 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
 
 end subroutine read_data
 
+!> Try a number of different names to get the 'time' varid and dimid.
+subroutine get_time_varid_and_dimid(ncid, dimid, varid)
+    integer, intent(in) :: ncid
+    integer, intent(out) :: dimid, varid
+
+    integer :: i, status
+    character(len=4), dimension(3) :: names
+
+    names(1) = 'time'
+    names(2) = 'TIME'
+    names(3) = 'AT'
+
+    do i=1, 3
+        status = nf90_inq_dimid(ncid, trim(names(i)), dimid)
+        if (status == nf90_noerr) then
+            exit
+        endif
+    enddo
+
+    call assert(status == nf90_noerr, &
+                "get_time_varid_and_dimid: Can't find time dim")
+
+    call ncheck(nf90_inq_varid(ncid, trim(names(i)), varid), &
+                "get_time_varid_and_dimid: Can't find time var")
+
+end subroutine get_time_varid_and_dimid
+
 ! Return the spatial and time dimensions of a field.
 subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
     integer, intent(in) :: ncid, varid
@@ -120,13 +147,14 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
       call ncheck(nf90_inquire_dimension(ncid, dimids(i), &
                                          name=dimname, len=len), &
                     'get_var_dims: Inquire dimension '//dimname)
-      if (trim(dimname) == 'time' .or. trim(dimname) == 'AT') then
+      if (trim(dimname) == 'time' .or. trim(dimname) == 'AT' .or. &
+          trim(dimname) == 'TIME') then
         time = len
       elseif (trim(dimname) == 'latitude' .or. trim(dimname) == 'AY' .or. &
-                trim(dimname) == 'ny') then
+                trim(dimname) == 'ny' .or. trim(dimname) == 'LAT') then
         ny = len
       elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX' .or. &
-                trim(dimname) == 'nx') then
+                trim(dimname) == 'nx' .or. trim(dimname) == 'LON') then
         nx = len
       else
         call assert(.false., 'get_var_dims: Unsupported dimension name '//trim(dimname))
