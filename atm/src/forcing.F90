@@ -4,7 +4,7 @@ use error_handler, only : assert
 use json_module
 use json_kinds
 use datetime_module, only : datetime
-use util_mod, only : ncheck, get_var_dims, replace_text
+use util_mod, only : get_var_dims, replace_text
 use util_mod, only : first_file_matching_pattern
 use netcdf
 use field_mod, only : field_type => field

@@ -57,6 +57,8 @@ contains
 
     procedure, pass(self), public :: get_cur_exp_date_array => &
                                         accessom2_get_cur_exp_date_array
+    procedure, pass(self), public :: get_forcing_start_date_array => &
+                                        accessom2_get_forcing_start_date_array
     procedure, pass(self), public :: get_seconds_since_cur_exp_year => &
                                         accessom2_get_seconds_since_cur_exp_year
 
@@ -502,6 +504,21 @@ function accessom2_get_cur_exp_date_array(self)
 
 endfunction accessom2_get_cur_exp_date_array
 
+!> Return the forcing start date as an array
+function accessom2_get_forcing_start_date_array(self)
+    class(accessom2), intent(inout) :: self
+
+    integer, dimension(6) :: accessom2_get_forcing_start_date_array
+
+    accessom2_get_forcing_start_date_array(1) = self%forcing_start_date%getYear()
+    accessom2_get_forcing_start_date_array(2) = self%forcing_start_date%getMonth()
+    accessom2_get_forcing_start_date_array(3) = self%forcing_start_date%getDay()
+    accessom2_get_forcing_start_date_array(4) = self%forcing_start_date%getHour()
+    accessom2_get_forcing_start_date_array(5) = self%forcing_start_date%getMinute()
+    accessom2_get_forcing_start_date_array(6) = self%forcing_start_date%getSecond()
+
+endfunction accessom2_get_forcing_start_date_array
+
 !> Return the number of seconds since the beginning of the current year.
 ! CICE needs this.
 function accessom2_get_seconds_since_cur_exp_year(self)
@@ -587,8 +604,9 @@ function accessom2_run_finished(self)
 
 endfunction accessom2_run_finished
 
-subroutine accessom2_deinit(self, cur_date, finalize)
+subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     class(accessom2), intent(inout) :: self
+    integer, dimension(6), optional, intent(in) :: cur_date_array
     type(datetime), optional, intent(in) :: cur_date
     logical, optional, intent(in) :: finalize
 
@@ -600,8 +618,19 @@ subroutine accessom2_deinit(self, cur_date, finalize)
     integer :: my_atm_comm_pe
     logical :: initialized, dir_exists
     character(len=1024) :: path
+    type(datetime) :: end_date
 
-    if (present(cur_date)) then
+    if (present(cur_date_array)) then
+        call assert(.not. present(cur_date), &
+                    "accessom2_deinit: incompatible arguments.")
+        end_date = datetime(cur_date_array(1), &
+                            cur_date_array(2), &
+                            cur_date_array(3), &
+                            cur_date_array(4), &
+                            cur_date_array(5), &
+                            cur_date_array(6))
+        checksum = date2num(end_date)
+    elseif (present(cur_date)) then
         checksum = date2num(cur_date)
     else
         checksum = date2num(self%exp_cur_date)
@@ -614,9 +643,11 @@ subroutine accessom2_deinit(self, cur_date, finalize)
     ! same between all models.
     if (self%model_name == 'matmxx') then
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-        call assert(buf(1) == checksum, 'Models are out of sync.')
+        call assert(buf(1) == checksum, &
+                    'accessom2_deinit: atm and ice models are out of sync.')
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
-        call assert(buf(1) == checksum, 'Models are out of sync.')
+        call assert(buf(1) == checksum, &
+                    'accessom2_deinit: atm and ocean models are out of sync.')
     else
         call MPI_Comm_Rank(self%atm_intercomm, my_atm_comm_pe, err)
         call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')

@@ -67,7 +67,7 @@ subroutine field_update_data(self, filename, forcing_date)
         indx = self%ncvar%get_index_for_datetime(forcing_date, .true.)
     endif
     call assert(indx /= -1, &
-                "Could not find forcing date "//forcing_date%isoformat())
+                "No forcing date "//forcing_date%isoformat()//" in "//trim(filename))
 
     call self%logger%write(LOG_DEBUG, 'field_update_data: file '//trim(filename))
     call self%logger%write(LOG_DEBUG, 'field_update_data: index ', indx)

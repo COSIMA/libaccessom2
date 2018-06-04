@@ -85,7 +85,7 @@ subroutine restart_write(self, cur_date, fields)
                     'restart_write: nf90_put_var '//trim(fields(i)%name))
     enddo
 
-    call ncheck(nf90_close(ncid))
+    call ncheck(nf90_close(ncid), 'restart_write: nf90_close')
 
 endsubroutine restart_write
 

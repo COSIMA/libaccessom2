@@ -10,13 +10,11 @@ contains
 subroutine ncheck(status, error_str)
 
     integer, intent(in) :: status
-    character(len=*), intent(in), optional :: error_str
+    character(len=*), intent(in) :: error_str
 
     if (status /= nf90_noerr) then
         write(stdout, '(/a)') 'Error - from NetCDF library'
-        if (present(error_str)) then
-            write(stdout, '(a)') error_str
-        endif
+        write(stdout, '(a)') error_str
         write(stdout, '(a/)')   trim(nf90_strerror(status))
         stop
     end if
@@ -101,13 +99,14 @@ subroutine get_time_varid_and_dimid(ncid, dimid, varid)
     integer, intent(out) :: dimid, varid
 
     integer :: i, status
-    character(len=4), dimension(3) :: names
+    character(len=4), dimension(4) :: names
 
     names(1) = 'time'
     names(2) = 'TIME'
     names(3) = 'AT'
+    names(4) = 'Time'
 
-    do i=1, 3
+    do i=1, 4
         status = nf90_inq_dimid(ncid, trim(names(i)), dimid)
         if (status == nf90_noerr) then
             exit
@@ -148,13 +147,15 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
                                          name=dimname, len=len), &
                     'get_var_dims: Inquire dimension '//dimname)
       if (trim(dimname) == 'time' .or. trim(dimname) == 'AT' .or. &
-          trim(dimname) == 'TIME') then
+          trim(dimname) == 'TIME' .or. trim(dimname) == 'Time') then
         time = len
       elseif (trim(dimname) == 'latitude' .or. trim(dimname) == 'AY' .or. &
-                trim(dimname) == 'ny' .or. trim(dimname) == 'LAT') then
+                trim(dimname) == 'ny' .or. trim(dimname) == 'LAT' .or. &
+                trim(dimname) == 'nj') then
         ny = len
       elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX' .or. &
-                trim(dimname) == 'nx' .or. trim(dimname) == 'LON') then
+                trim(dimname) == 'nx' .or. trim(dimname) == 'LON' .or. &
+                trim(dimname) == 'ni') then
         nx = len
       else
         call assert(.false., 'get_var_dims: Unsupported dimension name '//trim(dimname))

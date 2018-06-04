@@ -9,7 +9,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # if build type not specified, default to release
-set(CMAKE_BUILD_TYPE "Debug")
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
@@ -55,7 +54,7 @@ include(ExternalProject)
 # https://github.com/wavebitscientific/datetime-fortran/issues/51
 ExternalProject_Add(datetime-fortran
     GIT_REPOSITORY   https://github.com/nicjhan/datetime-fortran.git
-    GIT_TAG          e02501d9973f4d8eec5dc2de21816e9c4adb4f7f
+    GIT_TAG          3e7755c585cdc62ed262e91d57e7d54f82046087
     INSTALL_COMMAND cmake -E echo "Skipping datetime-fortran install step."
 )
 ExternalProject_Get_property(datetime-fortran BINARY_DIR)
