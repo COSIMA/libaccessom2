@@ -79,6 +79,8 @@ contains
 
     procedure, pass(self), public :: get_ice_ocean_timestep => &
                                         accessom2_get_ice_ocean_timestep
+    procedure, pass(self), public :: get_atm_ice_timestep => &
+                                        accessom2_get_atm_ice_timestep
 endtype accessom2
 
 integer, parameter :: CALENDAR_NOLEAP = 1, CALENDAR_GREGORIAN = 2
@@ -590,6 +592,14 @@ function accessom2_get_ice_ocean_timestep(self)
 
     accessom2_get_ice_ocean_timestep = self%ice_ocean_timestep
 endfunction accessom2_get_ice_ocean_timestep
+
+function accessom2_get_atm_ice_timestep(self)
+    class(accessom2), intent(inout) :: self
+    integer :: accessom2_get_atm_ice_timestep
+
+    accessom2_get_atm_ice_timestep = self%atm_ice_timestep
+
+endfunction accessom2_get_atm_ice_timestep
 
 function accessom2_run_finished(self)
     class(accessom2), intent(inout) :: self

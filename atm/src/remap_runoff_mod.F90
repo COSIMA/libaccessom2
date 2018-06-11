@@ -15,8 +15,7 @@ module remap_runoff_mod
   use netcdf
   use kdrunoff_mod, only : kdrunoff_class, kdrunoff_new, kdrunoff_del
   use kdrunoff_mod, only : kdrunoff_remap
-  use, intrinsic :: iso_fortran_env, only : stdout=>output_unit, &
-                                            stderr=>error_unit
+  use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
   implicit none
   private
@@ -385,9 +384,9 @@ contains
     character(len=*), intent(in) :: error_str
 
     if (status /= nf90_noerr) then
-      write(*,'(a)') 'Error'
-      write(*,'(a)') error_str
-      write(*,'(a/)') trim(nf90_strerror(status))
+      write(stderr,'(/a)') 'Error: '
+      write(stderr,'(a)') error_str
+      write(stderr,'(a/)') trim(nf90_strerror(status))
       stop 'Error: remap_runoff_mod, ncheck failed.'
     endif
   end subroutine ncheck

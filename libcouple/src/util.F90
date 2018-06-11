@@ -2,7 +2,8 @@ module util_mod
 
 use netcdf
 use error_handler, only : assert
-use, intrinsic :: iso_fortran_env, only : stdout=>output_unit
+use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
+
 implicit none
 
 contains
@@ -13,9 +14,9 @@ subroutine ncheck(status, error_str)
     character(len=*), intent(in) :: error_str
 
     if (status /= nf90_noerr) then
-        write(stdout, '(/a)') 'Error - from NetCDF library'
-        write(stdout, '(a)') error_str
-        write(stdout, '(a/)')   trim(nf90_strerror(status))
+        write(stderr, '(/a)') 'Error - from NetCDF library'
+        write(stderr, '(a)') error_str
+        write(stderr, '(a/)')   trim(nf90_strerror(status))
         stop
     end if
 
