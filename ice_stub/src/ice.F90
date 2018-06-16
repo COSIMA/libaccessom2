@@ -56,8 +56,7 @@ program ice
     ! sent to the atmosphere.
     call coupler%init_begin('cicexx', logger, config_dir=accessom2_config_dir)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
-    call accessom2%sync_config(coupler%atm_intercomm, coupler%ice_intercomm, &
-                               coupler%ocean_intercomm)
+    call accessom2%sync_config(coupler)
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0

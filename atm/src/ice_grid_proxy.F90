@@ -8,6 +8,7 @@ public ice_grid_proxy
 
 type ice_grid_proxy
     integer :: peer_intercomm
+    integer :: ice_root
     real, dimension(:, :), allocatable :: lats, lons, mask
     integer :: nx
     integer :: ny
@@ -20,12 +21,14 @@ endtype ice_grid_proxy
 
 contains
 
-subroutine ice_grid_proxy_init(self, peer_intercomm)
+subroutine ice_grid_proxy_init(self, peer_intercomm, ice_root)
 
     class(ice_grid_proxy), intent(inout) :: self
     integer, intent(in) :: peer_intercomm
+    integer, intent(in) :: ice_root
 
     self%peer_intercomm = peer_intercomm
+    self%ice_root = ice_root
 
 endsubroutine ice_grid_proxy_init
 
@@ -40,7 +43,8 @@ subroutine ice_grid_proxy_recv(self)
 
     ! Receive dimensions of the ice grid that we're coupled to.
     tag = MPI_ANY_TAG
-    call MPI_recv(buf_int, 2, MPI_INTEGER, 0, tag, self%peer_intercomm,  stat, err)
+    call MPI_recv(buf_int, 2, MPI_INTEGER, self%ice_root, tag, &
+                  self%peer_intercomm, stat, err)
     self%nx = buf_int(1)
     self%ny = buf_int(2)
 
@@ -50,15 +54,15 @@ subroutine ice_grid_proxy_recv(self)
     allocate(buf_real(self%nx*self%ny))
 
     call MPI_recv(buf_real, size(buf_real), &
-                  MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
+                  MPI_DOUBLE, self%ice_root, tag, self%peer_intercomm, stat, err)
     self%lats(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
 
     call MPI_recv(buf_real, size(buf_real), &
-                  MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
+                  MPI_DOUBLE, self%ice_root, tag, self%peer_intercomm, stat, err)
     self%lons(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
 
     call MPI_recv(buf_real, size(buf_real), &
-                  MPI_DOUBLE, 0, tag, self%peer_intercomm, stat, err)
+                  MPI_DOUBLE, self%ice_root, tag, self%peer_intercomm, stat, err)
     self%mask(:, :) = reshape(buf_real, (/ self%nx, self%ny /))
     deallocate(buf_real)
 
