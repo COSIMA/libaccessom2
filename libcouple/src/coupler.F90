@@ -11,6 +11,10 @@ use error_handler, only : assert
 use logger_mod, only : logger_type => logger, LOG_DEBUG
 use field_mod, only : field_type => field
 
+! TODO: Can I get this info from mod_oasis?
+use mod_oasis_namcouple, only : prism_nmodels, prism_modnam
+use mod_oasis_data, only : mpi_root_global
+
 implicit none
 private
 public coupler
@@ -22,9 +26,11 @@ type coupler
     integer :: size     ! Total number of processes
 
     ! Intercommunicators
+    !logical, public :: use_intercomm
     integer, public :: monitor_intercomm, atm_intercomm, ice_intercomm, ocean_intercomm
-    integer :: localcomm
+    integer, public :: localcomm
     integer, public :: my_local_pe, my_global_pe
+    integer, public :: atm_root, ice_root, ocean_root
 
     character(len=6) :: model_name
 
@@ -50,9 +56,32 @@ subroutine coupler_init_begin(self, model_name, logger, config_dir)
     type(logger_type), optional, intent(in) :: logger
     character(len=*), optional, intent(in) :: config_dir
 
-    integer :: err
-    logical :: initialized
+    character(len=*), parameter :: coupler_nml_fname = 'accessom2.nml'
 
+    integer :: tmp_unit, n, err
+    logical :: initialized, file_exists
+    logical :: use_intercomm
+    character(len=1024) :: coupler_nml_path
+
+    namelist /coupler_nml/ use_intercomm
+
+    ! Intercommunicator support
+    if (present(config_dir)) then
+        coupler_nml_path = trim(config_dir)//'/'//trim(coupler_nml_fname)
+    else
+        coupler_nml_path = coupler_nml_fname
+    end if
+
+    use_intercomm = .true.
+    inquire(file=coupler_nml_path, exist=file_exists)
+    if (file_exists) then
+        open(newunit=tmp_unit, file=coupler_nml_path)
+        read(tmp_unit, nml=coupler_nml)
+        close(tmp_unit)
+    end if
+    !self%use_intercomm = use_intercomm  ! TODO: Don't need to add this field?
+
+    ! Validate model names
     call assert(model_name == 'matmxx' .or. model_name == 'cicexx' &
                 .or. model_name == 'mom5xx' .or. model_name == 'monito', &
                 'Bad model name')
@@ -66,7 +95,7 @@ subroutine coupler_init_begin(self, model_name, logger, config_dir)
     if (present(logger)) then
         self%logger = logger
     else
-        call self%logger%init(model_name//'-coupler', 'ERROR')
+        call self%logger%init(model_name//'-coupler', loglevel='ERROR')
     endif
 
     if (present(config_dir)) then
@@ -81,14 +110,45 @@ subroutine coupler_init_begin(self, model_name, logger, config_dir)
     call MPI_Comm_rank(self%localcomm, self%my_local_pe, err)
     call MPI_Comm_rank(MPI_COMM_WORLD, self%my_global_pe, err)
 
+    ! TODO: Better place to initialise these?
+    self%atm_intercomm = -1
+    self%ice_intercomm = -1
+    self%ocean_intercomm = -1
+
     ! Get an intercommunicator with the peer.
-    if (model_name == 'matmxx') then
-        call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
-        call oasis_get_intercomm(self%ocean_intercomm, 'mom5xx', err)
-    elseif (model_name == 'cicexx') then
-        call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
-    elseif (model_name == 'mom5xx') then
-        call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
+    if (use_intercomm) then
+        if (model_name == 'matmxx') then
+            call oasis_get_intercomm(self%ice_intercomm, 'cicexx', err)
+            call oasis_get_intercomm(self%ocean_intercomm, 'mom5xx', err)
+        elseif (model_name == 'cicexx') then
+            call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
+        elseif (model_name == 'mom5xx') then
+            call oasis_get_intercomm(self%atm_intercomm, 'matmxx', err)
+        endif
+        self%atm_root = 0
+        self%ice_root = 0
+        self%ocean_root = 0
+    else
+        ! Use MPI_COMM_GLOBAL directly if intercommunicators are disabled
+        ! NOTE: This only works because all intercommunication is root<->root!
+        if (model_name == 'matmxx') then
+            self%ice_intercomm = MPI_COMM_WORLD
+            self%ocean_intercomm = MPI_COMM_WORLD
+        elseif (model_name == 'cicexx' .or. model_name == 'mom5xx') then
+            self%atm_intercomm = MPI_COMM_WORLD
+        endif
+
+        ! TODO: Assert that all values are populated
+        do n = 1, prism_nmodels
+            select case (trim(prism_modnam(n)))
+                case ('matmxx')
+                    self%atm_root = mpi_root_global(n)
+                case ('cicexx')
+                    self%ice_root = mpi_root_global(n)
+                case ('mom5xx')
+                    self%ocean_root = mpi_root_global(n)
+            end select
+        end do
     endif
 
 endsubroutine coupler_init_begin

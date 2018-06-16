@@ -8,6 +8,7 @@ use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
 use datetime_module, only : date2num, num2date
 use error_handler, only : assert
+use coupler_mod, only : coupler_type => coupler
 
 implicit none
 private
@@ -23,6 +24,8 @@ type accessom2
                num_ocean_to_ice_fields
 
     integer, public :: atm_intercomm, ice_intercomm, ocean_intercomm
+    integer, public :: atm_ic_root, ice_ic_root, ocean_ic_root
+    integer, public :: my_local_pe
 
     character(len=6) :: model_name
     character(len=1024) :: config_dir
@@ -229,9 +232,9 @@ endsubroutine accessom2_set_cpl_field_counts
 
 !> Synchronise shared configuration between models.
 ! 
-subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, ocean_intercomm)
+subroutine accessom2_sync_config(self, coupler)
     class(accessom2), intent(inout) :: self
-    integer, intent(in) :: atm_intercomm, ice_intercomm, ocean_intercomm
+    class(coupler_type), intent(in) :: coupler
 
     integer, parameter :: NUM_CONFIGS = 6
     integer :: stat(MPI_STATUS_SIZE)
@@ -239,9 +242,16 @@ subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, ocean_inter
     integer :: my_global_pe, my_atm_comm_pe
     integer, dimension(NUM_CONFIGS) :: buf, buf_from_ice, buf_from_ocean
 
-    self%atm_intercomm = atm_intercomm
-    self%ice_intercomm = ice_intercomm
-    self%ocean_intercomm = ocean_intercomm
+    ! TODO: Maybe just add a reference to coupler itself...?
+    self%atm_intercomm = coupler%atm_intercomm
+    self%ice_intercomm = coupler%ice_intercomm
+    self%ocean_intercomm = coupler%ocean_intercomm
+
+    self%atm_ic_root = coupler%atm_root
+    self%ice_ic_root = coupler%ice_root
+    self%ocean_ic_root = coupler%ocean_root
+
+    self%my_local_pe = coupler%my_local_pe
 
     ! Pack configs
     buf(1) = self%num_atm_to_ice_fields
@@ -259,12 +269,12 @@ subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, ocean_inter
         call assert(my_global_pe == 0, 'matmxx does not have global PE == 0')
 
         ! Receive configs from root processes of different models.
-        call MPI_recv(buf_from_ice, NUM_CONFIGS, MPI_INTEGER, 0, tag, &
-                      self%ice_intercomm, stat, err)
+        call MPI_recv(buf_from_ice, NUM_CONFIGS, MPI_INTEGER, &
+                      self%ice_ic_root, tag, self%ice_intercomm, stat, err)
         call assert(err == MPI_SUCCESS, &
                     'accessom2_sync_config: MPI_recv ice_intercomm error')
-        call MPI_recv(buf_from_ocean, NUM_CONFIGS, MPI_INTEGER, 0, tag, &
-                      self%ocean_intercomm, stat, err)
+        call MPI_recv(buf_from_ocean, NUM_CONFIGS, MPI_INTEGER, &
+                      self%ocean_ic_root, tag, self%ocean_intercomm, stat, err)
         call assert(err == MPI_SUCCESS, &
                     'accessom2_sync_config: MPI_recv ocean_intercomm error')
 
@@ -301,9 +311,9 @@ subroutine accessom2_sync_config(self, atm_intercomm, ice_intercomm, ocean_inter
         call MPI_Comm_Rank(self%atm_intercomm, my_atm_comm_pe, err)
         call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
 
-        if (my_atm_comm_pe == 0) then
-            call MPI_isend(buf, NUM_CONFIGS, MPI_INTEGER, 0, tag, &
-                            self%atm_intercomm, request, err)
+        if (coupler%my_local_pe == 0) then
+            call MPI_isend(buf, NUM_CONFIGS, MPI_INTEGER, self%atm_ic_root, &
+                           tag, self%atm_intercomm, request, err)
             call assert(err == MPI_SUCCESS, &
                        'accessom2_sync_config: MPI_isend ice_intercomm error')
         endif
@@ -350,10 +360,12 @@ subroutine accessom2_atm_ice_sync(self)
 
     if (self%model_name == 'matmxx') then
         tag = MPI_ANY_TAG
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
+        call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
+                      self%ice_intercomm, stat, err)
     elseif (self%model_name == 'cicexx') then
         tag = 0
-        call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
+        call MPI_isend(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
+                       self%atm_intercomm, request, err)
     endif
 
 endsubroutine accessom2_atm_ice_sync
@@ -659,7 +671,8 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     ! may not be using libaccessom2 to do this (yet). Check that cur_date is the
     ! same between all models.
     if (self%model_name == 'matmxx') then
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
+        call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
+                      self%ice_intercomm, stat, err)
         if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
                                  'ice models are out of sync.'
@@ -670,7 +683,8 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             stop 1
         endif
 
-        call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
+        call MPI_recv(buf, 1, MPI_INTEGER, self%ocean_ic_root, tag, &
+                      self%ocean_intercomm, stat, err)
         if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
                                  'ocean models are out of sync.'
@@ -682,12 +696,10 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
         endif
 
     else
-        call MPI_Comm_Rank(self%atm_intercomm, my_atm_comm_pe, err)
-        call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
-
-        if (my_atm_comm_pe == 0) then
+        if (self%my_local_pe == 0) then
             buf(1) = checksum
-            call MPI_send(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, err)
+            call MPI_send(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
+                           self%atm_intercomm, request, err)
         endif
     endif
 

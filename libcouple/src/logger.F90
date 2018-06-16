@@ -60,7 +60,7 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
     endif
 
     inquire(file=trim(self%logfilename), exist=file_exists)
-    open(newunit=self%fp, file=trim(self%logfilename))
+    open(newunit=self%fp, file=trim(self%logfilename), status='new')
 endsubroutine
 
 subroutine logger_write(self, loglevel, str, intnum)
