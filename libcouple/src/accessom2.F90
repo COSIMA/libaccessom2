@@ -362,10 +362,15 @@ function calc_run_end_date(self)
     type(datetime) :: calc_run_end_date
     integer :: year, month, day, hour, minute, second, i
 
+    call assert(self%restart_period(1) > 0 .or. &
+                self%restart_period(2) > 0 .or. &
+                self%restart_period(3) > 0, &
+                'Job runtime / restart_period all zero')
+
     if (self%restart_period(3) > 0) then
         call assert(self%restart_period(1) == 0 .and. &
                     self%restart_period(2) == 0, &
-                    'Job runtime must be only one of years, months, seconds')
+                    'Job runtime / restart_period must be only one of years, months, seconds')
 
         day = self%exp_cur_date%getDay()
         hour = self%exp_cur_date%getHour()
