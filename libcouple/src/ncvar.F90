@@ -169,9 +169,6 @@ function get_index_for_datetime(self, target_date, from_beginning)
         do i=self%idx_guess, size(self%time_bnds, 2)
             td_before = timedelta(seconds=int(self%time_bnds(1, i)*86400))
             td_after = timedelta(seconds=int(self%time_bnds(2, i)*86400))
-            print*, 'self%time_bnds(1, i): ', self%time_bnds(1, i)
-            print*, 'self%time_bnds(2, i): ', self%time_bnds(2, i)
-            print*, 'self%start_date: ', self%start_date%isoformat()
             if (target_date >= (self%start_date + td_before) .and. &
                 target_date < (self%start_date + td_after)) then
                 get_index_for_datetime = i
