@@ -65,6 +65,8 @@ subroutine field_update_data(self, filename, forcing_date)
     if (indx == -1) then
         ! Search from the beginning before failing
         indx = self%ncvar%get_index_for_datetime(forcing_date, .true.)
+        call self%logger%write(LOG_DEBUG, &
+                               'field_update_data: long forcing index search')
     endif
     call assert(indx /= -1, &
                 "No forcing date "//forcing_date%isoformat()//" in "//trim(filename))

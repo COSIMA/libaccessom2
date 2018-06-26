@@ -172,6 +172,7 @@ function get_index_for_datetime(self, target_date, from_beginning)
             if (target_date >= (self%start_date + td_before) .and. &
                 target_date < (self%start_date + td_after)) then
                 get_index_for_datetime = i
+                self%idx_guess = i
                 return
             endif
         enddo
@@ -180,6 +181,7 @@ function get_index_for_datetime(self, target_date, from_beginning)
             td = timedelta(seconds=int(self%times(i)*86400))
             if (target_date == (self%start_date + td)) then
                 get_index_for_datetime = i
+                self%idx_guess = i
                 return
             endif
         enddo
