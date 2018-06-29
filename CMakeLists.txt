@@ -41,8 +41,8 @@ endif()
 
 # compiler flags for ifort
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpe0 -fp-model precise")
-  set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check all -traceback")
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpe0 -fp-model precise -traceback")
+  set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check all")
   set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
 endif()
 
@@ -79,7 +79,7 @@ set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/lib
 # json-fortran external project
 ExternalProject_Add(oasis3-mct
     GIT_REPOSITORY    https://github.com/OceansAus/oasis3-mct.git
-    GIT_TAG           6fe5196babeded0d71f319153e937ceb0ab2cb53
+    GIT_TAG           62c541bead9b82c5d48da0496c8d414659dfd953
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make nci
