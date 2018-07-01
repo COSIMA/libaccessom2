@@ -156,6 +156,7 @@ function get_index_for_datetime(self, target_date, from_beginning)
     logical, optional, intent(in) :: from_beginning
 
     integer :: i, get_index_for_datetime
+    integer :: days, seconds
 
     type(timedelta) :: td, td_before, td_after
 
@@ -167,8 +168,16 @@ function get_index_for_datetime(self, target_date, from_beginning)
 
     if (allocated(self%time_bnds)) then
         do i=self%idx_guess, size(self%time_bnds, 2)
-            td_before = timedelta(seconds=int(self%time_bnds(1, i)*86400))
-            td_after = timedelta(seconds=int(self%time_bnds(2, i)*86400))
+            ! Must convert to days _and_ seconds rather than just days to avoid
+            ! integer overflow.
+            days = int(self%time_bnds(1, i))
+            seconds = int((self%time_bnds(1, i) - days)*86400)
+            td_before = timedelta(days=days, seconds=seconds)
+
+            days = int(self%time_bnds(2, i))
+            seconds = int((self%time_bnds(2, i) - days)*86400)
+            td_after = timedelta(days=days, seconds=seconds)
+
             if (target_date >= (self%start_date + td_before) .and. &
                 target_date < (self%start_date + td_after)) then
                 get_index_for_datetime = i
@@ -178,7 +187,9 @@ function get_index_for_datetime(self, target_date, from_beginning)
         enddo
     else
         do i=self%idx_guess, size(self%times)
-            td = timedelta(seconds=int(self%times(i)*86400))
+            days = int(self%times(i))
+            seconds = int((self%times(i) - days)*86400)
+            td = timedelta(days=days, seconds=seconds)
             if (target_date == (self%start_date + td)) then
                 get_index_for_datetime = i
                 self%idx_guess = i
