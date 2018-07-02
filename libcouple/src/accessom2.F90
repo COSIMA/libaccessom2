@@ -262,8 +262,11 @@ subroutine accessom2_sync_config(self, coupler)
     buf(6) = self%calendar
     tag = 5792
 
+
     call MPI_Comm_Rank(MPI_COMM_WORLD, my_global_pe, err)
     call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
+
+    print*, 'accessom2_sync_config starting: ', coupler%my_local_pe, my_global_pe
 
     if (self%model_name == 'matmxx') then
         call assert(my_global_pe == 0, 'matmxx does not have global PE == 0')
@@ -348,6 +351,8 @@ subroutine accessom2_sync_config(self, coupler)
     self%run_start_date = self%exp_cur_date
     self%run_end_date = self%calc_run_end_date()
 
+    print*, 'accessom2_sync_config complete: ', coupler%my_local_pe, my_global_pe
+
 endsubroutine accessom2_sync_config
 
 subroutine accessom2_atm_ice_sync(self)
@@ -359,11 +364,11 @@ subroutine accessom2_atm_ice_sync(self)
     integer :: err, tag, request
 
     if (self%model_name == 'matmxx') then
-        tag = MPI_ANY_TAG
+        tag = 5793
         call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
                       self%ice_intercomm, stat, err)
     elseif (self%model_name == 'cicexx') then
-        tag = 0
+        tag = 5793
         call MPI_isend(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
                        self%atm_intercomm, request, err)
     endif

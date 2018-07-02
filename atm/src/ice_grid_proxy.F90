@@ -42,7 +42,7 @@ subroutine ice_grid_proxy_recv(self)
     integer :: stat(MPI_STATUS_SIZE)
 
     ! Receive dimensions of the ice grid that we're coupled to.
-    tag = MPI_ANY_TAG
+    tag = 4982
     call MPI_recv(buf_int, 2, MPI_INTEGER, self%ice_root, tag, &
                   self%peer_intercomm, stat, err)
     self%nx = buf_int(1)
