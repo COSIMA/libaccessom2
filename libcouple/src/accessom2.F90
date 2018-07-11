@@ -628,7 +628,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     integer :: tmp_unit
     integer :: stat(MPI_STATUS_SIZE)
     integer, dimension(1) :: buf
-    integer :: err, tag, request
+    integer :: err, tag
     integer :: checksum
     integer :: my_atm_comm_pe
     logical :: initialized, dir_exists
@@ -669,7 +669,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
 
         if (my_atm_comm_pe == 0) then
             buf(1) = checksum
-            call MPI_isend(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, request, err)
+            call MPI_send(buf, 1, MPI_INTEGER, 0, tag, self%atm_intercomm, err)
         endif
     endif
 
