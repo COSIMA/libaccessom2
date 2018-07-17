@@ -26,10 +26,11 @@ module remap_runoff_mod
     integer :: n_s, n_a, n_b
     integer :: num_land_pts, num_ocean_pts
     type(kdrunoff_class) :: kdrunoff
+    logical :: do_conservation_check
   end type remap_runoff_class
 
   ! FIXME: would like to make this smaller
-  real, parameter :: MAX_RELATIVE_ERROR = 1e-09
+  real, parameter :: MAX_RELATIVE_ERROR = 1e-07
 
   public :: remap_runoff_class, remap_runoff_new, remap_runoff_del
   public :: remap_runoff_do
@@ -39,7 +40,7 @@ contains
   subroutine remap_runoff_new(this, weights, lats, lons, mask, &
       num_runoff_caps, runoff_caps, &
       runoff_caps_is, runoff_caps_ie, &
-      runoff_caps_js, runoff_caps_je)
+      runoff_caps_js, runoff_caps_je, check_runoff_conservation)
     type(remap_runoff_class), intent(inout) :: this
 
     character(len=*), intent(in) :: weights
@@ -50,9 +51,15 @@ contains
     integer, dimension(:), intent(in) :: runoff_caps_ie
     integer, dimension(:), intent(in) :: runoff_caps_js
     integer, dimension(:), intent(in) :: runoff_caps_je
+    logical, optional, intent(in) :: check_runoff_conservation
 
     integer :: ncid
     integer :: n_s, n_a, n_b
+
+    this%do_conservation_check = .true.
+    if (present(check_runoff_conservation)) then
+        this%do_conservation_check = check_runoff_conservation
+    endif
 
     ! Initialise remapping weights arrays
     call ncheck(nf90_open(trim(weights), NF90_NOWRITE, ncid), &
@@ -136,14 +143,16 @@ contains
     call kdrunoff_remap(this%kdrunoff, runoff_out, &
                         reshape(this%area_b, shape(runoff_out)))
 
-    total_runoff_outof_kd = sum(runoff_out(:, :) * areas(:, :))
+    if (this%do_conservation_check) then
+        total_runoff_outof_kd = sum(runoff_out(:, :) * areas(:, :))
 
-    ! Check that runoff is conserving
-    rel_err = abs(total_runoff_into_kd - total_runoff_outof_kd) /  &
-                total_runoff_outof_kd
-    if (rel_err > MAX_RELATIVE_ERROR) then
-      write(*,*) "Error: remap_runoff_do() runoff not conserving"
-      stop
+        ! Check that runoff is conserving
+        rel_err = abs(total_runoff_into_kd - total_runoff_outof_kd) /  &
+                    total_runoff_outof_kd
+        if (rel_err > MAX_RELATIVE_ERROR) then
+          write(*,*) "Error: remap_runoff_do() runoff not conserving"
+          stop
+        endif
     endif
 
     ! Check that there is no runoff on land.
