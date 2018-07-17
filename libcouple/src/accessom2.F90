@@ -3,6 +3,7 @@ module accessom2_mod
 
 use mpi
 use, intrinsic :: iso_c_binding, only: c_null_char
+use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
 use datetime_module, only : date2num
 use error_handler, only : assert
@@ -633,18 +634,18 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     integer :: my_atm_comm_pe
     logical :: initialized, dir_exists
     character(len=1024) :: path
-    type(datetime) :: end_date
+    type(datetime) :: tmp_date
 
     if (present(cur_date_array)) then
         call assert(.not. present(cur_date), &
                     "accessom2_deinit: incompatible arguments.")
-        end_date = datetime(cur_date_array(1), &
+        tmp_date = datetime(cur_date_array(1), &
                             cur_date_array(2), &
                             cur_date_array(3), &
                             cur_date_array(4), &
                             cur_date_array(5), &
                             cur_date_array(6))
-        checksum = date2num(end_date)
+        checksum = date2num(tmp_date)
     elseif (present(cur_date)) then
         checksum = date2num(cur_date)
     else
@@ -658,11 +659,27 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     ! same between all models.
     if (self%model_name == 'matmxx') then
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-        call assert(buf(1) == checksum, &
-                    'accessom2_deinit: atm and ice models are out of sync.')
+        if (buf(1) /= checksum) then    
+            write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
+                                  'ice models are out of sync.')
+            tmp_date = num2date(checksum)
+            write(stderr, '(A)') 'atm end date: '//trim(tmp_date%isoformat())
+            tmp_date = num2date(buf(1))
+            write(stderr, '(A)') 'ice end date: '//trim(tmp_date%isoformat())
+            stop 1
+        endif
+
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
-        call assert(buf(1) == checksum, &
-                    'accessom2_deinit: atm and ocean models are out of sync.')
+        if (buf(1) /= checksum) then    
+            write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
+                                  'ocean models are out of sync.')
+            tmp_date = num2date(checksum)
+            write(stderr, '(A)') 'atm end date: '//trim(tmp_date%isoformat())
+            tmp_date = num2date(buf(1))
+            write(stderr, '(A)') 'ocean end date: '//trim(tmp_date%isoformat())
+            stop 1
+        endif
+
     else
         call MPI_Comm_Rank(self%atm_intercomm, my_atm_comm_pe, err)
         call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
