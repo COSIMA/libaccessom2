@@ -3,9 +3,10 @@ module accessom2_mod
 
 use mpi
 use, intrinsic :: iso_c_binding, only: c_null_char
+use,intrinsic :: iso_fortran_env, only: real64
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
-use datetime_module, only : date2num
+use datetime_module, only : date2num, num2date
 use error_handler, only : assert
 
 implicit none
@@ -659,23 +660,23 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     ! same between all models.
     if (self%model_name == 'matmxx') then
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ice_intercomm, stat, err)
-        if (buf(1) /= checksum) then    
+        if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
-                                  'ice models are out of sync.')
-            tmp_date = num2date(checksum)
+                                 'ice models are out of sync.'
+            tmp_date = num2date(real(checksum, real64))
             write(stderr, '(A)') 'atm end date: '//trim(tmp_date%isoformat())
-            tmp_date = num2date(buf(1))
+            tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ice end date: '//trim(tmp_date%isoformat())
             stop 1
         endif
 
         call MPI_recv(buf, 1, MPI_INTEGER, 0, tag, self%ocean_intercomm, stat, err)
-        if (buf(1) /= checksum) then    
+        if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
-                                  'ocean models are out of sync.')
-            tmp_date = num2date(checksum)
+                                 'ocean models are out of sync.'
+            tmp_date = num2date(real(checksum, real64))
             write(stderr, '(A)') 'atm end date: '//trim(tmp_date%isoformat())
-            tmp_date = num2date(buf(1))
+            tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ocean end date: '//trim(tmp_date%isoformat())
             stop 1
         endif
