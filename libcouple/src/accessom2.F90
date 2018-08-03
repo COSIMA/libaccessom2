@@ -260,8 +260,6 @@ subroutine accessom2_sync_config(self, coupler)
     call MPI_Comm_Rank(MPI_COMM_WORLD, my_global_pe, err)
     call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
 
-    print*, 'accessom2_sync_config starting: ', coupler%my_local_pe, my_global_pe
-
     if (self%model_name == 'matmxx') then
         call assert(my_global_pe == 0, 'matmxx does not have global PE == 0')
 
@@ -340,8 +338,6 @@ subroutine accessom2_sync_config(self, coupler)
     ! Now we can use self%calendar
     self%run_start_date = self%exp_cur_date
     self%run_end_date = self%calc_run_end_date()
-
-    print*, 'accessom2_sync_config complete: ', coupler%my_local_pe, my_global_pe
 
 endsubroutine accessom2_sync_config
 
