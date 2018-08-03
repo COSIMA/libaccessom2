@@ -699,7 +699,6 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             write(stderr, '(A)') 'ocean end date: '//trim(tmp_date%isoformat())
             stop 1
         endif
-
     else
         if (self%my_local_pe == 0) then
             buf(1) = checksum
