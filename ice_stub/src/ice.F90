@@ -79,8 +79,7 @@ program ice
 
     ! Initialise ice grid and send details to peer.
     ! This will be used for regridding of runoff.
-    call ice_grid%init(trim(ice_grid_file), trim(ice_mask_file), &
-                       resolution, coupler%get_peer_intercomm())
+    call ice_grid%init(trim(ice_grid_file), trim(ice_mask_file), resolution)
     call ice_grid%send()
 
     ! Set up coupling fields

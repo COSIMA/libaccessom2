@@ -63,7 +63,7 @@ program atm
     call accessom2%sync_config(coupler)
 
     ! Get information about the ice grid needed for runoff remapping.
-    call ice_grid%init(coupler%ice_intercomm, coupler%ice_root)
+    call ice_grid%init(coupler%ice_root)
     call ice_grid%recv()
 
     ! Initialise the runoff remapping object with ice grid information.

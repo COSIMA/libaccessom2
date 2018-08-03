@@ -12,7 +12,6 @@ type ice_grid
     real, dimension(:, :), allocatable :: lats, lons, mask
     integer :: nx
     integer :: ny
-    integer :: peer_intercomm
 contains
     private
     procedure, public :: init => ice_grid_init
@@ -38,15 +37,13 @@ subroutine ice_read_global_nc(ncid, fieldname, dataout)
 
 endsubroutine ice_read_global_nc
 
-subroutine ice_grid_init(self, grid_filename, kmt_filename, resolution, peer_intercomm)
+subroutine ice_grid_init(self, grid_filename, kmt_filename, resolution)
 
     class(ice_grid), intent(inout) :: self
     character(len=*), intent(in) :: grid_filename, kmt_filename
     integer, dimension(2), intent(in) :: resolution
-    integer, intent(in) :: peer_intercomm
     integer :: ncid
 
-    self%peer_intercomm = peer_intercomm
     self%nx = resolution(1)
     self%ny = resolution(2)
 
@@ -79,20 +76,20 @@ subroutine ice_grid_send(self)
     tag = 0
     buf_int(1) = self%nx
     buf_int(2) = self%ny
-    call MPI_send(buf_int, 2, MPI_INTEGER, 0, tag, self%peer_intercomm, err)
+    call MPI_send(buf_int, 2, MPI_INTEGER, 0, tag, MPI_COMM_WORLD, err)
 
     allocate(buf_real(product(buf_int)))
     buf_real(:) = reshape(self%lats(:, :), (/ size(self%lats) /))
     call MPI_send(buf_real, size(buf_real), MPI_DOUBLE, 0, tag, &
-                  self%peer_intercomm, err)
+                  MPI_COMM_WORLD, err)
 
     buf_real(:) = reshape(self%lons(:, :), (/ size(self%lons) /))
     call MPI_send(buf_real, size(buf_real), MPI_DOUBLE, 0, tag, &
-                  self%peer_intercomm, err)
+                  MPI_COMM_WORLD, err)
 
     buf_real(:) = reshape(self%mask(:, :), (/ size(self%mask) /))
     call MPI_send(buf_real, size(buf_real), MPI_DOUBLE, 0, tag, &
-                  self%peer_intercomm, err)
+                  MPI_COMM_WORLD, err)
 
 endsubroutine ice_grid_send
 

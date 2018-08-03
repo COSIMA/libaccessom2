@@ -23,7 +23,6 @@ type accessom2
     integer :: num_cpl_fields, num_atm_to_ice_fields, num_ice_to_ocean_fields, &
                num_ocean_to_ice_fields
 
-    integer, public :: atm_intercomm, ice_intercomm, ocean_intercomm
     integer, public :: atm_ic_root, ice_ic_root, ocean_ic_root
     integer, public :: my_local_pe
 
@@ -242,11 +241,6 @@ subroutine accessom2_sync_config(self, coupler)
     integer :: my_global_pe, my_atm_comm_pe
     integer, dimension(NUM_CONFIGS) :: buf, buf_from_ice, buf_from_ocean
 
-    ! TODO: Maybe just add a reference to coupler itself...?
-    self%atm_intercomm = coupler%atm_intercomm
-    self%ice_intercomm = coupler%ice_intercomm
-    self%ocean_intercomm = coupler%ocean_intercomm
-
     self%atm_ic_root = coupler%atm_root
     self%ice_ic_root = coupler%ice_root
     self%ocean_ic_root = coupler%ocean_root
@@ -273,13 +267,13 @@ subroutine accessom2_sync_config(self, coupler)
 
         ! Receive configs from root processes of different models.
         call MPI_recv(buf_from_ice, NUM_CONFIGS, MPI_INTEGER, &
-                      self%ice_ic_root, tag, self%ice_intercomm, stat, err)
+                      self%ice_ic_root, tag, MPI_COMM_WORLD, stat, err)
         call assert(err == MPI_SUCCESS, &
-                    'accessom2_sync_config: MPI_recv ice_intercomm error')
+                    'accessom2_sync_config: MPI_recv from ice error')
         call MPI_recv(buf_from_ocean, NUM_CONFIGS, MPI_INTEGER, &
-                      self%ocean_ic_root, tag, self%ocean_intercomm, stat, err)
+                      self%ocean_ic_root, tag, MPI_COMM_WORLD, stat, err)
         call assert(err == MPI_SUCCESS, &
-                    'accessom2_sync_config: MPI_recv ocean_intercomm error')
+                    'accessom2_sync_config: MPI_recv from ocean error')
 
         ! Consolidate configuration.
         do i=1, NUM_CONFIGS
@@ -310,15 +304,11 @@ subroutine accessom2_sync_config(self, coupler)
         call assert(err == MPI_SUCCESS, &
                     'accessom2_sync_config: MPI_Bcast error')
     else
-        ! Send from ice and ocean
-        call MPI_Comm_Rank(self%atm_intercomm, my_atm_comm_pe, err)
-        call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
-
         if (coupler%my_local_pe == 0) then
             call MPI_isend(buf, NUM_CONFIGS, MPI_INTEGER, self%atm_ic_root, &
-                           tag, self%atm_intercomm, request, err)
+                           tag, MPI_COMM_WORLD, request, err)
             call assert(err == MPI_SUCCESS, &
-                       'accessom2_sync_config: MPI_isend ice_intercomm error')
+                       'accessom2_sync_config: MPI_isend to atm error')
         endif
 
         ! Broadcast recv
@@ -366,11 +356,11 @@ subroutine accessom2_atm_ice_sync(self)
     if (self%model_name == 'matmxx') then
         tag = 5793
         call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
-                      self%ice_intercomm, stat, err)
+                      MPI_COMM_WORLD, stat, err)
     elseif (self%model_name == 'cicexx') then
         tag = 5793
         call MPI_isend(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
-                       self%atm_intercomm, request, err)
+                       MPI_COMM_WORLD, request, err)
     endif
 
 endsubroutine accessom2_atm_ice_sync
@@ -677,7 +667,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     ! same between all models.
     if (self%model_name == 'matmxx') then
         call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
-                      self%ice_intercomm, stat, err)
+                      MPI_COMM_WORLD, stat, err)
         if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
                                  'ice models are out of sync.'
@@ -689,7 +679,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
         endif
 
         call MPI_recv(buf, 1, MPI_INTEGER, self%ocean_ic_root, tag, &
-                      self%ocean_intercomm, stat, err)
+                      MPI_COMM_WORLD, stat, err)
         if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
                                  'ocean models are out of sync.'
@@ -703,7 +693,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
         if (self%my_local_pe == 0) then
             buf(1) = checksum
             call MPI_send(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
-                           self%atm_intercomm, err)
+                           MPI_COMM_WORLD, err)
         endif
     endif
 
