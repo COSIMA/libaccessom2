@@ -703,7 +703,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
         if (self%my_local_pe == 0) then
             buf(1) = checksum
             call MPI_send(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
-                           self%atm_intercomm, request, err)
+                           self%atm_intercomm, err)
         endif
     endif
 
