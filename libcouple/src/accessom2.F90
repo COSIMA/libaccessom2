@@ -415,8 +415,8 @@ function calc_run_end_date(self)
 
         year = self%exp_cur_date%getYear()
         month = self%exp_cur_date%getMonth() + self%restart_period(2)
-        year = year + (month / 12)
-        month = mod(month, 12)
+        year = year + ((month - 1) / 12)
+        month = mod(month - 1, 12) + 1
 
         calc_run_end_date = datetime(year, month, &
                                      self%exp_cur_date%getDay(), &
