@@ -412,6 +412,8 @@ function calc_run_end_date(self)
         call assert(self%restart_period(1) == 0 .and. &
                     self%restart_period(3) == 0, &
                     'Job runtime must be only one of years, months, seconds')
+        call assert(self%exp_cur_date%getDay() <= 28, &
+                    'Monthly runs only supported when the start day is <= 28')
 
         year = self%exp_cur_date%getYear()
         month = self%exp_cur_date%getMonth() + self%restart_period(2)
