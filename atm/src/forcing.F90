@@ -5,7 +5,6 @@ use json_module
 use json_kinds
 use datetime_module, only : datetime
 use util_mod, only : get_var_dims, replace_text
-use util_mod, only : first_file_matching_pattern
 use netcdf
 use field_mod, only : field_type => field
 use logger_mod, only : logger_type => logger, LOG_DEBUG
@@ -145,8 +144,7 @@ function filename_for_year(filename, year)
 
     write(year_str, "(I4)") year
     with_year_replaced = replace_text(filename, "{{ year }}", year_str)
-    with_year_replaced = replace_text(with_year_replaced, "{{year}}", year_str)
-    filename_for_year = first_file_matching_pattern(with_year_replaced)
+    filename_for_year = replace_text(with_year_replaced, "{{year}}", year_str)
     if (trim(filename_for_year) == '') then
         filename_for_year = with_year_replaced
     endif
