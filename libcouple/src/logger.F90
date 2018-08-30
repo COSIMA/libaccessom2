@@ -33,7 +33,6 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
 
     character(len=5) :: pe_str
     integer :: pe, err
-    logical :: file_exists
 
     if (present(loglevel)) then
         if (trim(loglevel) == 'DEBUG') then
@@ -59,8 +58,8 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
         self%logfilename = trim(logfiledir)//'/'//trim(self%logfilename)
     endif
 
-    inquire(file=trim(self%logfilename), exist=file_exists)
-    open(newunit=self%fp, file=trim(self%logfilename), status='new')
+    self%fp = -1
+
 endsubroutine
 
 subroutine logger_write(self, loglevel, str, intnum)
@@ -72,6 +71,11 @@ subroutine logger_write(self, loglevel, str, intnum)
     character(len=10) :: intnum_str
 
     if (loglevel >= self%loglevel) then
+        ! Only open file if we actually need to write to it.
+        if (self%fp == -1) then
+            open(newunit=self%fp, file=trim(self%logfilename), status='new')
+        endif
+
         if (present(intnum)) then
             write(intnum_str, '(I10.10)') intnum
             write(self%fp, *) trim(str)//' '//intnum_str
@@ -80,7 +84,7 @@ subroutine logger_write(self, loglevel, str, intnum)
         endif
     endif
 
-    if (loglevel == LOG_ERROR) then
+    if (loglevel == LOG_ERROR .and. self%fp /= -1) then
         call flush(self%fp)
     endif
 
@@ -89,7 +93,9 @@ endsubroutine logger_write
 subroutine logger_deinit(self)
     class(logger), intent(inout) :: self
 
-    close(self%fp)
+    if (self%fp /= -1) then
+        close(self%fp)
+    endif
 
 endsubroutine logger_deinit
 
