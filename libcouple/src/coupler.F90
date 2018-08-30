@@ -152,7 +152,7 @@ endsubroutine coupler_init_end
 
 subroutine coupler_put(self, field, timestamp, err)
 
-    class(coupler), intent(in) :: self
+    class(coupler), intent(inout) :: self
     class(field_type), intent(inout) :: field
     integer, intent(in) :: timestamp
     integer, intent(out) :: err
@@ -173,7 +173,7 @@ endsubroutine coupler_put
 
 subroutine coupler_get(self, field, timestamp, err)
 
-    class(coupler), intent(in) :: self
+    class(coupler), intent(inout) :: self
     class(field_type), intent(inout) :: field
     integer, intent(in) :: timestamp
     integer, intent(out) :: err
@@ -198,7 +198,7 @@ subroutine coupler_deinit(self)
 endsubroutine coupler_deinit
 
 subroutine write_checksum(self, name, array)
-    class(coupler), intent(in) :: self
+    class(coupler), intent(inout) :: self
     character(len=*), intent(in) :: name
     real, dimension(:,:), intent(in) :: array
 

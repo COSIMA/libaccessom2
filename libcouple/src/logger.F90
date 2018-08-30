@@ -63,7 +63,7 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
 endsubroutine
 
 subroutine logger_write(self, loglevel, str, intnum)
-    class(logger), intent(in) :: self
+    class(logger), intent(inout) :: self
     integer, intent(in) :: loglevel
     character(len=*), intent(in) :: str
     integer, optional, intent(in) :: intnum
