@@ -16,6 +16,7 @@ type, public :: logger
     character(len=6) :: model_name
     character(len=1024) :: logfilename
     integer :: fp
+    logical :: write_called
 
 contains
     procedure, pass(self), public :: init => logger_init
@@ -58,7 +59,8 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
         self%logfilename = trim(logfiledir)//'/'//trim(self%logfilename)
     endif
 
-    self%fp = -1
+    open(newunit=self%fp, file=trim(self%logfilename), status='new')
+    self%write_called = .false.
 
 endsubroutine
 
@@ -71,11 +73,6 @@ subroutine logger_write(self, loglevel, str, intnum)
     character(len=10) :: intnum_str
 
     if (loglevel >= self%loglevel) then
-        ! Only open file if we actually need to write to it.
-        if (self%fp == -1) then
-            open(newunit=self%fp, file=trim(self%logfilename), status='new')
-        endif
-
         if (present(intnum)) then
             write(intnum_str, '(I10.10)') intnum
             write(self%fp, *) trim(str)//' '//intnum_str
@@ -84,17 +81,21 @@ subroutine logger_write(self, loglevel, str, intnum)
         endif
     endif
 
-    if (loglevel == LOG_ERROR .and. self%fp /= -1) then
+    if (loglevel == LOG_ERROR) then
         call flush(self%fp)
     endif
+
+    self%write_called = .true.
 
 endsubroutine logger_write
 
 subroutine logger_deinit(self)
     class(logger), intent(inout) :: self
 
-    if (self%fp /= -1) then
+    if (self%write_called) then
         close(self%fp)
+    else
+        close(self%fp, status='delete')
     endif
 
 endsubroutine logger_deinit

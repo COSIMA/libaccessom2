@@ -15,7 +15,7 @@ implicit none
 private
 
 type, public :: forcing
-    type(logger_type) :: logger
+    type(logger_type), pointer :: logger
     type(datetime) :: start_date
     type(json_file) :: json
     type(json_core) :: core
@@ -34,12 +34,12 @@ subroutine forcing_init(self, config, logger, nfields)
 
     class(forcing), intent(inout) :: self
     character(len=*), intent(in) :: config
-    type(logger_type), intent(in) :: logger
+    type(logger_type), target, intent(in) :: logger
     integer, intent(out) :: nfields
 
     type(json_value), pointer :: root
 
-    self%logger = logger
+    self%logger => logger
 
     call self%json%initialize()
     call self%json%load_file(filename=trim(config))

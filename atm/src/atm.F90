@@ -14,7 +14,6 @@ program atm
 
     integer, parameter :: MAX_FILE_NAME_LEN = 1024
 
-
     type(logger_type) :: logger
     type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler

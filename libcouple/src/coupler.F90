@@ -30,7 +30,7 @@ type coupler
 
     character(len=6) :: model_name
 
-    type(logger_type) :: logger
+    type(logger_type), pointer :: logger
 
 contains
     private
@@ -48,7 +48,7 @@ contains
 subroutine coupler_init_begin(self, model_name, logger, config_dir)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
-    type(logger_type), optional, intent(in) :: logger
+    type(logger_type), optional, target, intent(in) :: logger
     character(len=*), optional, intent(in) :: config_dir
 
     character(len=*), parameter :: coupler_nml_fname = 'accessom2.nml'
@@ -68,9 +68,9 @@ subroutine coupler_init_begin(self, model_name, logger, config_dir)
     endif
 
     if (present(logger)) then
-        self%logger = logger
+        self%logger => logger
     else
-        call self%logger%init(model_name//'-coupler', loglevel='ERROR')
+        self%logger => null()
     endif
 
     if (present(config_dir)) then
@@ -159,7 +159,6 @@ subroutine coupler_put(self, field, timestamp, err)
 
     character(len=10) :: timestamp_str
 
-
     call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
     ! Only output field checksum if it is actually sent.
     if (err == OASIS_SENT .or. err == OASIS_SENTOUT .or. err == OASIS_TOREST &
@@ -206,8 +205,10 @@ subroutine write_checksum(self, name, array)
     character(len=17) :: checksum_str
 
     ! FIXME: come up with a better way to do checksums
-    write(checksum_str, '(E17.10E3)') sum(array)
-    call self%logger%write(LOG_DEBUG, '{ "checksum-'//trim(name)//'": '//checksum_str//' }')
+    if (associated(self%logger)) then
+        write(checksum_str, '(E17.10E3)') sum(array)
+        call self%logger%write(LOG_DEBUG, '{ "checksum-'//trim(name)//'": '//checksum_str//' }')
+    endif
 
 endsubroutine write_checksum
 
