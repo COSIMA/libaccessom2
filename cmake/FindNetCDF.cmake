@@ -66,11 +66,13 @@ macro (NetCDF_check_interface lang header libs)
     #search starting from user modifiable cache var
     find_path (NETCDF_${lang}_INCLUDE_DIR NAMES ${header}
       HINTS "${NETCDF_INCLUDE_DIR}"
+      HINTS "${NETCDF_INCLUDE_DIR}/Intel"   # NCI format
       HINTS "${NETCDF_${lang}_ROOT}/include"
       ${USE_DEFAULT_PATHS})
 
     find_library (NETCDF_${lang}_LIBRARY NAMES ${libs}
       HINTS "${NetCDF_lib_dirs}"
+      HINTS "${NetCDF_lib_dirs}/Intel"      # NCI format
       HINTS "${NETCDF_${lang}_ROOT}/lib"
       ${USE_DEFAULT_PATHS})
 
