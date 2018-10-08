@@ -8,13 +8,12 @@ program atm
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
     use accessom2_mod, only : accessom2_type => accessom2
-    use logger_mod, only : logger_type => logger, LOG_INFO, LOG_DEBUG
+    use logger_mod, only : LOG_INFO, LOG_DEBUG
 
     implicit none
 
     integer, parameter :: MAX_FILE_NAME_LEN = 1024
 
-    type(logger_type) :: logger
     type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
     type(forcing_type) :: forcing
@@ -42,17 +41,16 @@ program atm
 
     ! Initialise model-level init, config and sync/tracking module
     call accessom2%init('matmxx', config_dir=trim(accessom2_config_dir))
-    ! Logger needs MPI_Init to have been called (above) and can now start
-    call logger%init('matmxx', logfiledir='log', loglevel=accessom2%log_level)
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.
-    call forcing%init(forcing_file, logger, num_atm_to_ice_fields)
+    call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
     allocate(fields(num_atm_to_ice_fields))
     call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), dt, calendar)
 
     ! Initialise the coupler.
-    call coupler%init_begin('matmxx', logger, config_dir=trim(accessom2_config_dir))
+    call coupler%init_begin('matmxx', accessom2%logger, &
+                            config_dir=trim(accessom2_config_dir))
 
     ! Tell libaccessom2 about any global configs/state
     call accessom2%set_calendar(calendar)
@@ -115,13 +113,13 @@ program atm
 
         call accessom2%progress_date(dt)
 
-        call logger%write(LOG_INFO, 'cur_exp_date '//accessom2%get_cur_exp_date_str())
-        call logger%write(LOG_INFO, 'cur_forcing_date '//accessom2%get_cur_forcing_date_str())
-        call logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
-                            int(accessom2%get_cur_runtime_in_seconds()))
+        call accessom2%logger%write(LOG_INFO, 'cur_exp_date '//accessom2%get_cur_exp_date_str())
+        call accessom2%logger%write(LOG_INFO, 'cur_forcing_date '//accessom2%get_cur_forcing_date_str())
+        call accessom2%logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
+                                    int(accessom2%get_cur_runtime_in_seconds()))
     enddo
 
-    call logger%write(LOG_INFO, 'Run complete, calling deinit')
+    call accessom2%logger%write(LOG_INFO, 'Run complete, calling deinit')
 
     call coupler%deinit()
     call accessom2%deinit(finalize=.true.)

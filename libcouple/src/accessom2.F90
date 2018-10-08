@@ -9,6 +9,7 @@ use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
 use datetime_module, only : date2num, num2date
 use error_handler, only : assert
 use coupler_mod, only : coupler_type => coupler
+use logger_mod, only : logger_type => logger
 
 implicit none
 private
@@ -18,6 +19,12 @@ type accessom2
     private
 
     character(len=8), public :: log_level
+    ! The accessom2 type includes a logger which, by default, will put per-PE
+    ! output into file in a log/ dir.
+    type(logger_type), public :: logger
+
+    logical :: enable_simple_timers
+
     integer :: atm_ice_timestep, ice_ocean_timestep
 
     integer :: num_cpl_fields, num_atm_to_ice_fields, num_ice_to_ocean_fields, &
@@ -49,6 +56,9 @@ contains
                                         accessom2_set_atm_timestep
     procedure, pass(self), public :: set_cpl_field_counts => &
                                         accessom2_set_cpl_field_counts
+
+    procedure, pass(self), public :: simple_timers_enabled => &
+                                        accessom2_simple_timers_enabled
 
     procedure, pass(self), public :: sync_config => accessom2_sync_config
     procedure, pass(self), public :: atm_ice_sync => accessom2_atm_ice_sync
@@ -96,9 +106,10 @@ character(len=19) :: forcing_start_date, forcing_end_date
 character(len=19) :: exp_cur_date, forcing_cur_date
 integer, dimension(3) :: restart_period
 character(len=8) :: log_level
+logical :: enable_simple_timers
 integer :: ice_ocean_timestep
 
-namelist /accessom2_nml/ log_level, ice_ocean_timestep
+namelist /accessom2_nml/ log_level, ice_ocean_timestep, enable_simple_timers
 namelist /date_manager_nml/ forcing_start_date, forcing_end_date, restart_period
 namelist /do_not_edit_nml/ forcing_cur_date, exp_cur_date
 
@@ -123,6 +134,7 @@ subroutine accessom2_init(self, model_name, config_dir)
     self%ice_ocean_timestep = CONIG_NOT_INITIALISED
     self%calendar = CONIG_NOT_INITIALISED
 
+    self%enable_simple_timers = .false.
     self%model_name = model_name
     if (present(config_dir)) then
         self%config_dir = config_dir
@@ -141,6 +153,7 @@ subroutine accessom2_init(self, model_name, config_dir)
 
     self%log_level = log_level
     self%ice_ocean_timestep = ice_ocean_timestep
+    self%enable_simple_timers = enable_simple_timers
 
     rc = c_strptime(forcing_start_date//c_null_char, &
                     "%Y-%m-%dT%H:%M:%S"//c_null_char, ctime)
@@ -186,6 +199,10 @@ subroutine accessom2_init(self, model_name, config_dir)
         call MPI_Init(err)
     endif
 
+    ! Now that MPI_Init has been called can set up a logger
+    call self%logger%init(self%model_name, logfiledir='log', &
+                            loglevel=self%log_level)
+
 endsubroutine accessom2_init
 
 subroutine accessom2_set_calendar(self, calendar)
@@ -229,8 +246,9 @@ subroutine accessom2_set_cpl_field_counts(self, num_atm_to_ice_fields, &
 
 endsubroutine accessom2_set_cpl_field_counts
 
+
 !> Synchronise shared configuration between models.
-! 
+!
 subroutine accessom2_sync_config(self, coupler)
     class(accessom2), intent(inout) :: self
     class(coupler_type), intent(in) :: coupler
@@ -255,7 +273,6 @@ subroutine accessom2_sync_config(self, coupler)
     buf(5) = self%ice_ocean_timestep
     buf(6) = self%calendar
     tag = 5792
-
 
     call MPI_Comm_Rank(MPI_COMM_WORLD, my_global_pe, err)
     call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
@@ -474,6 +491,15 @@ subroutine accessom2_progress_date(self, timestep)
 
 endsubroutine accessom2_progress_date
 
+function accessom2_simple_timers_enabled(self)
+    class(accessom2), intent(inout) :: self
+
+    logical :: accessom2_simple_timers_enabled
+
+    accessom2_simple_timers_enabled = self%enable_simple_timers
+
+endfunction accessom2_simple_timers_enabled
+
 function accessom2_get_cur_forcing_date(self)
     class(accessom2), intent(inout) :: self
 
@@ -641,6 +667,8 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     logical :: initialized, dir_exists
     character(len=1024) :: path
     type(datetime) :: tmp_date
+
+    call self%logger%deinit()
 
     if (present(cur_date_array)) then
         call assert(.not. present(cur_date), &

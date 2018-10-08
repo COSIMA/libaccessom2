@@ -11,6 +11,7 @@ type simple_timer
     private
 
     logical :: first_call
+    logical :: enabled
 
     character(len=32) :: name
 
@@ -18,7 +19,7 @@ type simple_timer
     real :: mean, m2
     integer :: count
 
-    type(logger_type) :: logger
+    type(logger_type), pointer :: logger
 
 contains
     private
@@ -32,21 +33,36 @@ endtype simple_timer
 
 contains
 
-subroutine simple_timer_init(self, name, logger, include_first_call)
+subroutine simple_timer_init(self, name, logger, include_first_call, enabled)
     class(simple_timer), intent(inout) :: self
     character(len=*), intent(in) :: name
-    type(logger_type), intent(in) :: logger
+    type(logger_type), target, intent(in) :: logger
     logical, optional, intent(in) :: include_first_call
+    logical, optional, intent(in) :: enabled
+
+    if (present(enabled)) then
+        if (enabled) then
+            self%enabled = .true.
+        else
+            self%enabled = .false.
+        endif
+    else
+        self%enabled = .true.
+    endif
+
+    if (.not. self%enabled) then
+        return
+    endif
 
     self%name = trim(name)
-    self%logger = logger
+    self%logger => logger
 
     self%first_call = .true.
     if (present(include_first_call)) then
         if (include_first_call) then
             self%first_call = .false.
         endif
-    endif 
+    endif
 
     self%starttime = 0
     self%endtime = 0
@@ -61,6 +77,10 @@ endsubroutine simple_timer_init
 subroutine simple_timer_start(self)
     class(simple_timer), intent(inout) :: self
 
+    if (.not. self%enabled) then
+        return
+    endif
+
     if (.not. self%first_call) then
         call cpu_time(self%starttime)
     endif
@@ -71,6 +91,10 @@ subroutine simple_timer_stop(self)
     class(simple_timer), intent(inout) :: self
 
     real :: time
+
+    if (.not. self%enabled) then
+        return
+    endif
 
     if (.not. self%first_call) then
         call assert(self%starttime > 0, 'simple_timer: timer_start not called.')
@@ -86,7 +110,7 @@ subroutine simple_timer_stop(self)
         endif
 
         call self%update_variance(time)
-        
+
     endif
     self%first_call = .false.
 
@@ -97,6 +121,10 @@ subroutine simple_timer_write_stats(self)
 
     real :: variance
     character(len=7) :: max_str, min_str, mean_str, variance_str, count_str
+
+    if (.not. self%enabled) then
+        return
+    endif
 
     call self%finalise_variance(variance)
 
@@ -126,7 +154,7 @@ subroutine update_variance(self, new_value)
     self%mean = self%mean + delta / self%count
     delta2 = new_value - self%mean
     self%M2 = self%M2 + delta*delta2
- 
+
 endsubroutine update_variance
 
 subroutine finalise_variance(self, variance)
