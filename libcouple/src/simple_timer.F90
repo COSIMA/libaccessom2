@@ -161,8 +161,11 @@ subroutine finalise_variance(self, variance)
     class(simple_timer), intent(inout) :: self
     real, intent(out) :: variance
 
-    call assert(self%count > 1, "simple_timer: can't calculate stats")
-    variance = self%M2 / (self%count - 1)
+    if (self%count > 1) then
+        variance = self%M2 / (self%count - 1)
+    else
+        variance = 0
+    endif
 
 endsubroutine finalise_variance
 
