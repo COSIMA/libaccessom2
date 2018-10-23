@@ -90,7 +90,7 @@ ExternalProject_Add(oasis3-mct
     GIT_TAG           master
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND make ${PLATFORM}
+    BUILD_COMMAND make VERBOSE=1 ${PLATFORM}
     INSTALL_COMMAND cmake -E echo "Skipping json-fortran install step."
 )
 ExternalProject_Get_property(oasis3-mct BINARY_DIR)
