@@ -11,7 +11,7 @@ MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $MYDIR && \
 mkdir -p build && \
 cd build && \
-cmake ../ && \
+cmake -DPLATFORM=nci ../ && \
 make ; \
 
 cd -
