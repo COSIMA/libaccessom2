@@ -7,14 +7,14 @@ env:
   matrix:
   - TYPE=ubuntu
   global:
-  - FC=gfortran-4.8
+  - FC=gfortran-8
   - OMPI_FC=${FC}
 install:
   - sudo apt-add-repository --yes ppa:ubuntu-toolchain-r/test
   - sudo apt-get update
-  - sudo apt-get install csh gcc-4.8 gfortran-4.8 libgomp1 openmpi-bin libopenmpi-dev  libnetcdf-dev  netcdf-bin
+  - sudo apt-get install csh gcc-8 gfortran-8 libgomp1 openmpi-bin libopenmpi-dev  libnetcdf-dev  netcdf-bin
 script:
-  - ./build.sh $TYPE
+  - ./build.sh ${TYPE}
 # before_deploy:
 #   - git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
 #   - tar -czvf binary_release.tar.gz Linux/*
