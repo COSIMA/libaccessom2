@@ -6,4 +6,4 @@ module load netcdf/4.4.1.1
 module load intel-fc/17.0.1.132
 module load openmpi/1.10.2
 
-./build.sh nci
+source ./build.sh nci
