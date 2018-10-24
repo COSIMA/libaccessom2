@@ -144,14 +144,22 @@ contains
                         reshape(this%area_b, shape(runoff_out)))
 
     if (this%do_conservation_check) then
+        ! See https://github.com/OceansAus/libaccessom2/issues/8
+        ! Check that runoff is conserving after the moving from land to ocean.
         total_runoff_outof_kd = sum(runoff_out(:, :) * areas(:, :))
 
-        ! Check that runoff is conserving
-        rel_err = abs(total_runoff_into_kd - total_runoff_outof_kd) /  &
-                    total_runoff_outof_kd
-        if (rel_err > MAX_RELATIVE_ERROR) then
-          write(*,*) "Error: remap_runoff_do() runoff not conserving"
-          stop
+        if (total_runoff_outof_kd == 0) then
+            if (total_runoff_into_kd /= 0) then
+                 write(*,*) "Error: remap_runoff_do() runoff not conserving"
+                 stop
+            endif
+        else
+            rel_err = abs(total_runoff_into_kd - total_runoff_outof_kd) /  &
+                        total_runoff_outof_kd
+            if (rel_err > MAX_RELATIVE_ERROR) then
+                write(*,*) "Error: remap_runoff_do() runoff not conserving"
+                stop
+            endif
         endif
     endif
 
@@ -289,6 +297,8 @@ contains
       endif
     enddo
 
+    ! Check that weights application was conservative.
+    ! See https://github.com/OceansAus/libaccessom2/issues/8
     ! Calculate source integral
     src_total = 0.0
     do i=1, size(src_field)
@@ -302,11 +312,17 @@ contains
     enddo
 
     ! Compare the above.
-    rel_err = abs(src_total - dst_total) / src_total
-    if (rel_err > MAX_RELATIVE_ERROR) then
-      write(stderr, *) &
-        "rel_err > MAX_RELATIVE_ERROR (", rel_err, ">", MAX_RELATIVE_ERROR, ")"
-      stop 'Error: apply_weights not conserving.'
+    if (src_total == 0) then
+        if (dst_total /= 0) then
+            stop 'Error: apply_weights not conserving.'
+        endif
+    else
+        rel_err = abs(src_total - dst_total) / src_total
+        if (rel_err > MAX_RELATIVE_ERROR) then
+            write(stderr, *) &
+                "rel_err > MAX_RELATIVE_ERROR (", rel_err, ">", MAX_RELATIVE_ERROR, ")"
+            stop 'Error: apply_weights not conserving.'
+        endif
     endif
 
   end subroutine apply_weights
