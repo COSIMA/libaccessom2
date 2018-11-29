@@ -9,6 +9,7 @@ program atm
     use runoff_mod, only : runoff_type => runoff
     use accessom2_mod, only : accessom2_type => accessom2
     use logger_mod, only : LOG_INFO, LOG_DEBUG
+    use yatm_version_mod, only : YATM_COMMIT_HASH
 
     implicit none
 
@@ -30,6 +31,8 @@ program atm
 
     namelist /atm_nml/ forcing_file, accessom2_config_dir
 
+    print *, YATM_COMMIT_HASH
+
     ! Read input namelist
     forcing_file = 'forcing.json'
     accessom2_config_dir = '../'
@@ -41,6 +44,7 @@ program atm
 
     ! Initialise model-level init, config and sync/tracking module
     call accessom2%init('matmxx', config_dir=trim(accessom2_config_dir))
+    call accessom2%print_version_info()
 
     ! Initialise forcing object and fields, involves reading details of each
     ! field from disk.

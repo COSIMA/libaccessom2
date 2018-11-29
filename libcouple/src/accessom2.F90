@@ -10,6 +10,7 @@ use datetime_module, only : date2num, num2date
 use error_handler, only : assert
 use coupler_mod, only : coupler_type => coupler
 use logger_mod, only : logger_type => logger
+use libaccessom2_version_mod, only : LIBACCESSOM2_COMMIT_HASH
 
 implicit none
 private
@@ -57,6 +58,8 @@ contains
     procedure, pass(self), public :: set_cpl_field_counts => &
                                         accessom2_set_cpl_field_counts
 
+    procedure, pass(self), public :: print_version_info => &
+                                        accessom2_print_version_info
     procedure, pass(self), public :: simple_timers_enabled => &
                                         accessom2_simple_timers_enabled
 
@@ -246,6 +249,12 @@ subroutine accessom2_set_cpl_field_counts(self, num_atm_to_ice_fields, &
 
 endsubroutine accessom2_set_cpl_field_counts
 
+subroutine accessom2_print_version_info(self)
+    class(accessom2), intent(inout) :: self
+
+    print*, trim(self%model_name)//": "//LIBACCESSOM2_COMMIT_HASH
+
+endsubroutine accessom2_print_version_info
 
 !> Synchronise shared configuration between models.
 !
