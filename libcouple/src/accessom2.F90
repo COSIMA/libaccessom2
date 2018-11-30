@@ -267,6 +267,7 @@ subroutine accessom2_sync_config(self, coupler)
     integer :: err, tag, request, i
     integer :: my_global_pe, my_atm_comm_pe
     integer, dimension(NUM_CONFIGS) :: buf, buf_from_ice, buf_from_ocean
+    character(len=32), dimension(NUM_CONFIGS) :: config_names
 
     self%atm_ic_root = coupler%atm_root
     self%ice_ic_root = coupler%ice_root
@@ -275,6 +276,13 @@ subroutine accessom2_sync_config(self, coupler)
     self%my_local_pe = coupler%my_local_pe
 
     ! Pack configs
+    config_names(1) = 'num_atm_to_ice_fields'
+    config_names(2) = 'num_ice_to_ocean_fields'
+    config_names(3) = 'num_ocean_to_ice_fields'
+    config_names(4) = 'atm_ice_timestep'
+    config_names(5) = 'ice_ocean_timestep'
+    config_names(6) = 'calendar'
+
     buf(1) = self%num_atm_to_ice_fields
     buf(2) = self%num_ice_to_ocean_fields
     buf(3) = self%num_ocean_to_ice_fields
@@ -312,13 +320,13 @@ subroutine accessom2_sync_config(self, coupler)
             else
                 if (buf_from_ice(i) /= CONIG_NOT_INITIALISED) then
                     call assert(buf(i) == buf_from_ice(i), &
-                            'accessom2_sync_config incompatible configs '// &
-                            'between atm and ice')
+                            'accessom2_sync_config incompatible config '// &
+                            'between atm and ice: '//trim(config_names(i)))
                 endif
                 if (buf_from_ocean(i) /= CONIG_NOT_INITIALISED) then
                     call assert(buf(i) == buf_from_ocean(i), &
-                            'accessom2_sync_config incompatible configs '// &
-                            'between atm and ocean')
+                            'accessom2_sync_config incompatible config '// &
+                            'between atm and ocean: '//trim(config_names(i)))
                 endif
             endif
         enddo
