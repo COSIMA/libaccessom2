@@ -1,22 +1,17 @@
-# YATM
 
-Yet another data-driven atmosphere model. Uses OASIS coupler to deliver atmospheric forcing fields to other models.
+# libaccessom2
 
-# Build
+libaccessom2 is a library that is linked into all of the ACCESS-OM2 component models, including YATM, CICE and MOM. libaccessom2 provides functionality used by all models as well as providing a interface to inter-model communication and synchronisation tasks. Using a common library reduces code duplication and provides a uniform way for all models to be integrated into ACCESS-OM2.
 
-```{bash}
-mkdir build
-cd build
-cmake ../
-```
+libaccessom2 functionality includes:
+    * simplified interface to the OASIS3-MCT coupler API
+    * date handling, logging and simple performance timers
+    * configuration synchronisation between models
+    * a single configuration file for common configs (accessom2.nml)
 
-# Run tests
+Further information about ACCESS-OM2 can be found in the [ACCESS-OM2 wiki](https://github.com/OceansAus/access-om2/wiki)
 
-cd tests/minimal
-rm accessom2_restart_datetime.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./ ; cp ../test_data/a2i.nc ./
-time mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 -np 1  ../../build/bin/atm : -np 1 ../../build/bin/ice_stub : -np 1 ../../build/bin/ocean_stub
-
-# How does YATM handle dates?
+## Date handling and other configuration
 
 The model tracks two datetime variables throughout a run:
 
@@ -36,3 +31,35 @@ Other key variables in datetime management are:
 * exp\_cur\_datetime, forcing\_cur\_datetime: the current experiment and forcing datetime. These are maintained by the model including across restarts and cannot be set by the user.
 * dt: the timestep, this is not set by the user but is read from the forcing files.
 * calendar: 'noleap' or 'gregorian' calendar, once again not set by the user but read from forcing files.
+
+
+# YATM
+
+This repository also includes YATM (Yet another data-driven atmosphere model). The purpose of YATM is to keep track of the current model time, then read current atmospheric forcing data and deliver it to the rest of the model via the coupler (OASIS3-MCT).
+
+## River runoff remapping
+
+It is difficult to regrid river runoff in a distributed memory system because moving runoff from a land point to the nearest ocean point may involve an interprocess communication. It makes more sense to regrid the river runoff within YATM since it is a single process application.
+
+YATM regrids runoff in a two step process:
+    1. Apply a conservative regridding operation to move the runoff from the source grid to the ACCESS-OM2 ocean/ice grid. The grid remapping interpolation weights are calculated using [ESMF\_RegridWeightGen](https://www.earthsystemcog.org/projects/regridweightgen/) from [ESMF](https://www.earthsystemcog.org/projects/esmf/).
+    2. Find any runoff that the previous step has distributed to land points and move it to the nearest ocean neighbour. This is done using an efficient nearest neighbour data structure called a [k-dimensional tree](https://en.wikipedia.org/wiki/K-d_tree). The [kdtree2](https://github.com/jmhodges/kdtree2) Fortran package is used for this.
+
+# Build
+
+How to build libaccessom2, YATM, ice\_stub and ocean\_stub:
+
+```{bash}
+mkdir build
+cd build
+cmake ../
+```
+
+# Run tests
+
+```{bash}
+cd tests/minimal
+rm accessom2_restart_datetime.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./ ; cp ../test_data/a2i.nc ./
+time mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 -np 1  ../../build/bin/atm : -np 1 ../../build/bin/ice_stub : -np 1 ../../build/bin/ocean_stub
+```
+
