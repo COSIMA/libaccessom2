@@ -15,9 +15,9 @@ Further information about ACCESS-OM2 can be found in the [ACCESS-OM2 wiki](https
 
 libaccessom2 has a single configuration file called `accessom2.nml` which is usually found in the top-level of the model configuration directory (also known as the `control` directory). This configuration contains model-wide configuration. Presently the options most important and worthy of explanation are:
 
-* forcing\_start\_date the date (and time) when forcing begins.
-* forcing\_end\_date the start (and time) at which the forcing ends. The time between the `forcing\_start\_date` and `forcing\_end\_date` is called the forcing period. The model will be forced by a continuous repetition of this period.
-* restart\_period: interval of time between successive model restarts. This is provided as a tuple: years, months, seconds. This breaks the entire experiment into a collection of runs or segments.
+* `forcing_start_date` the date (and time) when forcing begins.
+* `forcing_end_date` the start (and time) at which the forcing ends. The time between the `forcing\_start\_date` and `forcing\_end\_date` is called the forcing period. The model will be forced by a continuous repetition of this period.
+* `restart_period`: interval of time between successive model restarts. This is provided as a tuple: years, months, seconds. This breaks the entire experiment into a collection of runs or segments.
 
 These is no configruation option that controls when an experiment ends, it will simply continue until it is stopped.
 
