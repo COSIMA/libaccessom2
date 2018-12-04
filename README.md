@@ -14,9 +14,10 @@ Further information about ACCESS-OM2 can be found in the [ACCESS-OM2 wiki](https
 ## Configuration
 
 libaccessom2 has a single configuration file called `accessom2.nml` which is usually found in the top-level of the model configuration directory (also known as the `control` directory). This configuration contains model-wide configuration. Presently the options most important and worthy of explanation are:
-    * `forcing\_start\_date` the date (and time) when forcing begins.
-    * `forcing\_end\_date` the start (and time) at which the forcing ends. The time between the `forcing\_start\_date` and `forcing\_end\_date` is called the forcing period. The model will be forced by a continuous repetition of this period.
-    * restart\_period: interval of time between successive model restarts. This is provided as a tuple: years, months, seconds. This breaks the entire experiment into a collection of runs or segments.
+
+* forcing\_start\_date the date (and time) when forcing begins.
+* forcing\_end\_date the start (and time) at which the forcing ends. The time between the `forcing\_start\_date` and `forcing\_end\_date` is called the forcing period. The model will be forced by a continuous repetition of this period.
+* restart\_period: interval of time between successive model restarts. This is provided as a tuple: years, months, seconds. This breaks the entire experiment into a collection of runs or segments.
 
 These is no configruation option that controls when an experiment ends, it will simply continue until it is stopped.
 
@@ -37,8 +38,9 @@ To further simplify things YATM gathers a lot of it's configuration automaticall
 It is difficult to regrid river runoff in a distributed memory system because moving runoff from a land point to the nearest ocean point may involve an interprocess communication. It makes more sense to regrid the river runoff within YATM since it is a single process application.
 
 YATM regrids runoff in a two step process:
-    1. Apply a conservative regridding operation to move the runoff from the source grid to the ACCESS-OM2 ocean/ice grid. The remapping interpolation weights are calculated using [ESMF\_RegridWeightGen](https://www.earthsystemcog.org/projects/regridweightgen/) from [ESMF](https://www.earthsystemcog.org/projects/esmf/).
-    2. Find any runoff that the previous step has distributed to land points and move it to the nearest ocean neighbour. This is done using an efficient nearest neighbour data structure called a [k-dimensional tree](https://en.wikipedia.org/wiki/K-d_tree). The [kdtree2](https://github.com/jmhodges/kdtree2) Fortran package is used for this.
+
+1. Apply a conservative regridding operation to move the runoff from the source grid to the ACCESS-OM2 ocean/ice grid. The remapping interpolation weights are calculated using [ESMF\_RegridWeightGen](https://www.earthsystemcog.org/projects/regridweightgen/) from [ESMF](https://www.earthsystemcog.org/projects/esmf/).
+2. Find any runoff that the previous step has distributed to land points and move it to the nearest ocean neighbour. This is done using an efficient nearest neighbour data structure called a [k-dimensional tree](https://en.wikipedia.org/wiki/K-d_tree). The [kdtree2](https://github.com/jmhodges/kdtree2) Fortran package is used for this.
 
 # Ice and ocean stubs
 
