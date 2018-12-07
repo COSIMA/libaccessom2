@@ -33,21 +33,18 @@ endtype simple_timer
 
 contains
 
-subroutine simple_timer_init(self, name, logger, include_first_call, enabled)
+subroutine simple_timer_init(self, name, logger, enabled, include_first_call)
     class(simple_timer), intent(inout) :: self
     character(len=*), intent(in) :: name
     type(logger_type), target, intent(in) :: logger
     logical, optional, intent(in) :: include_first_call
     logical, optional, intent(in) :: enabled
 
+    self%enabled = .true.
     if (present(enabled)) then
-        if (enabled) then
-            self%enabled = .true.
-        else
+        if (.not. enabled) then
             self%enabled = .false.
         endif
-    else
-        self%enabled = .true.
     endif
 
     if (.not. self%enabled) then
@@ -57,10 +54,10 @@ subroutine simple_timer_init(self, name, logger, include_first_call, enabled)
     self%name = trim(name)
     self%logger => logger
 
-    self%first_call = .true.
+    self%first_call = .false.
     if (present(include_first_call)) then
-        if (include_first_call) then
-            self%first_call = .false.
+        if (.not. include_first_call) then
+            self%first_call = .true.
         endif
     endif
 
