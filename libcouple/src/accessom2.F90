@@ -361,6 +361,7 @@ subroutine accessom2_sync_config(self, coupler)
                           self%num_ice_to_ocean_fields + &
                           self%num_ocean_to_ice_fields
 
+    ! Check calendar
     if (self%calendar == CALENDAR_NOLEAP) then
         self%calendar_str = 'noleap'
     else
@@ -368,6 +369,15 @@ subroutine accessom2_sync_config(self, coupler)
                     'accessom2_sync_config: Unsupported calendar type')
         self%calendar_str = 'gregorian'
     endif
+
+    ! Check that atm_ice_timestep, ice_ocean_timestep and restart_period agree
+    ! with each other.
+    call assert(mod(self%restart_period, self%ice_ocean_timestep) == 0, &
+                'accessom2_sync_config: restart_period not integer multiple'// &
+                ' of ice_ocean_timestep')
+    call assert(mod(self%restart_period, self%atm_ice_timestep) == 0, &
+                'accessom2_sync_config: restart_period not integer multiple'// &
+                ' of atm_ice_timestep')
 
     ! Now we can use self%calendar
     self%run_start_date = self%exp_cur_date
