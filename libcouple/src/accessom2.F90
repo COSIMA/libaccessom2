@@ -268,6 +268,7 @@ subroutine accessom2_sync_config(self, coupler)
     integer :: my_global_pe, my_atm_comm_pe
     integer, dimension(NUM_CONFIGS) :: buf, buf_from_ice, buf_from_ocean
     character(len=32), dimension(NUM_CONFIGS) :: config_names
+    integer :: total_runtime_in_seconds
 
     self%atm_ic_root = coupler%atm_root
     self%ice_ic_root = coupler%ice_root
@@ -370,18 +371,24 @@ subroutine accessom2_sync_config(self, coupler)
         self%calendar_str = 'gregorian'
     endif
 
-    ! Check that atm_ice_timestep, ice_ocean_timestep and restart_period agree
-    ! with each other.
-    call assert(mod(self%restart_period, self%ice_ocean_timestep) == 0, &
-                'accessom2_sync_config: restart_period not integer multiple'// &
-                ' of ice_ocean_timestep')
-    call assert(mod(self%restart_period, self%atm_ice_timestep) == 0, &
-                'accessom2_sync_config: restart_period not integer multiple'// &
-                ' of atm_ice_timestep')
-
     ! Now we can use self%calendar
     self%run_start_date = self%exp_cur_date
     self%run_end_date = self%calc_run_end_date()
+
+    total_runtime_in_seconds = self%get_total_runtime_in_seconds()
+
+    ! Check that atm_ice_timestep, ice_ocean_timestep and restart_period agree
+    ! with each other.
+    call assert(self%ice_ocean_timestep /= 0, &
+                "accessom2_sync_config: ice_ocean_timestep can't be 0")
+    call assert(self%atm_ice_timestep /= 0, &
+                "accessom2_sync_config: atm_ice_timestep can't be 0")
+    call assert(mod(total_runtime_in_seconds, self%ice_ocean_timestep) == 0, &
+                'accessom2_sync_config: total runtime in seconds not'// &
+                ' integer multiple of ice_ocean_timestep')
+    call assert(mod(total_runtime_in_seconds, self%atm_ice_timestep) == 0, &
+                'accessom2_sync_config: total runtime in seconds not'// &
+                ' integer multiple of atm_ice_timestep')
 
 endsubroutine accessom2_sync_config
 
