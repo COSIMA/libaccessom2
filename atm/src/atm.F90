@@ -8,6 +8,7 @@ program atm
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
     use accessom2_mod, only : accessom2_type => accessom2
+    use simple_timer_mod, only : simple_timer_type => simple_timer
     use logger_mod, only : LOG_INFO, LOG_DEBUG
     use yatm_version_mod, only : YATM_COMMIT_HASH
 
@@ -28,6 +29,9 @@ program atm
     integer :: i, err, tmp_unit
     logical :: file_exists
     integer :: num_atm_to_ice_fields, dt, cur_runtime_in_seconds
+
+    type(simple_timer_type) :: field_read_timer, ice_wait_timer
+    type(simple_timer_type) :: init_runoff_timer, remap_runoff_timer
 
     namelist /atm_nml/ forcing_file, accessom2_config_dir
 
@@ -67,8 +71,20 @@ program atm
     call ice_grid%init(coupler%ice_root)
     call ice_grid%recv()
 
+    ! Initialise timers
+    call field_read_timer%init('field_read', accessom2%logger, &
+                               accessom2%simple_timers_enabled())
+    call ice_wait_timer%init('ice_wait', accessom2%logger, &
+                             accessom2%simple_timers_enabled())
+    call init_runoff_timer%init('init_runoff', accessom2%logger, &
+                                 accessom2%simple_timers_enabled())
+    call remap_runoff_timer%init('remap_runoff', accessom2%logger, &
+                                 accessom2%simple_timers_enabled())
+
     ! Initialise the runoff remapping object with ice grid information.
+    call init_runoff_timer%start()
     call runoff%init(ice_grid)
+    call init_runoff_timer%stop()
     ice_shape = ice_grid%get_shape()
 
     ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
@@ -96,11 +112,15 @@ program atm
         ! Send each forcing field
         do i=1, num_atm_to_ice_fields
             if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
+                call field_read_timer%start()
                 call forcing%update_field(fields(i), &
                                           accessom2%get_cur_forcing_date())
+                call field_read_timer%stop()
                 if (index(fields(i)%name, 'runof') /= 0) then
+                    call remap_runoff_timer%start()
                     call runoff%remap(fields(i)%data_array, &
                                       runoff_field%data_array, ice_grid%mask)
+                    call remap_runoff_timer%stop()
                 endif
             endif
 
@@ -113,7 +133,9 @@ program atm
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
         ! after receiving the above fields. This prevents the atm from sending continuously.
+        call ice_wait_timer%start()
         call accessom2%atm_ice_sync()
+        call ice_wait_timer%stop()
 
         call accessom2%progress_date(dt)
 
@@ -122,6 +144,11 @@ program atm
         call accessom2%logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
                                     int(accessom2%get_cur_runtime_in_seconds()))
     enddo
+
+    call field_read_timer%write_stats()
+    call ice_wait_timer%write_stats()
+    call init_runoff_timer%write_stats()
+    call remap_runoff_timer%write_stats()
 
     call accessom2%logger%write(LOG_INFO, 'Run complete, calling deinit')
 
