@@ -37,8 +37,8 @@ subroutine simple_timer_init(self, name, logger, enabled, include_first_call)
     class(simple_timer), intent(inout) :: self
     character(len=*), intent(in) :: name
     type(logger_type), target, intent(in) :: logger
-    logical, optional, intent(in) :: include_first_call
     logical, optional, intent(in) :: enabled
+    logical, optional, intent(in) :: include_first_call
 
     self%enabled = .true.
     if (present(enabled)) then
