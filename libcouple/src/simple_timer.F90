@@ -69,7 +69,7 @@ subroutine simple_timer_init(self, name, logger, enabled, include_first_call)
     self%count = 0
     self%mean = 0
     self%m2 = 0
-    call system_time(COUNT_RATE=self%count_rate) 
+    call system_clock(COUNT_RATE=self%count_rate) 
 
 endsubroutine simple_timer_init
 
@@ -81,7 +81,7 @@ subroutine simple_timer_start(self)
     endif
 
     if (.not. self%first_call) then
-        call system_time(self%starttime)
+        call system_clock(self%starttime)
     endif
 
 endsubroutine simple_timer_start
@@ -98,7 +98,7 @@ subroutine simple_timer_stop(self)
     if (.not. self%first_call) then
         call assert(self%starttime > 0, 'simple_timer: timer_start not called.')
 
-        call system_time(self%endtime)
+        call system_clock(self%endtime)
 
         time = real(self%endtime - self%starttime)/self%count_rate
         if (self%maxtime == -1 .or. time > self%maxtime) then
