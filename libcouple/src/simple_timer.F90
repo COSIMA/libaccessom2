@@ -15,9 +15,10 @@ type simple_timer
 
     character(len=32) :: name
 
-    real :: starttime, endtime, maxtime, mintime
+    real :: maxtime, mintime
     real :: mean, m2
     integer :: count
+    integer :: starttime, endtime, count_rate
 
     type(logger_type), pointer :: logger
 
@@ -68,6 +69,7 @@ subroutine simple_timer_init(self, name, logger, enabled, include_first_call)
     self%count = 0
     self%mean = 0
     self%m2 = 0
+    call system_time(COUNT_RATE=self%count_rate) 
 
 endsubroutine simple_timer_init
 
@@ -79,7 +81,7 @@ subroutine simple_timer_start(self)
     endif
 
     if (.not. self%first_call) then
-        call cpu_time(self%starttime)
+        call system_time(self%starttime)
     endif
 
 endsubroutine simple_timer_start
@@ -96,9 +98,9 @@ subroutine simple_timer_stop(self)
     if (.not. self%first_call) then
         call assert(self%starttime > 0, 'simple_timer: timer_start not called.')
 
-        call cpu_time(self%endtime)
+        call system_time(self%endtime)
 
-        time = self%endtime - self%starttime
+        time = real(self%endtime - self%starttime)/self%count_rate
         if (self%maxtime == -1 .or. time > self%maxtime) then
             self%maxtime = time
         endif
