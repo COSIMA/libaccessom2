@@ -1,53 +1,53 @@
 {
-  "description": "JRA55-do V1.3 IAF forcing",
+  "description": "JRA55-do IAF forcing",
   "inputs": [
     {
-      "filename": "v1-3/rsds.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/rsds.{{year}}.nc",
       "fieldname": "rsds",
       "cname": "swfld_ai"
     },
     {
-      "filename": "v1-3/rlds.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/rlds.{{year}}.nc",
       "fieldname": "rlds",
       "cname": "lwfld_ai"
     },
     {
-      "filename": "v1-3/rain.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/rain.{{year}}.nc",
       "fieldname": "prrn",
       "cname": "rain_ai"
     },
     {
-      "filename": "v1-3/snow.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/snow.{{year}}.nc",
       "fieldname": "prsn",
       "cname": "snow_ai"
     },
     {
-      "filename": "v1-3/slp.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/slp.{{year}}.nc",
       "fieldname": "psl",
       "cname": "press_ai"
     },
     {
-      "filename": "v1-3/runoff_all.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/runoff_all.{{year}}.nc",
       "fieldname": "friver",
       "cname": "runof_ai"
     },
     {
-      "filename": "v1-3/t_10.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/t_10.{{year}}.nc",
       "fieldname": "tas_10m",
       "cname": "tair_ai"
     },
     {
-      "filename": "v1-3/q_10.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/q_10.{{year}}.nc",
       "fieldname": "huss_10m",
       "cname": "qair_ai"
     },
     {
-      "filename": "v1-3/u_10.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/u_10.{{year}}.nc",
       "fieldname": "uas_10m",
       "cname": "uwnd_ai"
     },
     {
-      "filename": "v1-3/v_10.{{year}}.*.nc",
+      "filename": "/g/data1/ua8/JRA55-do/latest/v_10.{{year}}.nc",
       "fieldname": "vas_10m",
       "cname": "vwnd_ai"
     },

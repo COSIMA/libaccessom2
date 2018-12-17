@@ -44,23 +44,32 @@ YATM regrids runoff in a two step process:
 
 # Ice and ocean stubs
 
-This repository also includes ice and ocean stubs. These executables can be used as a stand-in for the CICE and MOM for testing purposes.
+This repository also includes ice and ocean stubs. These are stand-ins for the the ice and ocean models. They demonstrate how libaccessom2 can be used and are also very useful for testing.
 
 # Build
 
 How to build libaccessom2, YATM, ice\_stub and ocean\_stub:
 
 ```{bash}
+git clone https://github.com/OceansAus/libaccessom2.git
+cd libaccessom2
 mkdir build
 cd build
 cmake ../
+cd ../
 ```
 
-# Run tests
+# Run tests on Raijin (NCI)
+
+First do build as above. Then:
 
 ```{bash}
-cd tests/minimal
-rm accessom2_restart_datetime.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./ ; cp ../test_data/a2i.nc ./
-time mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 -np 1  ../../build/bin/atm : -np 1 ../../build/bin/ice_stub : -np 1 ../../build/bin/ocean_stub
+export LIBACCESSOM2_DIR=$(pwd)
+module load openmpi
+cd tests/
+./copy_test_data_from_raijin.sh
+cd JRA55_IAF
+rm -rf log ; mkdir log ; rm -f accessom2_restart_datetime.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./
+mpirun -np 1 $LIBACCESSOM2_DIR/build/bin/yatm.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ice_stub.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ocean_stub.exe
 ```
 

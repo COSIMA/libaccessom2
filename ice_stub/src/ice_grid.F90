@@ -73,7 +73,7 @@ subroutine ice_grid_send(self)
     real, dimension(:), allocatable :: buf_real
 
     ! Send my details to the atm.
-    tag = 0
+    tag = 4982
     buf_int(1) = self%nx
     buf_int(2) = self%ny
     call MPI_send(buf_int, 2, MPI_INTEGER, 0, tag, MPI_COMM_WORLD, err)

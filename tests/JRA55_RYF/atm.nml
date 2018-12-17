@@ -1,8 +1,7 @@
 &atm_nml
-    runoff_remap_weights_file = '../test_data/rmp_jrar_to_cict_CONSERV.nc'
-    dt = 10800
-    debug_output = .true.
+    accessom2_config_dir = './'
 &end
 
 &runoff_nml
+    remap_weights_file = '../test_data/rmp_jrar_to_cict_CONSERV.nc'
 &end

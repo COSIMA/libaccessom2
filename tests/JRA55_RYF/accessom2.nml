@@ -1,9 +1,13 @@
+&accessom2_nml
+    log_level = 'DEBUG'
+    ice_ocean_timestep = 5400
+    enable_simple_timers = .true.
+&end
+
 &date_manager_nml
     forcing_start_date = '1900-01-01T00:00:00'
     forcing_end_date = '1901-01-01T00:00:00'
-    calendar = 'noleap'
-
-    ! Runtime for a single segment/job/submit, format is years, months, seconds,
+    ! Runtime for a single job/submit, format is years, months, seconds,
     ! two of which must be zero.
-    restart_period = 0, 0, 864000
+    restart_period = 0, 0, 86400
 &end

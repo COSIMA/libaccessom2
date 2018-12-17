@@ -1,7 +1,6 @@
 &ocean_nml
-    from_ice_field_names = 'strsu_o', 'strsv_o', 'rain_o', 'snow_o', 'stflx_o', 'htflx_o', 'swflx_o', 'qflx_o', 'shflx_o', 'lwflx_o', 'runoff_o', 'press_o', 'melt_o', 'form_o'
-    to_ice_field_names = 'sst_oi', 'sss_oi', 'ssu_oi', 'ssv_oi', 'frazil_oi', 'sslx_oi', 'ssly_oi'
+    from_ice_field_names = 'u_flux', 'v_flux', 'lprec', 'fprec', 'salt_flx', 'mh_flux', 'sw_flux', 'q_flux', 't_flux', 'lw_flux', 'runof', 'p', 'aice', 'wfimelt', 'wfiform'
+    to_ice_field_names = 't_surf', 's_surf', 'u_surf', 'v_surf', 'dssldx', 'dssldy', 'frazil'
     resolution(:) = 360,300
     dt = 5400
-    debug_output = .true.
 &end

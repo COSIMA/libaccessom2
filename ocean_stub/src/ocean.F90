@@ -7,14 +7,13 @@ program ocean
     use restart_mod, only : restart_type => restart
     use accessom2_mod, only : accessom2_type => accessom2
     use mod_oasis, only : OASIS_IN, OASIS_OUT
-    use logger_mod, only : logger_type => logger
+    use ocean_version_mod, only : OCEAN_STUB_COMMIT_HASH
 
     implicit none
 
     integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128, &
                           MAX_FILE_NAME_LEN = 1024
 
-    type(logger_type) :: logger
     type(coupler_type) :: coupler
     type(restart_type) :: restart
     type(accessom2_type) :: accessom2
@@ -34,6 +33,8 @@ program ocean
                          from_ice_field_names, to_ice_field_names
     accessom2_config_dir = './'
 
+    print *, OCEAN_STUB_COMMIT_HASH
+
     ! Read namelist which model resolution and names and
     ! direction of coupling fields.
     inquire(file='ocean.nml', exist=file_exists)
@@ -44,9 +45,9 @@ program ocean
 
     ! Initialise time manager
     call accessom2%init('mom5xx', config_dir=accessom2_config_dir)
-    call logger%init('mom5xx', logfiledir='log', loglevel='DEBUG')
+    call accessom2%print_version_info()
 
-    call coupler%init_begin('mom5xx',  logger, config_dir=accessom2_config_dir)
+    call coupler%init_begin('mom5xx',  accessom2%logger, config_dir=accessom2_config_dir)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
     call accessom2%sync_config(coupler)
 
@@ -101,15 +102,15 @@ program ocean
     ! FIXME: dodgy hack, we need to change the out_field names to have
     ! '_i' prefix. This exists in ACCESS-OM2 and will go away once we do
     ! ocean and ice restarts properly.
-    do i=1, size(out_fields)
-        idx = index(out_fields(i)%name, '_oi')
-        call assert(idx /= 0, 'Did not find expected substring _oi')
-        out_fields(i)%name = out_fields(i)%name(1:idx-1)//'_i'
-    enddo
+    !do i=1, size(out_fields)
+    !    idx = index(out_fields(i)%name, '_oi')
+    !    call assert(idx /= 0, 'Did not find expected substring _oi')
+    !    out_fields(i)%name = out_fields(i)%name(1:idx-1)//'_i'
+    !enddo
 
     ! Write out restart.
     call restart%write(accessom2%get_cur_exp_date(), out_fields)
     call coupler%deinit()
-    call accessom2%deinit()
+    call accessom2%deinit(finalize=.true.)
 
 end program ocean
