@@ -6,28 +6,30 @@ from helper import Helper
 def helper():
     return Helper()
 
-@pytest.fixture(params=['JRA55-do', 'minimal'])
+@pytest.fixture(params=['JRA55_IAF', 'JRA55_RYF'])
 def exp(request):
     yield request.param
 
-class TestYatm:
+class TestStubs:
 
     def test_run(self, helper, exp):
         """
         Check that the default configurations run.
-        """
-        ret, output = helper.run_exp(exp)
+        ret, output, log = helper.run_exp(exp)
         assert ret == 0
+        """
+        pass
 
-    def test_forcing_checksums(self, helper, exp):
+
+    def test_unchanged_forcing_checksums(self, helper, exp):
         """
         Test that checksums have not changed.
         """
 
-        ret, output = helper.run_exp(exp)
+        ret, output, log = helper.run_exp(exp)
         assert ret == 0
 
-        run_checksums = helper.filter_checksums(output)
+        run_checksums = helper.filter_checksums(log)
         stored_checksums = helper.checksums(exp)
 
         # Check that keys are the same
@@ -39,6 +41,7 @@ class TestYatm:
     def test_dates(self, helper, exp):
         """
         """
+        pass
 
 
     def test_restart(self, helper, exp):

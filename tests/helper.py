@@ -21,11 +21,11 @@ class Helper:
         self.test_dir = os.path.dirname(os.path.realpath(__file__))
         self.test_data_dir = os.path.join(self.test_dir, 'test_data')
         self.atm_exe = os.path.join(self.test_dir, '..',
-                                    'build', 'bin', 'atm')
+                                    'build', 'bin', 'yatm.exe')
         self.ice_exe = os.path.join(self.test_dir, '..',
-                                    'build', 'bin', 'ice_stub')
+                                    'build', 'bin', 'ice_stub.exe')
         self.ocean_exe = os.path.join(self.test_dir, '..',
-                                      'build', 'bin', 'ocean_stub')
+                                      'build', 'bin', 'ocean_stub.exe')
 
     def checksums(self, exp_dir):
         """
@@ -65,16 +65,19 @@ class Helper:
         """
 
         def clean_exp():
-            silentremove('accessom2_restart_datetime.nml')
-            map(silentremove, glob.glob('*.nc'))
+            silentremove('accessom2_restart.nml')
+            for f in glob.glob('log/*.log'):
+                silentremove(f)
+            for f in glob.glob('*.nc'):
+                silentremove(f)
 
         def copy_oasis_restarts():
             shutil.copy(os.path.join(self.test_data_dir, 'i2o.nc'), './')
             shutil.copy(os.path.join(self.test_data_dir, 'o2i.nc'), './')
-            shutil.copy(os.path.join(self.test_data_dir, 'a2i.nc'), './')
 
         cur_dir = os.getcwd()
-        os.chdir(os.path.join(self.test_dir, exp_dir))
+        my_dir = os.path.join(self.test_dir, exp_dir)
+        os.chdir(my_dir)
         clean_exp()
         copy_oasis_restarts()
         cmd = shlex.split(run_cmd.format(atm_exe=self.atm_exe,
@@ -86,7 +89,21 @@ class Helper:
         except sp.CalledProcessError as e:
             retcode = e.returncode
 
-        return retcode, output.decode('utf-8')
+        if retcode != 0:
+            return retcode, None, None
+
+        log = ''
+        with open(os.path.join(my_dir, 'log', 'matmxx.pe00000.log')) as f:
+            log += f.read()
+        with open(os.path.join(my_dir, 'log', 'cicexx.pe00001.log')) as f:
+            log += f.read()
+        with open(os.path.join(my_dir, 'log', 'mom5xx.pe00002.log')) as f:
+            log += f.read()
+
+        with open(os.path.join(my_dir, 'log', 'all.log'), 'w') as f:
+            f.write(log)
+
+        return retcode, output.decode('utf-8'), log
 
 if __name__ == '__main__':
     sys.exit(run_exp('JRA55_RYF'))
