@@ -74,10 +74,10 @@ subroutine logger_write(self, loglevel, str, intnum)
 
     if (loglevel >= self%loglevel) then
         if (present(intnum)) then
-            write(intnum_str, '(I10.10)') intnum
-            write(self%fp, *) trim(str)//' '//intnum_str
+            write(intnum_str, '(I10)') intnum
+            write(self%fp, '(a)') trim(str)//' '//intnum_str
         else
-            write(self%fp, *) trim(str)
+            write(self%fp, '(a)') trim(str)
         endif
     endif
 

@@ -50,7 +50,6 @@
       "filename": "/g/data1/ua8/JRA55-do/latest/v_10.{{year}}.nc",
       "fieldname": "vas_10m",
       "cname": "vwnd_ai"
-    },
+    }
   ]
 }
-

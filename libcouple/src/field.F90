@@ -70,11 +70,14 @@ subroutine field_update_data(self, filename, forcing_date)
                                'field_update_data: long forcing index search')
     endif
     call assert(indx /= -1, &
-                "No forcing date "//forcing_date%isoformat()//" in "//trim(filename))
+                "No forcing date "//forcing_date%isoformat()//" in "// &
+                trim(filename))
 
-    call self%logger%write(LOG_DEBUG, '{ "field_update_data-file" : '//trim(filename)//' }')
-    write(int_str, '(I10.10)') indx
-    call self%logger%write(LOG_DEBUG, '{ "field_update_data-index" : '//trim(int_str)//' }')
+    call self%logger%write(LOG_DEBUG, '{ "field_update_data-file" : "'// &
+                                      trim(filename)//'" }')
+    write(int_str, '(I10)') indx
+    call self%logger%write(LOG_DEBUG, '{ "field_update_data-index" : '// &
+                                       trim(int_str)//' }')
     call self%ncvar%read_data(indx, self%data_array)
     self%timestamp = forcing_date
 

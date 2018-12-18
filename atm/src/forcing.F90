@@ -125,8 +125,8 @@ subroutine forcing_update_field(self, fld, forcing_date)
     endif
 
     call self%logger%write(LOG_DEBUG, &
-                           '{ "forcing_update_field-datetime" : '// &
-                           forcing_date%isoformat()//' }')
+                           '{ "forcing_update_field-datetime" : "'// &
+                           forcing_date%isoformat()//'" }')
 
     filename = filename_for_year(fld%filename_template, forcing_date%getYear())
     call assert(trim(filename) /= '', "File not found: "//filename)

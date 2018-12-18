@@ -6,6 +6,7 @@ import glob
 import shlex
 import ast
 import subprocess as sp
+import f90nml
 
 run_cmd = 'mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 --mca btl self,sm -np 1 {atm_exe} : -np 1 {ice_exe} : -np 1 {ocean_exe}'
 
@@ -59,7 +60,7 @@ class Helper:
         """
         pass
 
-    def run_exp(self, exp_dir):
+    def run_exp(self, exp_dir, years_duration=None):
         """
         Run the test experiment in exp_dir
         """
@@ -75,8 +76,17 @@ class Helper:
             shutil.copy(os.path.join(self.test_data_dir, 'i2o.nc'), './')
             shutil.copy(os.path.join(self.test_data_dir, 'o2i.nc'), './')
 
-        cur_dir = os.getcwd()
         my_dir = os.path.join(self.test_dir, exp_dir)
+
+        # Update runtime
+        if years_duration:
+            accessom2_config = os.path.join(my_dir, 'accessom2.nml')
+            with open(accessom2_config) as f:
+                nml = f90nml.read(f)
+                nml['date_manager_nml']['restart_period'] = [years_duration, 0, 0]
+                nml.write(accessom2_config, force=True)
+
+        cur_dir = os.getcwd()
         os.chdir(my_dir)
         clean_exp()
         copy_oasis_restarts()
@@ -95,6 +105,7 @@ class Helper:
         log = ''
         with open(os.path.join(my_dir, 'log', 'matmxx.pe00000.log')) as f:
             log += f.read()
+            matm_log = log
         with open(os.path.join(my_dir, 'log', 'cicexx.pe00001.log')) as f:
             log += f.read()
         with open(os.path.join(my_dir, 'log', 'mom5xx.pe00002.log')) as f:
@@ -103,7 +114,7 @@ class Helper:
         with open(os.path.join(my_dir, 'log', 'all.log'), 'w') as f:
             f.write(log)
 
-        return retcode, output.decode('utf-8'), log
+        return retcode, output.decode('utf-8'), log, matm_log
 
 if __name__ == '__main__':
     sys.exit(run_exp('JRA55_RYF'))
