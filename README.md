@@ -1,5 +1,5 @@
 
-[![Build Status](https://accessdev.nci.org.au/jenkins/buildStatus/icon?job=ACCESS-OM2/build)](https://accessdev.nci.org.au/jenkins/job/ACCESS-OM2/job/build/) 
+[![Build Status](https://accessdev.nci.org.au/jenkins/buildStatus/icon?job=ACCESS-OM2/libaccessom2)](https://accessdev.nci.org.au/jenkins/job/ACCESS-OM2/job/libaccessom2/)
 
 # libaccessom2
 
