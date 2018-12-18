@@ -88,6 +88,10 @@ class Helper:
 
         cur_dir = os.getcwd()
         os.chdir(my_dir)
+        try:
+            os.makedirs(os.path.join(my_dir, 'log'))
+        except FileExistsError:
+            pass
         clean_exp()
         copy_oasis_restarts()
         cmd = shlex.split(run_cmd.format(atm_exe=self.atm_exe,
