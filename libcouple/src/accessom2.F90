@@ -316,7 +316,8 @@ subroutine accessom2_sync_config(self, coupler)
                 elseif (buf_from_ocean(i) /= CONIG_NOT_INITIALISED) then
                     buf(i) = buf_from_ocean(i)
                 else
-                    call assert(.false., 'accessom2_sync_config: missing config')
+                    call assert(.false., 'accessom2_sync_config missing config '// &
+                                trim(config_names(i)))
                 endif
             else
                 if (buf_from_ice(i) /= CONIG_NOT_INITIALISED) then

@@ -8,14 +8,13 @@ program ice
     use restart_mod, only : restart_type => restart
     use mod_oasis, only : OASIS_IN, OASIS_OUT
     use accessom2_mod, only : accessom2_type => accessom2
-    use logger_mod, only : logger_type => logger
+    use ice_version_mod, only : ICE_STUB_COMMIT_HASH
 
     implicit none
 
     integer, parameter :: MAX_FIELDS = 20, MAX_FIELD_NAME_LEN = 128, &
                           MAX_FILE_NAME_LEN = 1024
 
-    type(logger_type) :: logger
     type(ice_grid_type) :: ice_grid
     type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
@@ -40,6 +39,8 @@ program ice
                        to_ocean_field_names, ice_grid_file, ice_mask_file
     accessom2_config_dir = './'
 
+    print *, ICE_STUB_COMMIT_HASH
+
     ! Read namelist which includes information
     ! model resolution and names and direction of coupling fields.
     inquire(file='ice.nml', exist=file_exists)
@@ -47,16 +48,6 @@ program ice
     open(newunit=tmp_unit, file='ice.nml')
     read(tmp_unit, nml=ice_nml)
     close(tmp_unit)
-
-    ! Initialise time manager
-    call accessom2%init('cicexx', config_dir=accessom2_config_dir)
-    call logger%init('cicexx', logfiledir='log', loglevel='DEBUG')
-
-    ! Initialise coupler, this needs to be done before the ice grid is
-    ! sent to the atmosphere.
-    call coupler%init_begin('cicexx', logger, config_dir=accessom2_config_dir)
-    ! Synchronise accessom2 'state' (i.e. configuration) between all models.
-    call accessom2%sync_config(coupler)
 
     ! Count and allocate the coupling fields
     num_from_atm_fields = 0
@@ -77,10 +68,27 @@ program ice
     allocate(from_ocean_fields(num_from_ocean_fields))
     allocate(to_ocean_fields(num_to_ocean_fields))
 
+    ! Initialise libaccessom2
+    call accessom2%init('cicexx', config_dir=accessom2_config_dir)
+    call accessom2%print_version_info()
+
+    ! Tell libaccessom2 about any global configs/state
+    call accessom2%set_cpl_field_counts(num_atm_to_ice_fields=num_from_atm_fields, &
+                                        num_ice_to_ocean_fields=num_to_ocean_fields, &
+                                        num_ocean_to_ice_fields=num_from_ocean_fields)
+
+    ! Initialise coupler, this needs to be done before the ice grid is
+    ! sent to the atmosphere.
+    call coupler%init_begin('cicexx', accessom2%logger, config_dir=accessom2_config_dir)
+
+    ! Synchronise accessom2 'state' (i.e. configuration) between all models.
+    call accessom2%sync_config(coupler)
+
     ! Initialise ice grid and send details to peer.
     ! This will be used for regridding of runoff.
     call ice_grid%init(trim(ice_grid_file), trim(ice_mask_file), resolution)
     call ice_grid%send()
+
 
     ! Set up coupling fields
     do i=1, size(from_atm_fields)
@@ -160,6 +168,6 @@ program ice
     ! Write out restart.
     call i2o_restart%write(accessom2%get_cur_exp_date(), to_ocean_fields)
     call coupler%deinit()
-    call accessom2%deinit()
+    call accessom2%deinit(finalize=.true.)
 
 end program

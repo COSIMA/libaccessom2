@@ -17,3 +17,5 @@ o2i.nc
 test_data
 gmon.*
 tests/minimal/*.nc
+tests/JRA55_IAF/debug.root.*
+tests/JRA55_RYF/debug.root.*

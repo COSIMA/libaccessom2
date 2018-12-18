@@ -6,6 +6,7 @@ import glob
 import shlex
 import ast
 import subprocess as sp
+import f90nml
 
 run_cmd = 'mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 --mca btl self,sm -np 1 {atm_exe} : -np 1 {ice_exe} : -np 1 {ocean_exe}'
 
@@ -21,11 +22,11 @@ class Helper:
         self.test_dir = os.path.dirname(os.path.realpath(__file__))
         self.test_data_dir = os.path.join(self.test_dir, 'test_data')
         self.atm_exe = os.path.join(self.test_dir, '..',
-                                    'build', 'bin', 'atm')
+                                    'build', 'bin', 'yatm.exe')
         self.ice_exe = os.path.join(self.test_dir, '..',
-                                    'build', 'bin', 'ice_stub')
+                                    'build', 'bin', 'ice_stub.exe')
         self.ocean_exe = os.path.join(self.test_dir, '..',
-                                      'build', 'bin', 'ocean_stub')
+                                      'build', 'bin', 'ocean_stub.exe')
 
     def checksums(self, exp_dir):
         """
@@ -59,22 +60,34 @@ class Helper:
         """
         pass
 
-    def run_exp(self, exp_dir):
+    def run_exp(self, exp_dir, years_duration=None):
         """
         Run the test experiment in exp_dir
         """
 
         def clean_exp():
-            silentremove('accessom2_restart_datetime.nml')
-            map(silentremove, glob.glob('*.nc'))
+            silentremove('accessom2_restart.nml')
+            for f in glob.glob('log/*.log'):
+                silentremove(f)
+            for f in glob.glob('*.nc'):
+                silentremove(f)
 
         def copy_oasis_restarts():
             shutil.copy(os.path.join(self.test_data_dir, 'i2o.nc'), './')
             shutil.copy(os.path.join(self.test_data_dir, 'o2i.nc'), './')
-            shutil.copy(os.path.join(self.test_data_dir, 'a2i.nc'), './')
+
+        my_dir = os.path.join(self.test_dir, exp_dir)
+
+        # Update runtime
+        if years_duration:
+            accessom2_config = os.path.join(my_dir, 'accessom2.nml')
+            with open(accessom2_config) as f:
+                nml = f90nml.read(f)
+                nml['date_manager_nml']['restart_period'] = [years_duration, 0, 0]
+                nml.write(accessom2_config, force=True)
 
         cur_dir = os.getcwd()
-        os.chdir(os.path.join(self.test_dir, exp_dir))
+        os.chdir(my_dir)
         clean_exp()
         copy_oasis_restarts()
         cmd = shlex.split(run_cmd.format(atm_exe=self.atm_exe,
@@ -86,7 +99,22 @@ class Helper:
         except sp.CalledProcessError as e:
             retcode = e.returncode
 
-        return retcode, output.decode('utf-8')
+        if retcode != 0:
+            return retcode, None, None
+
+        log = ''
+        with open(os.path.join(my_dir, 'log', 'matmxx.pe00000.log')) as f:
+            log += f.read()
+            matm_log = log
+        with open(os.path.join(my_dir, 'log', 'cicexx.pe00001.log')) as f:
+            log += f.read()
+        with open(os.path.join(my_dir, 'log', 'mom5xx.pe00002.log')) as f:
+            log += f.read()
+
+        with open(os.path.join(my_dir, 'log', 'all.log'), 'w') as f:
+            f.write(log)
+
+        return retcode, output.decode('utf-8'), log, matm_log
 
 if __name__ == '__main__':
     sys.exit(run_exp('JRA55_RYF'))
