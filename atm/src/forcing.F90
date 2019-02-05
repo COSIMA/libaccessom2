@@ -69,9 +69,10 @@ subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
     integer :: i
     character(kind=CK, len=:), allocatable :: cname, fieldname
     character(kind=CK, len=:), allocatable :: filename_template
+    character(kind=CK, len=:), allocatable :: scaling_filename
     character(len=1024) :: filename
     character(len=9) :: calendar_str
-    logical :: found
+    logical :: found, scaling_found
 
     min_dt = huge(min_dt)
     calendar_str = ''
@@ -83,6 +84,8 @@ subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
         call self%core%get(fp, "filename", filename_template, found)
         call assert(found, "Entry 'filename' not found in forcing config.")
 
+        call self%core%get(fp, "scaling_filename", scaling_filename, scaling_found)
+
         call self%core%get(fp, "fieldname", fieldname, found)
         call assert(found, "Entry 'fieldname' not found in forcing config.")
 
@@ -92,8 +95,13 @@ subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
         ! Get the shape of forcing fields
         filename = filename_for_year(filename_template, forcing_date%getYear())
         ! Initialise a new field object.
-        call fields(i)%init(cname, fieldname, filename_template, filename, &
-                            self%logger)
+        if (scaling_found) then
+            call fields(i)%init(cname, fieldname, filename_template, &
+                                filename, self%logger, scaling_filename)
+        else
+            call fields(i)%init(cname, fieldname, filename_template, &
+                                filename, self%logger)
+        endif
 
         if (fields(i)%dt < min_dt) then
             min_dt = fields(i)%dt

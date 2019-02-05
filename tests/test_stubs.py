@@ -26,7 +26,7 @@ def extract_field_name(checksum):
     k = k[0]
 
     return k.split('-')[2]
-    
+
 
 def build_log_items(forcing_update_dts, field_update_files,
                     field_update_indices, checksums):
@@ -37,7 +37,7 @@ def build_log_items(forcing_update_dts, field_update_files,
 
     for i in range(len(forcing_update_dts)):
         field_name = extract_field_name(checksums[i])
-        item = LogItem(field_name, field_update_files[i], 
+        item = LogItem(field_name, field_update_files[i],
                        field_update_indices[i], forcing_update_dts[i],
                        checksums[i])
         log_items.append(item)
@@ -101,6 +101,24 @@ class TestStubs:
         # Check that everything is the same
         assert run_checksums == stored_checksums
 
+
+    @pytest.mark.scaling
+    def test_field_scaling(self, helper):
+        ret, output, log, matm_log = helper.run_exp('FORCING_SCALING')
+        assert ret == 0
+
+        run_checksums = helper.filter_checksums(log)
+        stored_checksums = helper.checksums('FORCING_SCALING')
+
+        # FIXME: don't hard-code this, calculate that times/keys are correct.
+        keys = ['checksum-matmxx-swfld_ai-0000043200',
+                'checksum-matmxx-swfld_ai-0000054000',
+                'checksum-matmxx-swfld_ai-0000064800',
+                'checksum-matmxx-swfld_ai-0000075600']
+
+        # Scaling multiplied by 0, 1, 2, 3
+        for mult, k in enumerate(keys):
+            assert abs(run_checksums[k] - mult*stored_checksums[k]) < 0.1
 
     @pytest.mark.slow
     def test_forcing_fields(self, helper, exp):
