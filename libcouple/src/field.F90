@@ -13,14 +13,16 @@ private
 type, public :: field
     character(len=64) :: name
     character(len=1024) :: filename_template
+    character(len=1024) :: scaling_filename
     type(datetime) :: timestamp
     integer :: oasis_varid
     integer :: oasis_partid
 
     integer :: dt
     character(len=9) :: calendar
-    type(ncvar_type) :: ncvar
+    type(ncvar_type) :: ncvar, scaling_ncvar
     real, dimension(:, :), allocatable :: data_array
+    real, dimension(:, :), allocatable :: scaling_data_array
 
     type(logger_type) :: logger
 contains
@@ -31,11 +33,13 @@ endtype field
 
 contains
 
-subroutine field_init(self, name, ncname, filename_template, filename, logger)
+subroutine field_init(self, name, ncname, filename_template, &
+                      filename, logger, scaling_filename)
     class(field), intent(inout) :: self
     character(len=*), intent(in) :: name, ncname
     character(len=*), intent(in) :: filename_template, filename
     type(logger_type), intent(in) :: logger
+    character(len=*), intent(in), optional :: scaling_filename
 
     self%name = name
     self%filename_template = filename_template
@@ -47,6 +51,13 @@ subroutine field_init(self, name, ncname, filename_template, filename, logger)
     self%data_array(:, :) = HUGE(1.0)
     self%dt = self%ncvar%dt
     self%calendar = self%ncvar%calendar
+
+    if (present(scaling_filename)) then
+        self%scaling_filename = scaling_filename
+        call self%scaling_ncvar%init(ncname, scaling_filename)
+        allocate(self%scaling_data_array(self%ncvar%nx, self%ncvar%ny))
+        self%scaling_data_array(:, :) = HUGE(1.0)
+    endif
 
 end subroutine
 
@@ -80,6 +91,22 @@ subroutine field_update_data(self, filename, forcing_date)
                                        trim(int_str)//' }')
     call self%ncvar%read_data(indx, self%data_array)
     self%timestamp = forcing_date
+
+    ! Read the scaling data for this date and apply it (if there is any)
+    if (allocated(self%scaling_data_array)) then
+        indx = self%scaling_ncvar%get_index_for_datetime(forcing_date, .true.)
+        if (indx /= -1) then
+            call self%scaling_ncvar%read_data(indx, self%scaling_data_array)
+            call self%logger%write(LOG_DEBUG, &
+                                  '{ "field_update_data-scaling_file" : "'// &
+                                   trim(self%scaling_filename)//'" }')
+            call self%logger%write(LOG_DEBUG, &
+                                  '{ "field_update_data-scaling_date" : "'// &
+                                   forcing_date%isoformat()//'" }')
+            self%data_array(:, :) = self%data_array(:, :) * &
+                                        self%scaling_data_array(:, :)
+        endif
+    endif
 
 end subroutine field_update_data
 

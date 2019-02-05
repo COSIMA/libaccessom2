@@ -1,0 +1,1202 @@
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-swfld_ai-0000000000": 0.3705909716E+008 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-lwfld_ai-0000000000": 0.6016100493E+008 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-rain_ai-0000000000": 0.4229382744E+001 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-snow_ai-0000000000": 0.7192918367E+000 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-press_ai-0000000000": 0.2071952959E+011 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.runoff_all.1990_1991
+ .nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-runof_ai-0000000000": 0.2942046726E+000 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-tair_ai-0000000000": 0.5698552796E+008 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-qair_ai-0000000000": 0.1452095593E+004 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-uwnd_ai-0000000000": -.1166131205E+006 }
+ forcing_update_field at 1900-01-01T00:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: index 0000000001
+ { "checksum-matmxx-vwnd_ai-0000000000": -.5476062674E+005 }
+ cur_exp_date 1900-01-01T03:00:00
+ cur_forcing_date 1900-01-01T03:00:00
+ cur_runtime_in_seconds 0000010800
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-swfld_ai-0000010800": 0.3777202602E+008 }
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-lwfld_ai-0000010800": 0.6009319537E+008 }
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-rain_ai-0000010800": 0.4349455960E+001 }
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-snow_ai-0000010800": 0.7841592839E+000 }
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-press_ai-0000010800": 0.2071725871E+011 }
+ { "checksum-matmxx-runof_ai-0000010800": 0.2942046726E+000 }
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-tair_ai-0000010800": 0.5698128887E+008 }
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-qair_ai-0000010800": 0.1449108594E+004 }
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-uwnd_ai-0000010800": -.1170865895E+006 }
+ forcing_update_field at 1900-01-01T03:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: index 0000000002
+ { "checksum-matmxx-vwnd_ai-0000010800": -.5327144683E+005 }
+ cur_exp_date 1900-01-01T06:00:00
+ cur_forcing_date 1900-01-01T06:00:00
+ cur_runtime_in_seconds 0000021600
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-swfld_ai-0000021600": 0.3789001754E+008 }
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-lwfld_ai-0000021600": 0.6018853712E+008 }
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-rain_ai-0000021600": 0.4452875226E+001 }
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-snow_ai-0000021600": 0.8038448054E+000 }
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-press_ai-0000021600": 0.2071358964E+011 }
+ { "checksum-matmxx-runof_ai-0000021600": 0.2942046726E+000 }
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-tair_ai-0000021600": 0.5698585019E+008 }
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-qair_ai-0000021600": 0.1447880451E+004 }
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-uwnd_ai-0000021600": -.1174519270E+006 }
+ forcing_update_field at 1900-01-01T06:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: index 0000000003
+ { "checksum-matmxx-vwnd_ai-0000021600": -.5770328037E+005 }
+ cur_exp_date 1900-01-01T09:00:00
+ cur_forcing_date 1900-01-01T09:00:00
+ cur_runtime_in_seconds 0000032400
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-swfld_ai-0000032400": 0.3772184527E+008 }
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-lwfld_ai-0000032400": 0.6033428786E+008 }
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-rain_ai-0000032400": 0.4713043321E+001 }
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-snow_ai-0000032400": 0.8453051493E+000 }
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-press_ai-0000032400": 0.2071047107E+011 }
+ { "checksum-matmxx-runof_ai-0000032400": 0.2942046726E+000 }
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-tair_ai-0000032400": 0.5701754079E+008 }
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-qair_ai-0000032400": 0.1445015768E+004 }
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-uwnd_ai-0000032400": -.1104884882E+006 }
+ forcing_update_field at 1900-01-01T09:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: index 0000000004
+ { "checksum-matmxx-vwnd_ai-0000032400": -.5909244254E+005 }
+ cur_exp_date 1900-01-01T12:00:00
+ cur_forcing_date 1900-01-01T12:00:00
+ cur_runtime_in_seconds 0000043200
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-swfld_ai-0000043200": 0.3720079634E+008 }
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-lwfld_ai-0000043200": 0.6048958806E+008 }
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-rain_ai-0000043200": 0.4829329773E+001 }
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-snow_ai-0000043200": 0.8613351981E+000 }
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-press_ai-0000043200": 0.2070747394E+011 }
+ { "checksum-matmxx-runof_ai-0000043200": 0.2942046726E+000 }
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-tair_ai-0000043200": 0.5704232226E+008 }
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-qair_ai-0000043200": 0.1440550444E+004 }
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-uwnd_ai-0000043200": -.1004544562E+006 }
+ forcing_update_field at 1900-01-01T12:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: index 0000000005
+ { "checksum-matmxx-vwnd_ai-0000043200": -.5204804103E+005 }
+ cur_exp_date 1900-01-01T15:00:00
+ cur_forcing_date 1900-01-01T15:00:00
+ cur_runtime_in_seconds 0000054000
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-swfld_ai-0000054000": 0.3709844667E+008 }
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-lwfld_ai-0000054000": 0.6048478562E+008 }
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-rain_ai-0000054000": 0.5107663121E+001 }
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-snow_ai-0000054000": 0.9127205880E+000 }
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-press_ai-0000054000": 0.2070474296E+011 }
+ { "checksum-matmxx-runof_ai-0000054000": 0.2942046726E+000 }
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-tair_ai-0000054000": 0.5705791462E+008 }
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-qair_ai-0000054000": 0.1439315051E+004 }
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-uwnd_ai-0000054000": -.8735023510E+005 }
+ forcing_update_field at 1900-01-01T15:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: index 0000000006
+ { "checksum-matmxx-vwnd_ai-0000054000": -.4333686097E+005 }
+ cur_exp_date 1900-01-01T18:00:00
+ cur_forcing_date 1900-01-01T18:00:00
+ cur_runtime_in_seconds 0000064800
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-swfld_ai-0000064800": 0.3708264644E+008 }
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-lwfld_ai-0000064800": 0.6046128932E+008 }
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-rain_ai-0000064800": 0.4926356915E+001 }
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-snow_ai-0000064800": 0.8963686040E+000 }
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-press_ai-0000064800": 0.2070313522E+011 }
+ { "checksum-matmxx-runof_ai-0000064800": 0.2942046726E+000 }
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-tair_ai-0000064800": 0.5704388750E+008 }
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-qair_ai-0000064800": 0.1442558150E+004 }
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-uwnd_ai-0000064800": -.7010880232E+005 }
+ forcing_update_field at 1900-01-01T18:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: index 0000000007
+ { "checksum-matmxx-vwnd_ai-0000064800": -.3339618504E+005 }
+ cur_exp_date 1900-01-01T21:00:00
+ cur_forcing_date 1900-01-01T21:00:00
+ cur_runtime_in_seconds 0000075600
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-swfld_ai-0000075600": 0.3703219374E+008 }
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-lwfld_ai-0000075600": 0.6038068493E+008 }
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-rain_ai-0000075600": 0.4799500087E+001 }
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-snow_ai-0000075600": 0.9030555029E+000 }
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-press_ai-0000075600": 0.2070045391E+011 }
+ { "checksum-matmxx-runof_ai-0000075600": 0.2942046726E+000 }
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-tair_ai-0000075600": 0.5702379302E+008 }
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-qair_ai-0000075600": 0.1445578812E+004 }
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-uwnd_ai-0000075600": -.4849775737E+005 }
+ forcing_update_field at 1900-01-01T21:00:00.000
+ field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: index 0000000008
+ { "checksum-matmxx-vwnd_ai-0000075600": -.2103651609E+005 }
+ cur_exp_date 1900-01-02T00:00:00
+ cur_forcing_date 1900-01-02T00:00:00
+ cur_runtime_in_seconds 0000086400
+ { timer-field_read min:   0.002 }
+ { timer-field_read max:   0.088 }
+ { timer-field_read mean:   0.009 }
+ { timer-field_read variance:   0.000 }
+ { timer-field_read count: 0000073 }
+ { timer-ice_wait min:   0.000 }
+ { timer-ice_wait max:   0.010 }
+ { timer-ice_wait mean:   0.003 }
+ { timer-ice_wait variance:   0.000 }
+ { timer-ice_wait count: 0000008 }
+ { timer-init_runoff min:   0.231 }
+ { timer-init_runoff max:   0.231 }
+ { timer-init_runoff mean:   0.231 }
+ { timer-init_runoff variance:   0.000 }
+ { timer-init_runoff count: 0000001 }
+ { timer-remap_runoff min:   0.166 }
+ { timer-remap_runoff max:   0.166 }
+ { timer-remap_runoff mean:   0.166 }
+ { timer-remap_runoff variance:   0.000 }
+ { timer-remap_runoff count: 0000001 }
+ Run complete, calling deinit
+ { "checksum-cicexx-swfld_i-0000000000": 0.1366422710E+008 }
+ { "checksum-cicexx-lwfld_i-0000000000": 0.2329418642E+008 }
+ { "checksum-cicexx-rain_i-0000000000": 0.1989830481E+001 }
+ { "checksum-cicexx-snow_i-0000000000": 0.2532985017E+000 }
+ { "checksum-cicexx-press_i-0000000000": 0.7042177950E+010 }
+ { "checksum-cicexx-runof_i-0000000000": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000000000": 0.1988883197E+008 }
+ { "checksum-cicexx-qair_i-0000000000": 0.6810702544E+003 }
+ { "checksum-cicexx-uwnd_i-0000000000": -.8628150496E+005 }
+ { "checksum-cicexx-vwnd_i-0000000000": -.3741189123E+005 }
+ { "checksum-cicexx-strsu_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000000000": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000005400": 0.1366422710E+008 }
+ { "checksum-cicexx-lwfld_i-0000005400": 0.2329418642E+008 }
+ { "checksum-cicexx-rain_i-0000005400": 0.1989830481E+001 }
+ { "checksum-cicexx-snow_i-0000005400": 0.2532985017E+000 }
+ { "checksum-cicexx-press_i-0000005400": 0.7042177950E+010 }
+ { "checksum-cicexx-runof_i-0000005400": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000005400": 0.1988883197E+008 }
+ { "checksum-cicexx-qair_i-0000005400": 0.6810702544E+003 }
+ { "checksum-cicexx-uwnd_i-0000005400": -.8628150496E+005 }
+ { "checksum-cicexx-vwnd_i-0000005400": -.3741189123E+005 }
+ { "checksum-cicexx-sst_i-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000005400": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000010800": 0.1219938119E+008 }
+ { "checksum-cicexx-lwfld_i-0000010800": 0.2327585192E+008 }
+ { "checksum-cicexx-rain_i-0000010800": 0.2050512477E+001 }
+ { "checksum-cicexx-snow_i-0000010800": 0.2669365113E+000 }
+ { "checksum-cicexx-press_i-0000010800": 0.7041070530E+010 }
+ { "checksum-cicexx-runof_i-0000010800": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000010800": 0.1988987756E+008 }
+ { "checksum-cicexx-qair_i-0000010800": 0.6808087713E+003 }
+ { "checksum-cicexx-uwnd_i-0000010800": -.8443710334E+005 }
+ { "checksum-cicexx-vwnd_i-0000010800": -.3680227226E+005 }
+ { "checksum-cicexx-sst_i-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000010800": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000016200": 0.1219938119E+008 }
+ { "checksum-cicexx-lwfld_i-0000016200": 0.2327585192E+008 }
+ { "checksum-cicexx-rain_i-0000016200": 0.2050512477E+001 }
+ { "checksum-cicexx-snow_i-0000016200": 0.2669365113E+000 }
+ { "checksum-cicexx-press_i-0000016200": 0.7041070530E+010 }
+ { "checksum-cicexx-runof_i-0000016200": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000016200": 0.1988987756E+008 }
+ { "checksum-cicexx-qair_i-0000016200": 0.6808087713E+003 }
+ { "checksum-cicexx-uwnd_i-0000016200": -.8443710334E+005 }
+ { "checksum-cicexx-vwnd_i-0000016200": -.3680227226E+005 }
+ { "checksum-cicexx-sst_i-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000016200": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000021600": 0.1077860507E+008 }
+ { "checksum-cicexx-lwfld_i-0000021600": 0.2327583475E+008 }
+ { "checksum-cicexx-rain_i-0000021600": 0.2039303133E+001 }
+ { "checksum-cicexx-snow_i-0000021600": 0.2621175630E+000 }
+ { "checksum-cicexx-press_i-0000021600": 0.7040473365E+010 }
+ { "checksum-cicexx-runof_i-0000021600": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000021600": 0.1988612800E+008 }
+ { "checksum-cicexx-qair_i-0000021600": 0.6810735215E+003 }
+ { "checksum-cicexx-uwnd_i-0000021600": -.8524008071E+005 }
+ { "checksum-cicexx-vwnd_i-0000021600": -.3803437881E+005 }
+ { "checksum-cicexx-sst_i-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000021600": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000027000": 0.1077860507E+008 }
+ { "checksum-cicexx-lwfld_i-0000027000": 0.2327583475E+008 }
+ { "checksum-cicexx-rain_i-0000027000": 0.2039303133E+001 }
+ { "checksum-cicexx-snow_i-0000027000": 0.2621175630E+000 }
+ { "checksum-cicexx-press_i-0000027000": 0.7040473365E+010 }
+ { "checksum-cicexx-runof_i-0000027000": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000027000": 0.1988612800E+008 }
+ { "checksum-cicexx-qair_i-0000027000": 0.6810735215E+003 }
+ { "checksum-cicexx-uwnd_i-0000027000": -.8524008071E+005 }
+ { "checksum-cicexx-vwnd_i-0000027000": -.3803437881E+005 }
+ { "checksum-cicexx-sst_i-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000027000": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000032400": 0.1045602249E+008 }
+ { "checksum-cicexx-lwfld_i-0000032400": 0.2327076234E+008 }
+ { "checksum-cicexx-rain_i-0000032400": 0.2170007783E+001 }
+ { "checksum-cicexx-snow_i-0000032400": 0.2612573026E+000 }
+ { "checksum-cicexx-press_i-0000032400": 0.7039973046E+010 }
+ { "checksum-cicexx-runof_i-0000032400": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000032400": 0.1988288713E+008 }
+ { "checksum-cicexx-qair_i-0000032400": 0.6804163337E+003 }
+ { "checksum-cicexx-uwnd_i-0000032400": -.8287892432E+005 }
+ { "checksum-cicexx-vwnd_i-0000032400": -.4012851877E+005 }
+ { "checksum-cicexx-sst_i-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000032400": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000037800": 0.1045602249E+008 }
+ { "checksum-cicexx-lwfld_i-0000037800": 0.2327076234E+008 }
+ { "checksum-cicexx-rain_i-0000037800": 0.2170007783E+001 }
+ { "checksum-cicexx-snow_i-0000037800": 0.2612573026E+000 }
+ { "checksum-cicexx-press_i-0000037800": 0.7039973046E+010 }
+ { "checksum-cicexx-runof_i-0000037800": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000037800": 0.1988288713E+008 }
+ { "checksum-cicexx-qair_i-0000037800": 0.6804163337E+003 }
+ { "checksum-cicexx-uwnd_i-0000037800": -.8287892432E+005 }
+ { "checksum-cicexx-vwnd_i-0000037800": -.4012851877E+005 }
+ { "checksum-cicexx-sst_i-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000037800": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000043200": 0.1094814468E+008 }
+ { "checksum-cicexx-lwfld_i-0000043200": 0.2328248956E+008 }
+ { "checksum-cicexx-rain_i-0000043200": 0.2186970713E+001 }
+ { "checksum-cicexx-snow_i-0000043200": 0.2509665314E+000 }
+ { "checksum-cicexx-press_i-0000043200": 0.7039564060E+010 }
+ { "checksum-cicexx-runof_i-0000043200": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000043200": 0.1988035784E+008 }
+ { "checksum-cicexx-qair_i-0000043200": 0.6800616772E+003 }
+ { "checksum-cicexx-uwnd_i-0000043200": -.7810886696E+005 }
+ { "checksum-cicexx-vwnd_i-0000043200": -.3862575686E+005 }
+ { "checksum-cicexx-sst_i-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000043200": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000048600": 0.1094814468E+008 }
+ { "checksum-cicexx-lwfld_i-0000048600": 0.2328248956E+008 }
+ { "checksum-cicexx-rain_i-0000048600": 0.2186970713E+001 }
+ { "checksum-cicexx-snow_i-0000048600": 0.2509665314E+000 }
+ { "checksum-cicexx-press_i-0000048600": 0.7039564060E+010 }
+ { "checksum-cicexx-runof_i-0000048600": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000048600": 0.1988035784E+008 }
+ { "checksum-cicexx-qair_i-0000048600": 0.6800616772E+003 }
+ { "checksum-cicexx-uwnd_i-0000048600": -.7810886696E+005 }
+ { "checksum-cicexx-vwnd_i-0000048600": -.3862575686E+005 }
+ { "checksum-cicexx-sst_i-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000048600": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000054000": 0.1246182766E+008 }
+ { "checksum-cicexx-lwfld_i-0000054000": 0.2329037786E+008 }
+ { "checksum-cicexx-rain_i-0000054000": 0.2311004134E+001 }
+ { "checksum-cicexx-snow_i-0000054000": 0.2553818209E+000 }
+ { "checksum-cicexx-press_i-0000054000": 0.7038911354E+010 }
+ { "checksum-cicexx-runof_i-0000054000": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000054000": 0.1988187523E+008 }
+ { "checksum-cicexx-qair_i-0000054000": 0.6795619747E+003 }
+ { "checksum-cicexx-uwnd_i-0000054000": -.7238062434E+005 }
+ { "checksum-cicexx-vwnd_i-0000054000": -.3629443140E+005 }
+ { "checksum-cicexx-sst_i-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000054000": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000059400": 0.1246182766E+008 }
+ { "checksum-cicexx-lwfld_i-0000059400": 0.2329037786E+008 }
+ { "checksum-cicexx-rain_i-0000059400": 0.2311004134E+001 }
+ { "checksum-cicexx-snow_i-0000059400": 0.2553818209E+000 }
+ { "checksum-cicexx-press_i-0000059400": 0.7038911354E+010 }
+ { "checksum-cicexx-runof_i-0000059400": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000059400": 0.1988187523E+008 }
+ { "checksum-cicexx-qair_i-0000059400": 0.6795619747E+003 }
+ { "checksum-cicexx-uwnd_i-0000059400": -.7238062434E+005 }
+ { "checksum-cicexx-vwnd_i-0000059400": -.3629443140E+005 }
+ { "checksum-cicexx-sst_i-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000059400": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000064800": 0.1388039250E+008 }
+ { "checksum-cicexx-lwfld_i-0000064800": 0.2328349532E+008 }
+ { "checksum-cicexx-rain_i-0000064800": 0.2228180016E+001 }
+ { "checksum-cicexx-snow_i-0000064800": 0.2421175177E+000 }
+ { "checksum-cicexx-press_i-0000064800": 0.7038611645E+010 }
+ { "checksum-cicexx-runof_i-0000064800": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000064800": 0.1988038663E+008 }
+ { "checksum-cicexx-qair_i-0000064800": 0.6794867493E+003 }
+ { "checksum-cicexx-uwnd_i-0000064800": -.6709300261E+005 }
+ { "checksum-cicexx-vwnd_i-0000064800": -.3364081932E+005 }
+ { "checksum-cicexx-sst_i-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000064800": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000070200": 0.1388039250E+008 }
+ { "checksum-cicexx-lwfld_i-0000070200": 0.2328349532E+008 }
+ { "checksum-cicexx-rain_i-0000070200": 0.2228180016E+001 }
+ { "checksum-cicexx-snow_i-0000070200": 0.2421175177E+000 }
+ { "checksum-cicexx-press_i-0000070200": 0.7038611645E+010 }
+ { "checksum-cicexx-runof_i-0000070200": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000070200": 0.1988038663E+008 }
+ { "checksum-cicexx-qair_i-0000070200": 0.6794867493E+003 }
+ { "checksum-cicexx-uwnd_i-0000070200": -.6709300261E+005 }
+ { "checksum-cicexx-vwnd_i-0000070200": -.3364081932E+005 }
+ { "checksum-cicexx-sst_i-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000070200": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000075600": 0.1487539296E+008 }
+ { "checksum-cicexx-lwfld_i-0000075600": 0.2327117938E+008 }
+ { "checksum-cicexx-rain_i-0000075600": 0.2195286822E+001 }
+ { "checksum-cicexx-snow_i-0000075600": 0.2427958386E+000 }
+ { "checksum-cicexx-press_i-0000075600": 0.7037653632E+010 }
+ { "checksum-cicexx-runof_i-0000075600": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000075600": 0.1988115390E+008 }
+ { "checksum-cicexx-qair_i-0000075600": 0.6794049570E+003 }
+ { "checksum-cicexx-uwnd_i-0000075600": -.6039477142E+005 }
+ { "checksum-cicexx-vwnd_i-0000075600": -.3114829349E+005 }
+ { "checksum-cicexx-sst_i-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000075600": 0.0000000000E+000 }
+ { "checksum-cicexx-swfld_i-0000081000": 0.1487539296E+008 }
+ { "checksum-cicexx-lwfld_i-0000081000": 0.2327117938E+008 }
+ { "checksum-cicexx-rain_i-0000081000": 0.2195286822E+001 }
+ { "checksum-cicexx-snow_i-0000081000": 0.2427958386E+000 }
+ { "checksum-cicexx-press_i-0000081000": 0.7037653632E+010 }
+ { "checksum-cicexx-runof_i-0000081000": 0.2942046726E+000 }
+ { "checksum-cicexx-tair_i-0000081000": 0.1988115390E+008 }
+ { "checksum-cicexx-qair_i-0000081000": 0.6794049570E+003 }
+ { "checksum-cicexx-uwnd_i-0000081000": -.6039477142E+005 }
+ { "checksum-cicexx-vwnd_i-0000081000": -.3114829349E+005 }
+ { "checksum-cicexx-sst_i-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-sss_i-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssu_i-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssv_i-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-sslx_i-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-ssly_i-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-pfmice_i-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-strsu_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-strsv_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-rain_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-snow_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-stflx_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-htflx_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-swflx_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-qflux_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-shflx_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-lwflx_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-runof_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-press_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-aice_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-melt_io-0000081000": 0.0000000000E+000 }
+ { "checksum-cicexx-form_io-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000000000": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000005400": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000010800": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000016200": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000021600": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000027000": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000032400": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000037800": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000043200": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000048600": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000054000": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000059400": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000064800": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000070200": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000075600": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_flux-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_flux-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-lprec-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-fprec-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-salt_flx-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-mh_flux-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-sw_flux-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-q_flux-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_flux-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-lw_flux-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-runof-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-p-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-aice-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfimelt-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-wfiform-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-t_surf-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-s_surf-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-u_surf-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-v_surf-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldx-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-dssldy-0000081000": 0.0000000000E+000 }
+ { "checksum-mom5xx-frazil-0000081000": 0.0000000000E+000 }
