@@ -130,11 +130,11 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
         time = len
       elseif (trim(dimname) == 'latitude' .or. trim(dimname) == 'AY' .or. &
                 trim(dimname) == 'ny' .or. trim(dimname) == 'LAT' .or. &
-                trim(dimname) == 'nj') then
+                trim(dimname) == 'lat' .or. trim(dimname) == 'nj') then
         ny = len
       elseif (trim(dimname) == 'longitude' .or. trim(dimname) == 'AX' .or. &
                 trim(dimname) == 'nx' .or. trim(dimname) == 'LON' .or. &
-                trim(dimname) == 'ni') then
+                trim(dimname) == 'lon' .or. trim(dimname) == 'ni') then
         nx = len
       else
         call assert(.false., 'get_var_dims: Unsupported dimension name '//trim(dimname))
