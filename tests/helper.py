@@ -104,7 +104,7 @@ class Helper:
             retcode = e.returncode
 
         if retcode != 0:
-            return retcode, None, None
+            return retcode, None, None, None
 
         log = ''
         with open(os.path.join(my_dir, 'log', 'matmxx.pe00000.log')) as f:

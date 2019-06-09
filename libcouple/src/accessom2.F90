@@ -41,6 +41,8 @@ type accessom2
     type(datetime) :: forcing_start_date, forcing_end_date
     integer, dimension(3) :: restart_period
 
+    logical :: allow_forcing_and_exp_date_mismatch
+
     character(len=9) :: calendar_str
     integer :: calendar
 
@@ -108,12 +110,14 @@ character(len=*), parameter :: config_file = 'accessom2.nml'
 character(len=19) :: forcing_start_date, forcing_end_date
 character(len=19) :: exp_cur_date, forcing_cur_date
 integer, dimension(3) :: restart_period
+logical :: allow_forcing_and_exp_date_mismatch
 character(len=8) :: log_level
 logical :: enable_simple_timers
 integer :: ice_ocean_timestep
 
 namelist /accessom2_nml/ log_level, ice_ocean_timestep, enable_simple_timers
-namelist /date_manager_nml/ forcing_start_date, forcing_end_date, restart_period
+namelist /date_manager_nml/ forcing_start_date, forcing_end_date, &
+         restart_period, allow_forcing_and_exp_date_mismatch
 namelist /do_not_edit_nml/ forcing_cur_date, exp_cur_date
 
 contains
@@ -137,13 +141,14 @@ subroutine accessom2_init(self, model_name, config_dir)
     self%ice_ocean_timestep = CONIG_NOT_INITIALISED
     self%calendar = CONIG_NOT_INITIALISED
 
-    self%enable_simple_timers = .false.
     self%model_name = model_name
     if (present(config_dir)) then
         self%config_dir = config_dir
     else
         self%config_dir = '../globabl/'
     endif
+
+    allow_forcing_and_exp_date_mismatch = .false.
 
     ! Read namelist which includes information about the forcing start and end date
     path = trim(config_dir)//'/'//trim(config_file)
@@ -169,6 +174,7 @@ subroutine accessom2_init(self, model_name, config_dir)
     self%forcing_end_date = tm2date(ctime)
 
     self%restart_period = restart_period
+    self%allow_forcing_and_exp_date_mismatch = allow_forcing_and_exp_date_mismatch
 
     ! Read in exp_cur_date and focing_cur_date from restart file.
     ! Try to read from config dir first.
@@ -498,8 +504,14 @@ subroutine accessom2_progress_date(self, timestep)
     class(accessom2), intent(inout) :: self
     integer, intent(in) :: timestep
 
+    logical :: check_for_date_mismatch
+    integer :: err
+
+    check_for_date_mismatch = .true.
+
     ! Forcing date
     self%forcing_cur_date = self%forcing_cur_date + timedelta(seconds=timestep)
+    ! Deal with the NOLEAP calendar special case
     if (self%forcing_cur_date%getMonth() == 2 .and. &
         self%forcing_cur_date%getDay() == 29 .and. &
         self%calendar == CALENDAR_NOLEAP) then
@@ -513,6 +525,7 @@ subroutine accessom2_progress_date(self, timestep)
 
     ! Experiment date
     self%exp_cur_date = self%exp_cur_date + timedelta(seconds=timestep)
+    ! Deal with the NOLEAP calendar special case
     if (self%exp_cur_date%getMonth() == 2 .and. &
         self%exp_cur_date%getDay() == 29 .and. &
         self%calendar == CALENDAR_NOLEAP) then
@@ -522,6 +535,47 @@ subroutine accessom2_progress_date(self, timestep)
 
     if (self%exp_cur_date >= self%run_end_date) then
         self%exp_cur_date = self%run_end_date
+    endif
+
+    ! If the forcing date is a leap day but the experiment date is not, then
+    ! skip the forcing leap day.
+    if ((self%forcing_cur_date%getMonth() == 2 .and. &
+         self%forcing_cur_date%getDay() == 29) .and. &
+         (self%exp_cur_date%getMonth() == 3 .and. &
+         self%exp_cur_date%getDay() == 1)) then
+
+        self%forcing_cur_date = self%forcing_cur_date + timedelta(days=1)
+
+    ! If the experiment date is a leap day but the forcing date is not, then
+    ! replay the forcing day.
+    elseif ((self%exp_cur_date%getMonth() == 2 .and. &
+             self%exp_cur_date%getDay() == 29) .and. &
+             (self%forcing_cur_date%getMonth() == 3 .and. &
+              self%forcing_cur_date%getDay() == 1)) then
+
+        self%forcing_cur_date = self%forcing_cur_date - timedelta(days=1)
+        check_for_date_mismatch = .false.
+    endif
+
+    ! Expect the forcing date and experiment date to only differ on the year.
+    if (check_for_date_mismatch .and. &
+        (self%forcing_cur_date%getMonth() /= self%exp_cur_date%getMonth()) .or. &
+        (self%forcing_cur_date%getDay() /= self%exp_cur_date%getDay())) then
+
+        if (self%allow_forcing_and_exp_date_mismatch) then
+            write(stderr, '(A)') 'WARNING in accessom2_progress_date: forcing '// &
+                                 'and experiment dates are out of sync.'
+        else
+            write(stderr, '(A)') 'ERROR in accessom2_progress_date: forcing '// &
+                                 'and experiment dates are out of sync.'
+        endif
+
+        write(stderr, '(A)') 'forcing date: '//trim(self%forcing_cur_date%isoformat())
+        write(stderr, '(A)') 'experiment date: '//trim(self%exp_cur_date%isoformat())
+
+        if (.not. self%allow_forcing_and_exp_date_mismatch) then
+            call MPI_Abort(MPI_COMM_WORLD, 1, err)
+        endif
     endif
 
 endsubroutine accessom2_progress_date
@@ -736,7 +790,8 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             write(stderr, '(A)') 'atm end date: '//trim(tmp_date%isoformat())
             tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ice end date: '//trim(tmp_date%isoformat())
-            stop 1
+
+            call MPI_Abort(MPI_COMM_WORLD, 1, err)
         endif
 
         call MPI_recv(buf, 1, MPI_INTEGER, self%ocean_ic_root, tag, &
@@ -748,7 +803,8 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             write(stderr, '(A)') 'atm end date: '//trim(tmp_date%isoformat())
             tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ocean end date: '//trim(tmp_date%isoformat())
-            stop 1
+
+            call MPI_Abort(MPI_COMM_WORLD, 1, err)
         endif
     else
         if (self%my_local_pe == 0) then

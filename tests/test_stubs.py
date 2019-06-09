@@ -194,3 +194,16 @@ class TestStubs:
         Test that model restarts at the correct date.
         """
         pass
+
+    @pytest.mark.very_slow
+    def test_exp_and_forcing_date_sync(self, helper, exp):
+        """
+        Test that experiment and forcing dates are always in sync.
+
+        Esp relevant for multi-cycle IAF run, see:
+        https://github.com/COSIMA/access-om2/issues/149
+        """
+
+        ret, output, log, matm_log = helper.run_exp(exp, years_duration=1)
+        assert ret == 0
+

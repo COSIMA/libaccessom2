@@ -139,8 +139,8 @@ program atm
 
         call accessom2%progress_date(dt)
 
-        call accessom2%logger%write(LOG_INFO, 'cur_exp_date '//accessom2%get_cur_exp_date_str())
-        call accessom2%logger%write(LOG_INFO, 'cur_forcing_date '//accessom2%get_cur_forcing_date_str())
+        call accessom2%logger%write(LOG_INFO, '{ "cur_exp_date" :  "'//accessom2%get_cur_exp_date_str()//'" }')
+        call accessom2%logger%write(LOG_INFO, '{ "cur_forcing_date" : "'//accessom2%get_cur_forcing_date_str()//'" }')
         call accessom2%logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
                                     int(accessom2%get_cur_runtime_in_seconds()))
     enddo
