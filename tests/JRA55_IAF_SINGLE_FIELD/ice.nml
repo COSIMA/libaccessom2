@@ -1,0 +1,9 @@
+&ice_nml
+    resolution(:) = 360,300
+    from_atm_field_names = 'swfld_i'
+    to_ocean_field_names = 'strsu_io'
+    from_ocean_field_names = 'sst_i'
+    ice_grid_file = '../test_data/grid.nc'
+    ice_mask_file = '../test_data/kmt.nc'
+    dt = 5400
+&end

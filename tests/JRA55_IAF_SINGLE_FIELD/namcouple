@@ -1,0 +1,86 @@
+# This is a typical input file for OASIS 3.0, using netCDF format
+# for restart input files.  Oasis reads this file at run-time. 
+#
+# Any line beginning with # is ignored. Blank lines are not allowed.
+#
+# $SEQMODE
+# This keyword concerns the coupling algorithm. Put here the maximum number
+# of fields that have to be, at one particular coupling timestep,
+# necessarily exchanged sequentially in a given order.
+#       1
+# $END
+#########################################################################
+
+ $NFIELDS
+# This is the total number of fields being exchanged. 
+### 1 fields  atm -> ice
+### 1 fields  ice -> ocn
+### 1 fields  ocn -> ice
+  3
+ $END
+##########################################################################
+ $NBMODEL
+# This gives you the number of models running in this experiment +
+# their names (character*6, exactly!) + , in option, the maximum Fortran unit
+# number used by each model; 1024 will be used if none are given.
+#
+  3  cicexx matmxx mom5xx
+ $END
+###########################################################################
+ $RUNTIME
+# This gives you the total simulated time for this run in seconds
+# This is not used but needs to be >= to the timestep to satisfy error checking.
+# See https://github.com/OceansAus/oasis3-mct/issues/3
+ 10800
+ $END
+###########################################################################
+ $NLOGPRT
+# Index of printing level in output file cplout: 0 = no printing
+#  1 = main routines and field names when treated, 2 = complete output
+ 0
+ $END
+###########################################################################
+ $STRINGS
+#
+# The above variables are the general parameters for the experiment.
+# Everything below has to do with the fields being exchanged.
+#
+#
+#                      ATMOSPHERE  --->>>  ICE
+#                      -----------------------
+##########
+# Field 01 : swflx down
+##########
+swfld_ai swfld_i 367 10800 3 a2i.nc EXPORTED
+jrat cict LAG=0 SEQ=+1
+P  0  P  0
+#
+LOCTRANS MAPPING SCRIPR
+INSTANT
+../test_data/rmp_jra55_cice_conserve.nc dst
+CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
+############################################################################
+#
+#                      ICE --->>> OCEAN
+#                      ----------------
+##########
+# Field 11 : ice-ocean interface stress (x-direction)
+##########
+strsu_io u_flux 170 3600 1 i2o.nc IGNORED
+cict cict LAG=0 SEQ=+1
+#
+LOCTRANS
+INSTANT
+############################################################################
+# 
+#                      OCEAN --->>> ICE
+#                      ----------------
+########## 
+# Field 26 : Sea surface temperature (Celsius in MOM4, Kelvin in MOM5)
+##########
+t_surf sst_i 1 3600 1 o2i.nc IGNORED
+cict cict LAG=0 SEQ=+1
+#  
+LOCTRANS
+INSTANT
+ $END

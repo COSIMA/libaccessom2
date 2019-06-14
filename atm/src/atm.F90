@@ -32,6 +32,7 @@ program atm
 
     type(simple_timer_type) :: field_read_timer, ice_wait_timer
     type(simple_timer_type) :: init_runoff_timer, remap_runoff_timer
+    type(simple_timer_type) :: coupler_put_timer
 
     namelist /atm_nml/ forcing_file, accessom2_config_dir
 
@@ -80,6 +81,8 @@ program atm
                                  accessom2%simple_timers_enabled())
     call remap_runoff_timer%init('remap_runoff', accessom2%logger, &
                                  accessom2%simple_timers_enabled())
+    call coupler_put_timer%init('coupler_put', accessom2%logger, &
+                                 accessom2%simple_timers_enabled())
 
     ! Initialise the runoff remapping object with ice grid information.
     call init_runoff_timer%start()
@@ -124,11 +127,13 @@ program atm
                 endif
             endif
 
+            call coupler_put_timer%start()
             if (index(fields(i)%name, 'runof') /= 0) then
                 call coupler%put(runoff_field, cur_runtime_in_seconds, err)
             else
                 call coupler%put(fields(i), cur_runtime_in_seconds, err)
             endif
+            call coupler_put_timer%stop()
         enddo
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
@@ -137,18 +142,19 @@ program atm
         call accessom2%atm_ice_sync()
         call ice_wait_timer%stop()
 
-        call accessom2%progress_date(dt)
-
-        call accessom2%logger%write(LOG_INFO, '{ "cur_exp_date" :  "'//accessom2%get_cur_exp_date_str()//'" }')
-        call accessom2%logger%write(LOG_INFO, '{ "cur_forcing_date" : "'//accessom2%get_cur_forcing_date_str()//'" }')
+        call accessom2%logger%write(LOG_INFO, '{ "cur_exp-datetime" :  "'//accessom2%get_cur_exp_date_str()//'" }')
+        call accessom2%logger%write(LOG_INFO, '{ "cur_forcing-datetime" : "'//accessom2%get_cur_forcing_date_str()//'" }')
         call accessom2%logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
                                     int(accessom2%get_cur_runtime_in_seconds()))
+
+        call accessom2%progress_date(dt)
     enddo
 
     call field_read_timer%write_stats()
     call ice_wait_timer%write_stats()
     call init_runoff_timer%write_stats()
     call remap_runoff_timer%write_stats()
+    call coupler_put_timer%write_stats()
 
     call accessom2%logger%write(LOG_INFO, 'Run complete, calling deinit')
 

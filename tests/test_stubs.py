@@ -28,19 +28,51 @@ def extract_field_name(checksum):
     return k.split('-')[2]
 
 
-def build_log_items(forcing_update_dts, field_update_files,
-                    field_update_indices, checksums):
+def dicts_to_list(key_name, log_str): 
+    lines = filter(lambda x : key_name in x, log_str.splitlines())
+    out = []
+    for l in lines:
+        out += list(ast.literal_eval(l.strip()).values())
+    return out
+
+
+def build_log_items(log_str):
+
+    forcing_update_dts = dicts_to_list('forcing_update_field-datetime', log_str)
+    forcing_update_dts = [dateutil.parser.parse(d) for d in forcing_update_dts]
+    field_update_files = dicts_to_list('field_update_data-file', log_str)
+    field_update_indices = dicts_to_list('field_update_data-index', log_str)
+
+    tmp_chk = filter(lambda x : 'checksum' in x, log_str.splitlines())
+    checksums = []
+    for c in tmp_chk:
+        checksums.append(ast.literal_eval(c.strip()))
+
     log_items = []
 
     assert len(forcing_update_dts) == len(field_update_files) == \
                 len(field_update_indices) == len(checksums)
 
+    field_names = set()
     for i in range(len(forcing_update_dts)):
         field_name = extract_field_name(checksums[i])
+        field_names.add(field_name)
         item = LogItem(field_name, field_update_files[i],
                        field_update_indices[i], forcing_update_dts[i],
                        checksums[i])
         log_items.append(item)
+
+    cur_exp_dts = dicts_to_list('cur_exp-datetime', log_str)
+    cur_exp_dts = [dateutil.parser.parse(d) for d in cur_exp_dts]
+    cur_forcing_dts = dicts_to_list('cur_forcing-datetime', log_str)
+    cur_forcing_dts = [dateutil.parser.parse(d) for d in cur_forcing_dts]
+
+    # There should be one cur_exp_dts and cur_forcing_dts for each exchange of
+    # all fields
+    assert len(cur_exp_dts) == len(cur_forcing_dts) == \
+            (len(forcing_update_dts) // len(field_names))
+   
+    for li in log_items:
 
     return log_items
 
@@ -69,9 +101,14 @@ def remove_duplicate_runoff_checksums(checksums):
 def helper():
     return Helper()
 
-@pytest.fixture(params=['JRA55_IAF', 'JRA55_RYF'])
+@pytest.fixture(params=['JRA55_IAF', 'JRA55_RYF', 'JRA55_RYF_MINIMAL'])
 def exp(request):
     yield request.param
+
+@pytest.fixture(params=['JRA55_IAF_SINGLE_FIELD'])
+def exp_fast(request):
+    yield request.param
+
 
 class TestStubs:
 
@@ -139,23 +176,6 @@ class TestStubs:
             forcing_start_date = dateutil.parser.parse(forcing_start_date)
             forcing_end_date = dateutil.parser.parse(forcing_end_date)
 
-        # Parse some YATM output
-        def dicts_to_list(key_name, log_str): 
-            lines = filter(lambda x : key_name in x, log_str.splitlines())
-            out = []
-            for l in lines:
-                out += list(ast.literal_eval(l.strip()).values())
-            return out
-
-        forcing_update_dts = dicts_to_list('forcing_update_field-datetime', matm_log)
-        forcing_update_dts = [dateutil.parser.parse(d) for d in forcing_update_dts]
-        field_update_files = dicts_to_list('field_update_data-file', matm_log)
-        field_update_indices = dicts_to_list('field_update_data-index', matm_log)
-        tmp_chk = filter(lambda x : 'checksum' in x, matm_log.splitlines())
-        checksums = []
-        for c in tmp_chk:
-            checksums.append(ast.literal_eval(c.strip()))
-
         # Parse forcing.json
         forcing_config = os.path.join(exp_dir, 'forcing.json')
         with open(forcing_config) as f:
@@ -196,7 +216,7 @@ class TestStubs:
         pass
 
     @pytest.mark.very_slow
-    def test_exp_and_forcing_date_sync(self, helper, exp):
+    def test_iaf_cycles(self, helper, exp_fast):
         """
         Test that experiment and forcing dates are always in sync.
 
@@ -204,6 +224,6 @@ class TestStubs:
         https://github.com/COSIMA/access-om2/issues/149
         """
 
-        ret, output, log, matm_log = helper.run_exp(exp, years_duration=1)
+        ret, output, log, matm_log = helper.run_exp(exp_fast, years_duration=1)
         assert ret == 0
 
