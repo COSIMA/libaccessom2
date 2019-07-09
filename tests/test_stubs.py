@@ -27,8 +27,7 @@ def extract_field_name(checksum):
 
     return k.split('-')[2]
 
-
-def dicts_to_list(key_name, log_str): 
+def dicts_to_list(key_name, log_str):
     lines = filter(lambda x : key_name in x, log_str.splitlines())
     out = []
     for l in lines:
@@ -49,6 +48,9 @@ def build_log_items(log_str):
         checksums.append(ast.literal_eval(c.strip()))
 
     log_items = []
+
+    # Remove duplicate runoff checksums
+    checksums, num_removed = remove_duplicate_runoff_checksums(checksums)
 
     assert len(forcing_update_dts) == len(field_update_files) == \
                 len(field_update_indices) == len(checksums)
@@ -71,8 +73,6 @@ def build_log_items(log_str):
     # all fields
     assert len(cur_exp_dts) == len(cur_forcing_dts) == \
             (len(forcing_update_dts) // len(field_names))
-   
-    for li in log_items:
 
     return log_items
 
@@ -166,6 +166,8 @@ class TestStubs:
         ret, output, log, matm_log = helper.run_exp(exp)
         assert ret == 0
 
+        log_items = build_log_items(log)
+
         # Get the experiment start and end dates
         exp_dir = os.path.join(helper.test_dir, exp)
         accessom2_config = os.path.join(exp_dir, 'accessom2.nml')
@@ -182,21 +184,12 @@ class TestStubs:
             forcing = json.load(f)
 
         # Check that first forcing time corrosponds to forcing_start_date
-        assert forcing_update_dts[0] == forcing_start_date 
+        assert log_items[0].forcing_datetime == forcing_start_date 
 
         # Check that field dt is all the same and as expected 
         uniq_dt = list(OrderedDict.fromkeys(forcing_update_dts))
         dt = [b - a for a, b in zip(uniq_dt, uniq_dt[1:])]
         assert set(dt).pop() == datetime.timedelta(hours=3)
-
-        # Remove duplicate runoff checksums
-        checksums, num_removed = remove_duplicate_runoff_checksums(checksums)
-
-        assert len(forcing_update_dts) == len(field_update_files) == \
-                 len(field_update_indices) == len(checksums)
-
-        log_items = build_log_items(forcing_update_dts, field_update_files,
-                                    field_update_indices, checksums)
 
         # Check that indices for a particular year are sequential and increasing
 
@@ -225,5 +218,9 @@ class TestStubs:
         """
 
         ret, output, log, matm_log = helper.run_exp(exp_fast, years_duration=1)
+
+        log_items = build_log_items(log)
+        # Check that experiment and forcing dates only differ as expected.
+
         assert ret == 0
 
