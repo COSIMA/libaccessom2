@@ -60,7 +60,7 @@ class Helper:
         """
         pass
 
-    def run_exp(self, exp_dir, years_duration=None):
+    def run_exp(self, exp_dir, years_duration=0, months_duration=0, seconds_duration=0):
         """
         Run the test experiment in exp_dir
         """
@@ -79,11 +79,15 @@ class Helper:
         my_dir = os.path.join(self.test_dir, exp_dir)
 
         # Update runtime
-        if years_duration:
+        if years_duration > 0 or months_duration > 0 or seconds_duration > 0:
+            assert not (years_duration > 0 and months_duration > 0)
+            assert not (years_duration > 0 and seconds_duration > 0)
+            assert not (months_duration > 0 and seconds_duration > 0)
             accessom2_config = os.path.join(my_dir, 'accessom2.nml')
             with open(accessom2_config) as f:
                 nml = f90nml.read(f)
-                nml['date_manager_nml']['restart_period'] = [years_duration, 0, 0]
+                nml['date_manager_nml']['restart_period'] = \
+                    [years_duration, months_duration, seconds_duration]
                 nml.write(accessom2_config, force=True)
 
         cur_dir = os.getcwd()

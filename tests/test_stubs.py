@@ -12,12 +12,15 @@ from helper import Helper
 class LogItem:
 
     def __init__(self, field_name, field_file,
-                 field_index, forcing_datetime, checksum):
+                 field_index, forcing_datetime, checksum, 
+                 cur_exp_dts, cur_forcing_dts):
         self.forcing_datetime = forcing_datetime
         self.field_name = field_name
         self.field_file = field_file
         self.field_index = field_index
         self.checksum = checksum
+        self.cur_exp_dts = cur_exp_dts
+        self.cur_forcing_dts = cur_forcing_dts
 
 
 def extract_field_name(checksum):
@@ -37,6 +40,7 @@ def dicts_to_list(key_name, log_str):
 
 def build_log_items(log_str):
 
+    # There will be one of these for each single field exchange
     forcing_update_dts = dicts_to_list('forcing_update_field-datetime', log_str)
     forcing_update_dts = [dateutil.parser.parse(d) for d in forcing_update_dts]
     field_update_files = dicts_to_list('field_update_data-file', log_str)
@@ -47,32 +51,38 @@ def build_log_items(log_str):
     for c in tmp_chk:
         checksums.append(ast.literal_eval(c.strip()))
 
-    log_items = []
-
     # Remove duplicate runoff checksums
     checksums, num_removed = remove_duplicate_runoff_checksums(checksums)
 
     assert len(forcing_update_dts) == len(field_update_files) == \
                 len(field_update_indices) == len(checksums)
 
+    # Figure out field names
     field_names = set()
     for i in range(len(forcing_update_dts)):
         field_name = extract_field_name(checksums[i])
         field_names.add(field_name)
-        item = LogItem(field_name, field_update_files[i],
-                       field_update_indices[i], forcing_update_dts[i],
-                       checksums[i])
-        log_items.append(item)
+    field_names = list(field_names)
 
+    # There should be one cur_exp_dts and cur_forcing_dts for each exchange of
+    # all fields
     cur_exp_dts = dicts_to_list('cur_exp-datetime', log_str)
     cur_exp_dts = [dateutil.parser.parse(d) for d in cur_exp_dts]
     cur_forcing_dts = dicts_to_list('cur_forcing-datetime', log_str)
     cur_forcing_dts = [dateutil.parser.parse(d) for d in cur_forcing_dts]
-
-    # There should be one cur_exp_dts and cur_forcing_dts for each exchange of
-    # all fields
     assert len(cur_exp_dts) == len(cur_forcing_dts) == \
             (len(forcing_update_dts) // len(field_names))
+
+    log_items = []
+    i = 0
+    for xchgi in range(len(cur_forcing_dts)):
+        for fldi in range(len(field_names)):
+            item = LogItem(field_names[fldi], field_update_files[i],
+                           field_update_indices[i], forcing_update_dts[i],
+                           checksums[i], cur_exp_dts[xchgi],
+                           cur_forcing_dts[xchgi])
+            log_items.append(item)
+            i += 1
 
     return log_items
 
@@ -166,7 +176,7 @@ class TestStubs:
         ret, output, log, matm_log = helper.run_exp(exp)
         assert ret == 0
 
-        log_items = build_log_items(log)
+        log_items = build_log_items(matm_log)
 
         # Get the experiment start and end dates
         exp_dir = os.path.join(helper.test_dir, exp)
@@ -217,10 +227,20 @@ class TestStubs:
         https://github.com/COSIMA/access-om2/issues/149
         """
 
-        ret, output, log, matm_log = helper.run_exp(exp_fast, years_duration=1)
-
-        log_items = build_log_items(log)
-        # Check that experiment and forcing dates only differ as expected.
-
+        # FIXME: either need to start closer to the problem dates or do several
+        # restarts. It is not currently possible to do a 180 year run.
+        ret, output, log, matm_log = helper.run_exp(exp_fast, years_duration=20)
         assert ret == 0
 
+        log_items = build_log_items(matm_log)
+
+        import pdb
+        pdb.set_trace()
+
+        # Check that experiment and forcing dates only differ in the year.
+        for li in log_items:
+            assert li.cur_exp_dts.month == li.cur_forcing_dts.month
+            assert li.cur_exp_dts.day == li.cur_forcing_dts.day
+            assert li.cur_exp_dts.hour == li.cur_forcing_dts.hour
+            assert li.cur_exp_dts.minute == li.cur_forcing_dts.minute
+            assert li.cur_exp_dts.second == li.cur_forcing_dts.second
