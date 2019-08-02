@@ -12,7 +12,7 @@ from helper import Helper
 class LogItem:
 
     def __init__(self, field_name, field_file,
-                 field_index, forcing_datetime, checksum, 
+                 field_index, forcing_datetime, checksum,
                  cur_exp_dts, cur_forcing_dts):
         self.forcing_datetime = forcing_datetime
         self.field_name = field_name
@@ -111,7 +111,8 @@ def remove_duplicate_runoff_checksums(checksums):
 def helper():
     return Helper()
 
-@pytest.fixture(params=['JRA55_IAF', 'JRA55_RYF', 'JRA55_RYF_MINIMAL'])
+#@pytest.fixture(params=['JRA55_RYF_MINIMAL', 'JRA55_IAF', 'JRA55_RYF'])
+@pytest.fixture(params=['JRA55_RYF_MINIMAL'])
 def exp(request):
     yield request.param
 
@@ -122,6 +123,7 @@ def exp_fast(request):
 
 class TestStubs:
 
+    @pytest.mark.fast
     def test_run(self, helper, exp):
         """
         Check that the default configurations run.
