@@ -122,7 +122,6 @@ def exp_fast(request):
 
 class TestStubs:
 
-    @pytest.mark.fast
     def test_run(self, helper, exp):
         """
         Check that the default configurations run.
@@ -148,8 +147,6 @@ class TestStubs:
         # Check that everything is the same
         assert run_checksums == stored_checksums
 
-
-    @pytest.mark.scaling
     def test_field_scaling(self, helper):
         ret, output, log, matm_log = helper.run_exp('FORCING_SCALING')
         assert ret == 0
@@ -194,9 +191,9 @@ class TestStubs:
             forcing = json.load(f)
 
         # Check that first forcing time corrosponds to forcing_start_date
-        assert log_items[0].forcing_datetime == forcing_start_date 
+        assert log_items[0].forcing_datetime == forcing_start_date
 
-        # Check that field dt is all the same and as expected 
+        # Check that field dt is all the same and as expected
         uniq_dt = list(OrderedDict.fromkeys(forcing_update_dts))
         dt = [b - a for a, b in zip(uniq_dt, uniq_dt[1:])]
         assert set(dt).pop() == datetime.timedelta(hours=3)
@@ -218,7 +215,7 @@ class TestStubs:
         """
         pass
 
-    @pytest.mark.very_slow
+    @pytest.mark.slow
     def test_iaf_cycles(self, helper, exp_fast):
         """
         Test that experiment and forcing dates are always in sync.
@@ -227,20 +224,29 @@ class TestStubs:
         https://github.com/COSIMA/access-om2/issues/149
         """
 
-        # FIXME: either need to start closer to the problem dates or do several
-        # restarts. It is not currently possible to do a 180 year run.
-        ret, output, log, matm_log = helper.run_exp(exp_fast, years_duration=20)
-        assert ret == 0
+        runtime_years = 5*60
+        curr_year = 0
+        curr_cycle = 0
 
-        log_items = build_log_items(matm_log)
+        while curr_year <= runtime_years:
+            restart = curr_year != 0
+            ret, output, log, matm_log = helper.run_exp(exp_fast, restart=restart, years_duration=1)
+            assert ret == 0
 
-        import pdb
-        pdb.set_trace()
+            curr_cycle = curr_year // 60
 
-        # Check that experiment and forcing dates only differ in the year.
-        for li in log_items:
-            assert li.cur_exp_dts.month == li.cur_forcing_dts.month
-            assert li.cur_exp_dts.day == li.cur_forcing_dts.day
-            assert li.cur_exp_dts.hour == li.cur_forcing_dts.hour
-            assert li.cur_exp_dts.minute == li.cur_forcing_dts.minute
-            assert li.cur_exp_dts.second == li.cur_forcing_dts.second
+            log_items = build_log_items(matm_log)
+
+            for li in log_items:
+                # Check the experiment year
+                assert li.cur_exp_dts.year == curr_year + 1958
+                assert li.cur_exp_dts.year == li.cur_forcing_dts.year + (curr_cycle * 60)
+
+                # Check that experiment and forcing dates only differ in the year.
+                assert li.cur_exp_dts.month == li.cur_forcing_dts.month
+                assert li.cur_exp_dts.day == li.cur_forcing_dts.day
+                assert li.cur_exp_dts.hour == li.cur_forcing_dts.hour
+                assert li.cur_exp_dts.minute == li.cur_forcing_dts.minute
+                assert li.cur_exp_dts.second == li.cur_forcing_dts.second
+
+            curr_year += 1

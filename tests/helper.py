@@ -60,15 +60,16 @@ class Helper:
         """
         pass
 
-    def run_exp(self, exp_dir, years_duration=0, months_duration=0, seconds_duration=0):
+    def run_exp(self, exp_dir, restart=False, years_duration=0, months_duration=0, seconds_duration=0):
         """
         Run the test experiment in exp_dir
         """
 
-        def clean_exp():
-            silentremove('accessom2_restart.nml')
+        def clean_logs():
             for f in glob.glob('log/*.log'):
                 silentremove(f)
+
+        def clean_restarts():
             for f in glob.glob('*.nc'):
                 silentremove(f)
 
@@ -96,8 +97,14 @@ class Helper:
             os.makedirs(os.path.join(my_dir, 'log'))
         except FileExistsError:
             pass
-        clean_exp()
+
+        if not restart:
+            silentremove('accessom2_restart.nml')
+
+        clean_restarts()
         copy_oasis_restarts()
+        clean_logs()
+
         cmd = shlex.split(run_cmd.format(atm_exe=self.atm_exe,
                                          ice_exe=self.ice_exe,
                                          ocean_exe=self.ocean_exe))
