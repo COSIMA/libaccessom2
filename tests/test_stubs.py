@@ -111,8 +111,7 @@ def remove_duplicate_runoff_checksums(checksums):
 def helper():
     return Helper()
 
-#@pytest.fixture(params=['JRA55_RYF_MINIMAL', 'JRA55_IAF', 'JRA55_RYF'])
-@pytest.fixture(params=['JRA55_RYF_MINIMAL'])
+@pytest.fixture(params=['JRA55_RYF_MINIMAL', 'JRA55_IAF', 'JRA55_RYF'])
 def exp(request):
     yield request.param
 
@@ -133,6 +132,7 @@ class TestStubs:
         assert ret == 0
 
 
+    @pytest.mark.debugging
     def test_unchanged_forcing_checksums(self, helper, exp):
         """
         Test that checksums have not changed.

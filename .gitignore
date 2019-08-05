@@ -20,3 +20,4 @@ tests/minimal/*.nc
 tests/JRA55_IAF/debug.root.*
 tests/JRA55_RYF/debug.root.*
 tests/JRA55_IAF_SINGLE_FIELD/debug.root.*
+tests/*/log/
