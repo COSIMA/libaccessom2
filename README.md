@@ -11,7 +11,7 @@ libaccessom2 functionality includes:
     * configuration synchronisation between models
     * a single configuration file for common configs (accessom2.nml)
 
-Further information about ACCESS-OM2 can be found in the [ACCESS-OM2 wiki](https://github.com/OceansAus/access-om2/wiki)
+Further information about ACCESS-OM2 can be found in the [ACCESS-OM2 wiki](https://github.com/COSIMA/access-om2/wiki)
 
 ## Configuration
 
@@ -53,7 +53,7 @@ This repository also includes ice and ocean stubs. These are stand-ins for the t
 How to build libaccessom2, YATM, ice\_stub and ocean\_stub:
 
 ```{bash}
-git clone https://github.com/OceansAus/libaccessom2.git
+git clone https://github.com/COSIMA/libaccessom2.git
 cd libaccessom2
 mkdir build
 cd build

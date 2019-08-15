@@ -30,7 +30,7 @@
  $RUNTIME
 # This gives you the total simulated time for this run in seconds
 # This is not used but needs to be >= to the timestep to satisfy error checking.
-# See https://github.com/OceansAus/oasis3-mct/issues/3
+# See https://github.com/COSIMA/oasis3-mct/issues/3
  10800
  $END
 ###########################################################################

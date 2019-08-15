@@ -144,7 +144,7 @@ contains
                         reshape(this%area_b, shape(runoff_out)))
 
     if (this%do_conservation_check) then
-        ! See https://github.com/OceansAus/libaccessom2/issues/8
+        ! See https://github.com/COSIMA/libaccessom2/issues/8
         ! Check that runoff is conserving after the moving from land to ocean.
         total_runoff_outof_kd = sum(runoff_out(:, :) * areas(:, :))
 
@@ -298,7 +298,7 @@ contains
     enddo
 
     ! Check that weights application was conservative.
-    ! See https://github.com/OceansAus/libaccessom2/issues/8
+    ! See https://github.com/COSIMA/libaccessom2/issues/8
     ! Calculate source integral
     src_total = 0.0
     do i=1, size(src_field)
