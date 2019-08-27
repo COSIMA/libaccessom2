@@ -29,14 +29,14 @@ else()
   endif()
 endif()
 
-if("${NETCDF_DIR}" STREQUAL "")
-  execute_process(COMMAND nf-config --prefix OUTPUT_VARIABLE NETCDF_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-endif()
+#if("${NETCDF_DIR}" STREQUAL "")
+#  execute_process(COMMAND nf-config --prefix OUTPUT_VARIABLE NETCDF_DIR
+#    OUTPUT_STRIP_TRAILING_WHITESPACE)
+#endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-set (NETCDF_F90 "YES")
-find_package(NetCDF REQUIRED)
-include_directories(${NETCDF_F90_INCLUDE_DIRS})
+# set (NETCDF_F90 "YES")
+# find_package(NetCDF REQUIRED)
+# include_directories(${NETCDF_F90_INCLUDE_DIRS})
 
 # compiler flags for gfortran
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
@@ -154,15 +154,15 @@ set_target_properties(accessom2 PROPERTIES IMPORTED_LOCATION ${LIBACCESSOM2})
 # yatm executable
 file(GLOB ATM_SOURCES atm/src/*.F90)
 add_executable(yatm.exe ${ATM_SOURCES})
-target_link_libraries(yatm.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(yatm.exe accessom2 netcdff ${MPI_Fortran_LIBRARIES})
 
 # ice stub executable
 file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
 add_executable(ice_stub.exe ${ICE_STUB_SOURCES})
-target_link_libraries(ice_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(ice_stub.exe accessom2 netcdff ${MPI_Fortran_LIBRARIES})
 
 # ocean stub executable
 file(GLOB OCEAN_STUB_SOURCES ocean_stub/src/*.F90)
 add_executable(ocean_stub.exe ${OCEAN_STUB_SOURCES})
-target_link_libraries(ocean_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+target_link_libraries(ocean_stub.exe accessom2 netcdff ${MPI_Fortran_LIBRARIES})
 
