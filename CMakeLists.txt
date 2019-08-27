@@ -29,14 +29,7 @@ else()
   endif()
 endif()
 
-#if("${NETCDF_DIR}" STREQUAL "")
-#  execute_process(COMMAND nf-config --prefix OUTPUT_VARIABLE NETCDF_DIR
-#    OUTPUT_STRIP_TRAILING_WHITESPACE)
-#endif()
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-# set (NETCDF_F90 "YES")
-# find_package(NetCDF REQUIRED)
-# include_directories(${NETCDF_F90_INCLUDE_DIRS})
 
 # compiler flags for gfortran
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
