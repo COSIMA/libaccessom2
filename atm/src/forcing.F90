@@ -156,9 +156,9 @@ function filename_for_year(filename, year)
     if (trim(filename_for_year) == '') then
       filename_for_year = replace_text(filename, "{{year}}", year_str)
     endif
-    filename_for_yearp1 = replace_text(filename, "{{ year+1 }}", yearp1_str)
+    filename_for_yearp1 = replace_text(filename_for_year, "{{ year+1 }}", yearp1_str)
     if (trim(filename_for_yearp1) == '') then
-      filename_for_yearp1 = replace_text(filename, "{{year+1}}", yearp1_str)
+      filename_for_yearp1 = replace_text(filename_for_year, "{{year+1}}", yearp1_str)
     endif
     if (trim(filename_for_yearp1) /= '') then
         filename_for_year = filename_for_yearp1
