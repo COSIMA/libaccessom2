@@ -24,10 +24,11 @@ end subroutine ncheck
 
 !> Replace all occurrences of 'pattern' with 'replace' in string.
 ! Based on: http://fortranwiki.org/fortran/show/String_Functions
+! BUG: endless loop if replace contains pattern
 function replace_text(string, pattern, replace)  result(outs)
 
     character(len=*), intent(in) :: string, pattern, replace
-    character(len(string)) :: outs
+    character(len(string)+100) :: outs ! provide 100 extra char - BUG: may be too few in some cases
     integer             :: i, nt, nr
 
     outs = string ; nt = len_trim(pattern) ; nr = len_trim(replace)
