@@ -8,4 +8,5 @@ module load openmpi/1.10.2
 
 MYDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-source $MYDIR/build.sh nci
+# Args: platform and whether Cmake should search for NetCDF libraries
+source $MYDIR/build.sh nci OFF
