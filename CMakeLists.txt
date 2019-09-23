@@ -8,6 +8,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
+
 # if build type not specified, default to release
 # set(CMAKE_BUILD_TYPE "Debug")
 if(NOT CMAKE_BUILD_TYPE)
@@ -29,14 +31,14 @@ else()
   endif()
 endif()
 
-if("${NETCDF_DIR}" STREQUAL "")
-  execute_process(COMMAND nf-config --prefix OUTPUT_VARIABLE NETCDF_DIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
+option(FIND_NETCDF "Use FindNetCDF to generate NetCDF configuration" ON)
+if(${FIND_NETCDF})
+  set (NETCDF_F90 "YES")
+  find_package(NetCDF REQUIRED)
+  include_directories(${NETCDF_F90_INCLUDE_DIRS})
+else()
+  set(NETCDF_LIBRARIES netcdff)
 endif()
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-set (NETCDF_F90 "YES")
-find_package(NetCDF REQUIRED)
-include_directories(${NETCDF_F90_INCLUDE_DIRS})
 
 # compiler flags for gfortran
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
@@ -85,7 +87,7 @@ set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/lib
 # json-fortran external project
 ExternalProject_Add(oasis3-mct
     GIT_REPOSITORY    https://github.com/COSIMA/oasis3-mct.git
-    GIT_TAG           3dd0d4cf2947dbad8928b7f2803da5e20970fa13
+    GIT_TAG           43e3686890accbf496aa1f450907d00bc14e2ed4
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make ${PLATFORM}
