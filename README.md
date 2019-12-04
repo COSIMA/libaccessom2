@@ -50,15 +50,20 @@ This repository also includes ice and ocean stubs. These are stand-ins for the t
 
 # Build
 
-How to build libaccessom2, YATM, ice\_stub and ocean\_stub:
+How to build libaccessom2, YATM, ice\_stub and ocean\_stub on raijin (NCI):
 
 ```{bash}
 git clone https://github.com/COSIMA/libaccessom2.git
 cd libaccessom2
-mkdir build
-cd build
-cmake ../
-cd ../
+./build_on_raijin.sh
+```
+
+How to build libaccessom2, YATM, ice\_stub and ocean\_stub on gadi (NCI):
+
+```{bash}
+git clone https://github.com/COSIMA/libaccessom2.git
+cd libaccessom2
+./build_on_gadi.sh
 ```
 
 # Run tests on Raijin (NCI)
