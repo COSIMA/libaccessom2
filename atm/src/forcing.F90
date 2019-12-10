@@ -147,16 +147,15 @@ function filename_for_year(filename, year)
     character(len=*), intent(in) :: filename
     integer, intent(in) :: year
     character(len=1024) :: filename_for_year
-
-    character(len=1024) :: with_year_replaced
-    character(len=4) :: year_str
+    character(len=4) :: year_str, yearp1_str
 
     write(year_str, "(I4)") year
-    with_year_replaced = replace_text(filename, "{{ year }}", year_str)
-    filename_for_year = replace_text(with_year_replaced, "{{year}}", year_str)
-    if (trim(filename_for_year) == '') then
-        filename_for_year = with_year_replaced
-    endif
+    write(yearp1_str, "(I4)") year+1
+
+    filename_for_year = replace_text(filename, "{{ year }}", year_str)
+    filename_for_year = replace_text(filename_for_year, "{{year}}", year_str)
+    filename_for_year = replace_text(filename_for_year, "{{ year+1 }}", yearp1_str)
+    filename_for_year = replace_text(filename_for_year, "{{year+1}}", yearp1_str)
 endfunction filename_for_year
 
 subroutine forcing_deinit(self)
