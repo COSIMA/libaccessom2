@@ -49,9 +49,9 @@ endif()
 
 # compiler flags for ifort
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
-  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpe0 -fp-model precise -traceback")
-  set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check all")
-  set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
+  set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpe0 -fp-model precise -fp-model source -align all -traceback")
+  set(CMAKE_Fortran_FLAGS_DEBUG "-g3 -O0 -check all")
+  set(CMAKE_Fortran_FLAGS_RELEASE "-g3 -O2 -axCORE-AVX2 -debug all -check none -qopt-report=5 -qopt-report-annotate")
 endif()
 
 # get external projects
@@ -61,8 +61,8 @@ include(ExternalProject)
 # We use a forked version because of this behaviour:
 # https://github.com/wavebitscientific/datetime-fortran/issues/51
 ExternalProject_Add(datetime-fortran
-    GIT_REPOSITORY   https://github.com/nicjhan/datetime-fortran.git
-    GIT_TAG          3e7755c585cdc62ed262e91d57e7d54f82046087
+    GIT_REPOSITORY  https://github.com/COSIMA/datetime-fortran.git
+    GIT_TAG         use-repro-flags-for-gadi
     INSTALL_COMMAND cmake -E echo "Skipping datetime-fortran install step."
 )
 ExternalProject_Get_property(datetime-fortran BINARY_DIR)
@@ -73,8 +73,8 @@ set_property(TARGET datetime PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/libdat
 
 # json-fortran external project
 ExternalProject_Add(json-fortran
-    GIT_REPOSITORY    https://github.com/jacobwilliams/json-fortran.git
-    GIT_TAG          37de3ade555e84779ebf8a26c23e86a3ae268390
+    GIT_REPOSITORY  https://github.com/COSIMA/json-fortran.git
+    GIT_TAG         a9b0a721be2a6c13d865104c7600b3ab016244d7
     INSTALL_COMMAND cmake -E echo "Skipping json-fortran install step."
 )
 ExternalProject_Get_property(json-fortran BINARY_DIR)
@@ -87,7 +87,7 @@ set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/lib
 # json-fortran external project
 ExternalProject_Add(oasis3-mct
     GIT_REPOSITORY    https://github.com/COSIMA/oasis3-mct.git
-    GIT_TAG           d02cc8d896362ad10f548b86fef267db435a7ff3
+    GIT_TAG           use-repro-flags-for-gadi
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make ${PLATFORM}
