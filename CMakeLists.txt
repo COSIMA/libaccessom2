@@ -51,7 +51,7 @@ endif()
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpe0 -fp-model precise -traceback")
   set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check all")
-  set(CMAKE_Fortran_FLAGS_RELEASE "-O3")
+  set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -xCORE-AVX2 -axSKYLAKE-AVX512,CASCADELAKE")
 endif()
 
 # get external projects
@@ -87,7 +87,7 @@ set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/lib
 # json-fortran external project
 ExternalProject_Add(oasis3-mct
     GIT_REPOSITORY    https://github.com/COSIMA/oasis3-mct.git
-    GIT_TAG           d02cc8d896362ad10f548b86fef267db435a7ff3
+    GIT_TAG           f8ee36853ebcc7fde4812e42c504be8ed1db4903
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make ${PLATFORM}
