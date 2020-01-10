@@ -61,8 +61,8 @@ include(ExternalProject)
 # We use a forked version because of this behaviour:
 # https://github.com/wavebitscientific/datetime-fortran/issues/51
 ExternalProject_Add(datetime-fortran
-    GIT_REPOSITORY   https://github.com/nicjhan/datetime-fortran.git
-    GIT_TAG          3e7755c585cdc62ed262e91d57e7d54f82046087
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/datetime-fortran
     INSTALL_COMMAND cmake -E echo "Skipping datetime-fortran install step."
 )
 ExternalProject_Get_property(datetime-fortran BINARY_DIR)
@@ -73,8 +73,8 @@ set_property(TARGET datetime PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/libdat
 
 # json-fortran external project
 ExternalProject_Add(json-fortran
-    GIT_REPOSITORY    https://github.com/jacobwilliams/json-fortran.git
-    GIT_TAG          37de3ade555e84779ebf8a26c23e86a3ae268390
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/json-fortran
     INSTALL_COMMAND cmake -E echo "Skipping json-fortran install step."
 )
 ExternalProject_Get_property(json-fortran BINARY_DIR)
@@ -86,8 +86,8 @@ set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/lib
 # oasis external project
 # json-fortran external project
 ExternalProject_Add(oasis3-mct
-    GIT_REPOSITORY    https://github.com/COSIMA/oasis3-mct.git
-    GIT_TAG           f8ee36853ebcc7fde4812e42c504be8ed1db4903
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/oasis3-mct
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make ${PLATFORM}
