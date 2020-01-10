@@ -1,0 +1,9 @@
+[submodule "json-fortran"]
+	path = json-fortran
+	url = https://github.com/jacobwilliams/json-fortran.git
+[submodule "datetime-fortran"]
+	path = datetime-fortran
+	url = https://github.com/nicjhan/datetime-fortran.git
+[submodule "oasis3-mct"]
+	path = oasis3-mct
+	url = https://github.com/COSIMA/oasis3-mct.git
