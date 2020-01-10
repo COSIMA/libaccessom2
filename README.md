@@ -66,7 +66,7 @@ First do build as above. Then:
 export LIBACCESSOM2_DIR=$(pwd)
 module load openmpi
 cd tests/
-./copy_test_data_from_gadi.sh
+./copy_test_data.sh
 cd JRA55_IAF
 rm -rf log ; mkdir log ; rm -f accessom2_restart_datetime.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./
 mpirun -np 1 $LIBACCESSOM2_DIR/build/bin/yatm.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ice_stub.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ocean_stub.exe

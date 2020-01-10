@@ -87,7 +87,7 @@ set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/lib
 # json-fortran external project
 ExternalProject_Add(oasis3-mct
     GIT_REPOSITORY    https://github.com/COSIMA/oasis3-mct.git
-    GIT_TAG           87a873aa7b545a6ee46a42f811f5c7a5dfc81a01
+    GIT_TAG           f8ee36853ebcc7fde4812e42c504be8ed1db4903
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make ${PLATFORM}
