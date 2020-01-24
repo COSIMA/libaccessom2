@@ -22,7 +22,7 @@ program atm
     type(ice_grid_type) :: ice_grid
     type(runoff_type) :: runoff
     type(field_type), dimension(:), allocatable :: fields
-    type(field_type) :: runoff_field
+    type(field_type), dimension(2) :: runoff_fields ! Liquid (river) and solid (iceberg) runoff
     character(len=MAX_FILE_NAME_LEN) :: forcing_file, accessom2_config_dir
     character(len=9) :: calendar
     integer, dimension(2) :: ice_shape
@@ -92,7 +92,8 @@ program atm
 
     ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
     do i=1, num_atm_to_ice_fields
-        if (index(fields(i)%name, 'runof') /= 0) then
+        if ((index(fields(i)%name, 'runof') /= 0) .or. &
+                 (index(fields(i)%name, 'licalvf') /= 0)) then
             call assert(.not. allocated(runoff_field%data_array), &
                         'Runoff already associated')
             runoff_field%name = fields(i)%name

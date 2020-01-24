@@ -7,11 +7,17 @@ use error_handler, only : assert
 use logger_mod, only : logger_type => logger, LOG_DEBUG
 
 implicit none
-
 private
+
+! Fields can be either atmospheric or ocean. YATM will treat the differently,
+! see atm.F90 for details.
+integer, parameter, public :: FIELD_DOMAIN_NONE = 0
+integer, parameter, public :: FIELD_DOMAIN_ATMOSPHERE = 10
+integer, parameter, public :: FIELD_LAND_LAND = 20
 
 type, public :: field
     character(len=64) :: name
+    integer :: field_type
     character(len=1024) :: filename_template
     character(len=1024) :: scaling_filename
     type(datetime) :: timestamp
@@ -34,10 +40,11 @@ endtype field
 contains
 
 subroutine field_init(self, name, ncname, filename_template, &
-                      filename, logger, scaling_filename)
+                      filename, domain, logger, scaling_filename)
     class(field), intent(inout) :: self
     character(len=*), intent(in) :: name, ncname
     character(len=*), intent(in) :: filename_template, filename
+    character(len=*), intent(in) :: domain
     type(logger_type), intent(in) :: logger
     character(len=*), intent(in), optional :: scaling_filename
 
@@ -58,6 +65,16 @@ subroutine field_init(self, name, ncname, filename_template, &
         allocate(self%scaling_data_array(self%ncvar%nx, self%ncvar%ny))
         self%scaling_data_array(:, :) = HUGE(1.0)
     endif
+
+    ! Set the field domain
+    self%domain = FIELD_DOMAIN_NONE
+    if (domain == 'atmosphere') then
+        self%domain = FIELD_DOMAIN_ATMOSPHERE
+    elseif (domain == 'land') then
+        self%field_type = FIELD_DOMAIN_LAND
+    endif              
+    call assert(self%domain /= FIELD_DOMAIN_NONE, &
+                'field_init: invalid field domain')
 
 end subroutine
 

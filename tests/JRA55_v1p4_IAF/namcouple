@@ -157,7 +157,7 @@ DISTWGT LR VECTOR LATLON 10 4 uwnd_ai
 ##########
 # Field 11 : land ice calving flux, like runoff it is passed on the destination grid
 ##########
-licefw_ai licecfw_i 56 10800 2 a2i.nc EXPORTED
+licalvf_ai licalvf_i 56 10800 2 a2i.nc EXPORTED
 cict cict LAG=0 SEQ=+1
 P  0  P  0
 #
@@ -280,7 +280,23 @@ cict cict LAG=0 SEQ=+1
 LOCTRANS
 INSTANT
 ##########
-# Field 25 : ice forming eaterflux
+# Field 25 : ice forming waterflux
+########## 
+form_io wfiform 36 3600 1 i2o.nc IGNORED
+cict cict LAG=0 SEQ=+1
+#
+LOCTRANS
+INSTANT
+##########
+# Field 26 : land ice waterflux
+########## 
+licefw_io wfiform 36 3600 1 i2o.nc IGNORED
+cict cict LAG=0 SEQ=+1
+#
+LOCTRANS
+INSTANT
+##########
+# Field 26 : land ice heatflux
 ########## 
 form_io wfiform 36 3600 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
