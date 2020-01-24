@@ -2,7 +2,7 @@ program atm
 
     use mod_oasis, only : OASIS_IN, OASIS_OUT
     use forcing_mod, only : forcing_type => forcing
-    use field_mod, only : field_type => field
+    use field_mod, only : field_type => field, FIELD_DOMAIN_LAND
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
@@ -29,6 +29,7 @@ program atm
     integer :: i, err, tmp_unit
     logical :: file_exists
     integer :: num_atm_to_ice_fields, dt, cur_runtime_in_seconds
+    integer :: num_runoff_fields
 
     type(simple_timer_type) :: field_read_timer, ice_wait_timer
     type(simple_timer_type) :: init_runoff_timer, remap_runoff_timer
@@ -51,26 +52,26 @@ program atm
     call accessom2%init('matmxx', config_dir=trim(accessom2_config_dir))
     call accessom2%print_version_info()
 
-    ! Initialise forcing object and fields, involves reading details of each
-    ! field from disk.
-    call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
-    allocate(fields(num_atm_to_ice_fields))
-    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), dt, calendar)
-
     ! Initialise the coupler.
     call coupler%init_begin('matmxx', accessom2%logger, &
                             config_dir=trim(accessom2_config_dir))
 
+    ! Initialise ice grid proxy and get information about it,
+    ! this is needed for local remapping.
+    call ice_grid%init(coupler%ice_root)
+    call ice_grid%recv()
+    ice_shape = ice_grid%get_shape()
+
+    ! Initialise forcing object, this reads config and
+    ! tells us how man atm-to-ice fields there are.
+    call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
+    
     ! Tell libaccessom2 about any global configs/state
     call accessom2%set_calendar(calendar)
     call accessom2%set_atm_timestep(dt)
     call accessom2%set_cpl_field_counts(num_atm_to_ice_fields=num_atm_to_ice_fields)
     ! Synchronise accessom2 'state' (i.e. configuration) between all PEs of all models.
     call accessom2%sync_config(coupler)
-
-    ! Get information about the ice grid needed for runoff remapping.
-    call ice_grid%init(coupler%ice_root)
-    call ice_grid%recv()
 
     ! Initialise timers
     call field_read_timer%init('field_read', accessom2%logger, &
@@ -88,21 +89,27 @@ program atm
     call init_runoff_timer%start()
     call runoff%init(ice_grid)
     call init_runoff_timer%stop()
-    ice_shape = ice_grid%get_shape()
 
-    ! Initialise OASIS3-MCT fields. Runoff done seperately for now.
+    ! Initialise forcing fields, involves reading details of each from disk,
+    ! and allocating necessary memory.
+    allocate(fields(num_atm_to_ice_fields))
+    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), dt, calendar)
+
+    ! Create intermediate fields with for runoff. 
+    num_runoff_fields = 0
     do i=1, num_atm_to_ice_fields
-        if ((index(fields(i)%name, 'runof') /= 0) .or. &
-                 (index(fields(i)%name, 'licalvf') /= 0)) then
-            call assert(.not. allocated(runoff_field%data_array), &
-                        'Runoff already associated')
-            runoff_field%name = fields(i)%name
-            runoff_field%timestamp = fields(i)%timestamp
-            allocate(runoff_field%data_array(ice_shape(1), ice_shape(2)))
-            call coupler%init_field(runoff_field, OASIS_OUT)
-        else
-            call coupler%init_field(fields(i), OASIS_OUT)
+    FIXME
+    enddo
+
+    ! Initialise OASIS3-MCT fields.
+    do i=1, num_atm_to_ice_fields
+        if (fields(i)%domain == FIELD_DOMAIN_LAND) then
+            ! Treat land fields differently - they need to be regridded
+            ! locally so will contain data on the destination grid.
+            deallocate(fields(i)%data_array)
+            allocate(fields(i)%data_array(ice_shape(1), ice_shape(2)))
         endif
+        call coupler%init_field(fields(i), OASIS_OUT)
     enddo
     ! Finish coupler initialisation. Tell oasis how long the run is and the
     ! coupling timesteps.

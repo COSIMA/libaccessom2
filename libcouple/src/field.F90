@@ -72,7 +72,7 @@ subroutine field_init(self, name, ncname, filename_template, &
         self%domain = FIELD_DOMAIN_ATMOSPHERE
     elseif (domain == 'land') then
         self%field_type = FIELD_DOMAIN_LAND
-    endif              
+    endif
     call assert(self%domain /= FIELD_DOMAIN_NONE, &
                 'field_init: invalid field domain')
 
