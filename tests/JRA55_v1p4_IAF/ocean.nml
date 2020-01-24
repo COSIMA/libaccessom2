@@ -1,0 +1,6 @@
+&ocean_nml
+    from_ice_field_names = 'u_flux', 'v_flux', 'lprec', 'fprec', 'salt_flx', 'mh_flux', 'sw_flux', 'q_flux', 't_flux', 'lw_flux', 'runof', 'p', 'aice', 'wfimelt', 'wfiform', 'licefw'
+    to_ice_field_names = 't_surf', 's_surf', 'u_surf', 'v_surf', 'dssldx', 'dssldy', 'frazil'
+    resolution(:) = 360,300
+    dt = 5400
+&end

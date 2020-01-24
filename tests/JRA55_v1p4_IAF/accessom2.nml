@@ -1,0 +1,11 @@
+&accessom2_nml
+    log_level = 'DEBUG'
+    ice_ocean_timestep = 5400
+    enable_simple_timers = .true.
+/
+
+&date_manager_nml
+    forcing_start_date = '1958-12-30T00:00:00'
+    forcing_end_date = '1960-01-01T00:00:00'
+    restart_period = 1, 0, 0
+/

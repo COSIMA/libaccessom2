@@ -1,0 +1,61 @@
+{
+  "description": "JRA55-do v1.4 IAF forcing",
+  "inputs": [
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hr/rsds/gr/v20190429/rsds/rsds_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010130-{{year}}12312230.nc",
+      "fieldname": "rsds",
+      "cname": "swfld_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hr/rlds/gr/v20190429/rlds_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010130-{{year}}12312230.nc",
+      "fieldname": "rlds",
+      "cname": "lwfld_ai"
+    },
+    {
+      "filename": "/g/data/ua8/JRA55-do/latest/rain.{{year}}.nc",
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hr/prra/gr/v20190429/prra/prra_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010130-{{year}}12312230.nc",
+      "fieldname": "prra",
+      "cname": "rain_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hr/prsn/gr/v20190429/prsn/prsn_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010130-{{year}}12312230.nc",
+      "fieldname": "prsn",
+      "cname": "snow_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hrPt/psl/gr/v20190429/psl/psl_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010000-{{year}}12312100.nc",
+      "fieldname": "psl",
+      "cname": "press_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/land/day/friver/gr/v20190429/friver/friver_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}0101-{{year}}1231.nc",
+      "fieldname": "friver",
+      "cname": "runof_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hrPt/tas/gr/v20190429/tas/tas_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010000-{{year}}12312100.nc",
+      "fieldname": "tas_10m",
+      "cname": "tair_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hrPt/huss/gr/v20190429/huss/huss_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010000-{{year}}12312100.nc",
+      "fieldname": "huss_10m",
+      "cname": "qair_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hrPt/uas/gr/v20190429/uas/uas_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010000-{{year}}12312100.nc",
+      "fieldname": "uas_10m",
+      "cname": "uwnd_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/atmos/3hrPt/vas/gr/v20190429/vas/vas_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}01010000-{{year}}12312100.nc",
+      "fieldname": "vas_10m",
+      "cname": "vwnd_ai"
+    },
+    {
+      "filename": "/g/data1b/qv56/replicas/input4MIPs/CMIP6/OMIP/MRI/MRI-JRA55-do-1-4-0/landIce/day/licalvf/gr/v20190429/licalvf/licalvf_input4MIPs_atmosphericState_OMIP_MRI-JRA55-do-1-4-0_gr_{{year}}0101-{{year}}1231.nc",
+      "fieldname": "licalvf",
+      "cname": "licefw_ai"
+    }
+  ]
+}
