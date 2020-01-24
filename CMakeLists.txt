@@ -51,7 +51,7 @@ endif()
 if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
   set(CMAKE_Fortran_FLAGS "${CMAKE_Fortran_FLAGS} -r8 -fpe0 -fp-model precise -traceback")
   set(CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -check all")
-  set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -xCORE-AVX2 -axSKYLAKE-AVX512,CASCADELAKE")
+  set(CMAKE_Fortran_FLAGS_RELEASE "-O3 -xAVX -axCORE-AVX2,CORE-AVX512")
 endif()
 
 # get external projects
