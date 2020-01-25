@@ -22,6 +22,7 @@ program atm
     type(ice_grid_type) :: ice_grid
     type(runoff_type) :: runoff
     type(field_type), dimension(:), allocatable :: fields
+    integer, dimension(:), allocatable :: to_runoff_map
     type(field_type), dimension(2) :: runoff_fields ! Liquid (river) and solid (iceberg) runoff
     character(len=MAX_FILE_NAME_LEN) :: forcing_file, accessom2_config_dir
     character(len=9) :: calendar
@@ -65,7 +66,7 @@ program atm
     ! Initialise forcing object, this reads config and
     ! tells us how man atm-to-ice fields there are.
     call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
-    
+
     ! Tell libaccessom2 about any global configs/state
     call accessom2%set_calendar(calendar)
     call accessom2%set_atm_timestep(dt)
@@ -93,24 +94,39 @@ program atm
     ! Initialise forcing fields, involves reading details of each from disk,
     ! and allocating necessary memory.
     allocate(fields(num_atm_to_ice_fields))
-    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), dt, calendar)
+    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), &
+                             dt, calendar, num_land_fields)
+    ! Create intermediate fields for runoff,
+    ! these are a copy/variation of the forcing fields
+    allocate(runoff_fields(num_land_fields))
 
-    ! Create intermediate fields with for runoff. 
-    num_runoff_fields = 0
+    ! Create a little map to go from atm_to_ice field indices to
+    ! runoff field indices, simplifies the code below
+    allocate(to_runoff_map(num_atm_to_ice_fields))
+    ri = 1
     do i=1, num_atm_to_ice_fields
-    FIXME
-    enddo
-
-    ! Initialise OASIS3-MCT fields.
-    do i=1, num_atm_to_ice_fields
-        if (fields(i)%domain == FIELD_DOMAIN_LAND) then
-            ! Treat land fields differently - they need to be regridded
-            ! locally so will contain data on the destination grid.
-            deallocate(fields(i)%data_array)
-            allocate(fields(i)%data_array(ice_shape(1), ice_shape(2)))
+        if (field(i)%domain == FIELD_DOMAIN_LAND) then
+            to_runoff_map(i) = ri
+            ri = ri + 1
+        else
+            to_runoff_map(i) = 0
         endif
-        call coupler%init_field(fields(i), OASIS_OUT)
     enddo
+
+    ! Initialise coupling fields, runoff fields need special treatment.
+    do i=1, num_atm_to_ice_fields
+        if (to_runoff_map[i] /= 0)
+            ri = to_runoff_map[i]
+            runoff_fields(ri)%name = fields(i)%name
+            runoff_fields(ri)%domain = fields(i)%domain
+            runoff_fields(ri)%timestamp = fields(i)%timestamp
+            allocate(runoff_fields(ri)%data_array(ice_shape(1), ice_shape(2)))
+            call coupler%init_field(runoff_fields(ri), OASIS_OUT)
+        else
+            call coupler%init_field(fields(i), OASIS_OUT)
+        endif
+    enddo
+
     ! Finish coupler initialisation. Tell oasis how long the run is and the
     ! coupling timesteps.
     call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
@@ -127,10 +143,11 @@ program atm
                 call forcing%update_field(fields(i), &
                                           accessom2%get_cur_forcing_date())
                 call field_read_timer%stop()
-                if (index(fields(i)%name, 'runof') /= 0) then
+                if (to_runoff_map(i) /= 0) then
+                    ri = to_runoff_map(i)
                     call remap_runoff_timer%start()
                     call runoff%remap(fields(i)%data_array, &
-                                      runoff_field%data_array, ice_grid%mask)
+                                      runoff_fields(ri)%data_array, ice_grid%mask)
                     call remap_runoff_timer%stop()
                 endif
             endif

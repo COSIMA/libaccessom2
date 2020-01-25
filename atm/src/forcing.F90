@@ -56,12 +56,13 @@ subroutine forcing_init(self, config, logger, nfields)
 endsubroutine forcing_init
 
 !> Parse forcing file into a dictionary.
-subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
+subroutine forcing_init_fields(self, fields, forcing_date, &
+                               min_dt, calendar, num_land_fields)
 
     class(forcing), intent(inout) :: self
     type(field_type), dimension(:), intent(inout) :: fields
     type(datetime), intent(in) :: forcing_date
-    integer, intent(out) :: min_dt
+    integer, intent(out) :: min_dt, num_land_fields
     character(len=9), intent(out) :: calendar
 
     type(json_value), pointer :: fp
@@ -76,6 +77,7 @@ subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
     min_dt = huge(min_dt)
     calendar_str = ''
 
+    num_land_fields = 0
     do i=1, size(fields)
         call self%core%get_child(self%inputs, i, fp, found)
         call assert(found, "Input not found in forcing config.")
@@ -97,6 +99,10 @@ subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
                         "forcing_init_fields: invalid domain value.")
         else
             domain = "atmosphere"
+        endif
+
+        if (domain == "land") then
+            num_land_fields = num_land_fields + 1
         endif
 
         ! Get the shape of forcing fields
