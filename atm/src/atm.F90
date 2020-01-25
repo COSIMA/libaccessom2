@@ -23,14 +23,15 @@ program atm
     type(runoff_type) :: runoff
     type(field_type), dimension(:), allocatable :: fields
     integer, dimension(:), allocatable :: to_runoff_map
-    type(field_type), dimension(2) :: runoff_fields ! Liquid (river) and solid (iceberg) runoff
+    ! Liquid (river) and solid (iceberg) runoff
+    type(field_type), dimension(:), allocatable :: runoff_fields
     character(len=MAX_FILE_NAME_LEN) :: forcing_file, accessom2_config_dir
     character(len=9) :: calendar
     integer, dimension(2) :: ice_shape
-    integer :: i, err, tmp_unit
+    integer :: i, ri, err, tmp_unit
     logical :: file_exists
     integer :: num_atm_to_ice_fields, dt, cur_runtime_in_seconds
-    integer :: num_runoff_fields
+    integer :: num_land_fields
 
     type(simple_timer_type) :: field_read_timer, ice_wait_timer
     type(simple_timer_type) :: init_runoff_timer, remap_runoff_timer
@@ -105,7 +106,7 @@ program atm
     allocate(to_runoff_map(num_atm_to_ice_fields))
     ri = 1
     do i=1, num_atm_to_ice_fields
-        if (field(i)%domain == FIELD_DOMAIN_LAND) then
+        if (fields(i)%domain == FIELD_DOMAIN_LAND) then
             to_runoff_map(i) = ri
             ri = ri + 1
         else
@@ -115,8 +116,8 @@ program atm
 
     ! Initialise coupling fields, runoff fields need special treatment.
     do i=1, num_atm_to_ice_fields
-        if (to_runoff_map[i] /= 0)
-            ri = to_runoff_map[i]
+        if (to_runoff_map(i) /= 0) then
+            ri = to_runoff_map(i)
             runoff_fields(ri)%name = fields(i)%name
             runoff_fields(ri)%domain = fields(i)%domain
             runoff_fields(ri)%timestamp = fields(i)%timestamp
@@ -138,13 +139,14 @@ program atm
 
         ! Send each forcing field
         do i=1, num_atm_to_ice_fields
+            ri = to_runoff_map(i)
+
             if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
                 call field_read_timer%start()
                 call forcing%update_field(fields(i), &
                                           accessom2%get_cur_forcing_date())
                 call field_read_timer%stop()
-                if (to_runoff_map(i) /= 0) then
-                    ri = to_runoff_map(i)
+                if (ri /= 0) then
                     call remap_runoff_timer%start()
                     call runoff%remap(fields(i)%data_array, &
                                       runoff_fields(ri)%data_array, ice_grid%mask)
@@ -153,8 +155,8 @@ program atm
             endif
 
             call coupler_put_timer%start()
-            if (index(fields(i)%name, 'runof') /= 0) then
-                call coupler%put(runoff_field, cur_runtime_in_seconds, err)
+            if (ri /= 0) then
+                call coupler%put(runoff_fields(ri), cur_runtime_in_seconds, err)
             else
                 call coupler%put(fields(i), cur_runtime_in_seconds, err)
             endif

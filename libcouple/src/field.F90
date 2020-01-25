@@ -13,11 +13,11 @@ private
 ! see atm.F90 for details.
 integer, parameter, public :: FIELD_DOMAIN_NONE = 0
 integer, parameter, public :: FIELD_DOMAIN_ATMOSPHERE = 10
-integer, parameter, public :: FIELD_LAND_LAND = 20
+integer, parameter, public :: FIELD_DOMAIN_LAND = 20
 
 type, public :: field
     character(len=64) :: name
-    integer :: field_type
+    integer :: domain
     character(len=1024) :: filename_template
     character(len=1024) :: scaling_filename
     type(datetime) :: timestamp
@@ -71,7 +71,7 @@ subroutine field_init(self, name, ncname, filename_template, &
     if (domain == 'atmosphere') then
         self%domain = FIELD_DOMAIN_ATMOSPHERE
     elseif (domain == 'land') then
-        self%field_type = FIELD_DOMAIN_LAND
+        self%domain = FIELD_DOMAIN_LAND
     endif
     call assert(self%domain /= FIELD_DOMAIN_NONE, &
                 'field_init: invalid field domain')
