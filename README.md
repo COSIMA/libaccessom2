@@ -50,14 +50,6 @@ This repository also includes ice and ocean stubs. These are stand-ins for the t
 
 # Build
 
-How to build libaccessom2, YATM, ice\_stub and ocean\_stub on raijin (NCI):
-
-```{bash}
-git clone https://github.com/COSIMA/libaccessom2.git
-cd libaccessom2
-./build_on_raijin.sh
-```
-
 How to build libaccessom2, YATM, ice\_stub and ocean\_stub on gadi (NCI):
 
 ```{bash}
@@ -66,7 +58,7 @@ cd libaccessom2
 ./build_on_gadi.sh
 ```
 
-# Run tests on Raijin (NCI)
+# Run tests on Gadi (NCI)
 
 First do build as above. Then:
 
@@ -74,7 +66,7 @@ First do build as above. Then:
 export LIBACCESSOM2_DIR=$(pwd)
 module load openmpi
 cd tests/
-./copy_test_data_from_raijin.sh
+./copy_test_data_from_gadi.sh
 cd JRA55_IAF
 rm -rf log ; mkdir log ; rm -f accessom2_restart_datetime.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./
 mpirun -np 1 $LIBACCESSOM2_DIR/build/bin/yatm.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ice_stub.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ocean_stub.exe
