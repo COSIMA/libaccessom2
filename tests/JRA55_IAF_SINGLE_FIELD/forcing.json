@@ -2,7 +2,7 @@
   "description": "JRA55-do IAF forcing",
   "inputs": [
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/rsds.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/rsds.{{year}}.nc",
       "fieldname": "rsds",
       "cname": "swfld_ai"
     }
