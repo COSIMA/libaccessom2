@@ -1,322 +1,322 @@
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-swfld_ai-0000000000": 0.3705909716E+008 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-lwfld_ai-0000000000": 0.6016100493E+008 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-rain_ai-0000000000": 0.4229382744E+001 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-snow_ai-0000000000": 0.7192918367E+000 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-press_ai-0000000000": 0.2071952959E+011 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.runoff_all.1990_1991
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.runoff_all.1990_1991
  .nc
  field_update_data: index 0000000001
  { "checksum-matmxx-runof_ai-0000000000": 0.2942046726E+000 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-tair_ai-0000000000": 0.5698552796E+008 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-qair_ai-0000000000": 0.1452095593E+004 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-uwnd_ai-0000000000": -.1166131205E+006 }
  forcing_update_field at 1900-01-01T00:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
  field_update_data: index 0000000001
  { "checksum-matmxx-vwnd_ai-0000000000": -.5476062674E+005 }
  cur_exp_date 1900-01-01T03:00:00
  cur_forcing_date 1900-01-01T03:00:00
  cur_runtime_in_seconds 0000010800
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-swfld_ai-0000010800": 0.3777202602E+008 }
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-lwfld_ai-0000010800": 0.6009319537E+008 }
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-rain_ai-0000010800": 0.4349455960E+001 }
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-snow_ai-0000010800": 0.7841592839E+000 }
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-press_ai-0000010800": 0.2071725871E+011 }
  { "checksum-matmxx-runof_ai-0000010800": 0.2942046726E+000 }
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-tair_ai-0000010800": 0.5698128887E+008 }
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-qair_ai-0000010800": 0.1449108594E+004 }
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-uwnd_ai-0000010800": -.1170865895E+006 }
  forcing_update_field at 1900-01-01T03:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
  field_update_data: index 0000000002
  { "checksum-matmxx-vwnd_ai-0000010800": -.5327144683E+005 }
  cur_exp_date 1900-01-01T06:00:00
  cur_forcing_date 1900-01-01T06:00:00
  cur_runtime_in_seconds 0000021600
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-swfld_ai-0000021600": 0.3789001754E+008 }
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-lwfld_ai-0000021600": 0.6018853712E+008 }
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-rain_ai-0000021600": 0.4452875226E+001 }
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-snow_ai-0000021600": 0.8038448054E+000 }
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-press_ai-0000021600": 0.2071358964E+011 }
  { "checksum-matmxx-runof_ai-0000021600": 0.2942046726E+000 }
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-tair_ai-0000021600": 0.5698585019E+008 }
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-qair_ai-0000021600": 0.1447880451E+004 }
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-uwnd_ai-0000021600": -.1174519270E+006 }
  forcing_update_field at 1900-01-01T06:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
  field_update_data: index 0000000003
  { "checksum-matmxx-vwnd_ai-0000021600": -.5770328037E+005 }
  cur_exp_date 1900-01-01T09:00:00
  cur_forcing_date 1900-01-01T09:00:00
  cur_runtime_in_seconds 0000032400
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-swfld_ai-0000032400": 0.3772184527E+008 }
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-lwfld_ai-0000032400": 0.6033428786E+008 }
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-rain_ai-0000032400": 0.4713043321E+001 }
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-snow_ai-0000032400": 0.8453051493E+000 }
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-press_ai-0000032400": 0.2071047107E+011 }
  { "checksum-matmxx-runof_ai-0000032400": 0.2942046726E+000 }
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-tair_ai-0000032400": 0.5701754079E+008 }
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-qair_ai-0000032400": 0.1445015768E+004 }
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-uwnd_ai-0000032400": -.1104884882E+006 }
  forcing_update_field at 1900-01-01T09:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
  field_update_data: index 0000000004
  { "checksum-matmxx-vwnd_ai-0000032400": -.5909244254E+005 }
  cur_exp_date 1900-01-01T12:00:00
  cur_forcing_date 1900-01-01T12:00:00
  cur_runtime_in_seconds 0000043200
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-swfld_ai-0000043200": 0.3720079634E+008 }
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-lwfld_ai-0000043200": 0.6048958806E+008 }
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-rain_ai-0000043200": 0.4829329773E+001 }
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-snow_ai-0000043200": 0.8613351981E+000 }
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-press_ai-0000043200": 0.2070747394E+011 }
  { "checksum-matmxx-runof_ai-0000043200": 0.2942046726E+000 }
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-tair_ai-0000043200": 0.5704232226E+008 }
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-qair_ai-0000043200": 0.1440550444E+004 }
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-uwnd_ai-0000043200": -.1004544562E+006 }
  forcing_update_field at 1900-01-01T12:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
  field_update_data: index 0000000005
  { "checksum-matmxx-vwnd_ai-0000043200": -.5204804103E+005 }
  cur_exp_date 1900-01-01T15:00:00
  cur_forcing_date 1900-01-01T15:00:00
  cur_runtime_in_seconds 0000054000
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-swfld_ai-0000054000": 0.3709844667E+008 }
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-lwfld_ai-0000054000": 0.6048478562E+008 }
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-rain_ai-0000054000": 0.5107663121E+001 }
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-snow_ai-0000054000": 0.9127205880E+000 }
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-press_ai-0000054000": 0.2070474296E+011 }
  { "checksum-matmxx-runof_ai-0000054000": 0.2942046726E+000 }
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-tair_ai-0000054000": 0.5705791462E+008 }
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-qair_ai-0000054000": 0.1439315051E+004 }
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-uwnd_ai-0000054000": -.8735023510E+005 }
  forcing_update_field at 1900-01-01T15:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
  field_update_data: index 0000000006
  { "checksum-matmxx-vwnd_ai-0000054000": -.4333686097E+005 }
  cur_exp_date 1900-01-01T18:00:00
  cur_forcing_date 1900-01-01T18:00:00
  cur_runtime_in_seconds 0000064800
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-swfld_ai-0000064800": 0.3708264644E+008 }
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-lwfld_ai-0000064800": 0.6046128932E+008 }
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-rain_ai-0000064800": 0.4926356915E+001 }
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-snow_ai-0000064800": 0.8963686040E+000 }
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-press_ai-0000064800": 0.2070313522E+011 }
  { "checksum-matmxx-runof_ai-0000064800": 0.2942046726E+000 }
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-tair_ai-0000064800": 0.5704388750E+008 }
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-qair_ai-0000064800": 0.1442558150E+004 }
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-uwnd_ai-0000064800": -.7010880232E+005 }
  forcing_update_field at 1900-01-01T18:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
  field_update_data: index 0000000007
  { "checksum-matmxx-vwnd_ai-0000064800": -.3339618504E+005 }
  cur_exp_date 1900-01-01T21:00:00
  cur_forcing_date 1900-01-01T21:00:00
  cur_runtime_in_seconds 0000075600
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-swfld_ai-0000075600": 0.3703219374E+008 }
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-lwfld_ai-0000075600": 0.6038068493E+008 }
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.rain.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-rain_ai-0000075600": 0.4799500087E+001 }
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.snow.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-snow_ai-0000075600": 0.9030555029E+000 }
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.slp.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-press_ai-0000075600": 0.2070045391E+011 }
  { "checksum-matmxx-runof_ai-0000075600": 0.2942046726E+000 }
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.t_10.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-tair_ai-0000075600": 0.5702379302E+008 }
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.q_10.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-qair_ai-0000075600": 0.1445578812E+004 }
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.u_10.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-uwnd_ai-0000075600": -.4849775737E+005 }
  forcing_update_field at 1900-01-01T21:00:00.000
- field_update_data: file /g/data1/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
+ field_update_data: file /g/data/ua8/JRA55-do/RYF/v1-3/RYF.v_10.1990_1991.nc
  field_update_data: index 0000000008
  { "checksum-matmxx-vwnd_ai-0000075600": -.2103651609E+005 }
  cur_exp_date 1900-01-02T00:00:00

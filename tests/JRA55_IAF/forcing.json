@@ -2,52 +2,52 @@
   "description": "JRA55-do IAF forcing",
   "inputs": [
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/rsds.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/rsds.{{year}}.nc",
       "fieldname": "rsds",
       "cname": "swfld_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/rlds.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/rlds.{{year}}.nc",
       "fieldname": "rlds",
       "cname": "lwfld_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/rain.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/rain.{{year}}.nc",
       "fieldname": "prrn",
       "cname": "rain_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/snow.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/snow.{{year}}.nc",
       "fieldname": "prsn",
       "cname": "snow_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/slp.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/slp.{{year}}.nc",
       "fieldname": "psl",
       "cname": "press_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/runoff_all.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/runoff_all.{{year}}.nc",
       "fieldname": "friver",
       "cname": "runof_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/t_10.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/t_10.{{year}}.nc",
       "fieldname": "tas_10m",
       "cname": "tair_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/q_10.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/q_10.{{year}}.nc",
       "fieldname": "huss_10m",
       "cname": "qair_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/u_10.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/u_10.{{year}}.nc",
       "fieldname": "uas_10m",
       "cname": "uwnd_ai"
     },
     {
-      "filename": "/g/data1/ua8/JRA55-do/latest/v_10.{{year}}.nc",
+      "filename": "/g/data/ua8/JRA55-do/latest/v_10.{{year}}.nc",
       "fieldname": "vas_10m",
       "cname": "vwnd_ai"
     }
