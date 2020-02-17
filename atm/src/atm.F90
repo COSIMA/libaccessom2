@@ -66,7 +66,9 @@ program atm
 
     ! Initialise forcing object, this reads config and
     ! tells us how man atm-to-ice fields there are.
+    print*, 'HELLO 2'
     call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
+    print*, 'HELLO 3'
 
     ! Tell libaccessom2 about any global configs/state
     call accessom2%set_calendar(calendar)
@@ -122,8 +124,10 @@ program atm
             runoff_fields(ri)%domain = fields(i)%domain
             runoff_fields(ri)%timestamp = fields(i)%timestamp
             allocate(runoff_fields(ri)%data_array(ice_shape(1), ice_shape(2)))
+            print*, 'atm calling init_field', i
             call coupler%init_field(runoff_fields(ri), OASIS_OUT)
         else
+            print*, 'atm calling init_field', i
             call coupler%init_field(fields(i), OASIS_OUT)
         endif
     enddo

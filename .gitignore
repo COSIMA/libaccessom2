@@ -10,6 +10,7 @@ debug.root.01
 debug.01.000000
 debug.02.000000
 debug.03.000000
+debug.root.*
 nout.000000
 a2i.nc
 accessom2_restart.nml

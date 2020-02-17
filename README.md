@@ -60,7 +60,15 @@ cd libaccessom2
 
 # Run tests on Gadi (NCI)
 
-First do build as above. Then:
+First do build as above. Then to get some computer resources:
+
+```{bash}
+qsub -I -P x77 -l ncpus=4 -l mem=16Gb -lstorage=gdata/ua8+gdata/qv56
+
+/g/data1b/qv56/
+```
+
+
 
 ```{bash}
 export LIBACCESSOM2_DIR=$(pwd)
