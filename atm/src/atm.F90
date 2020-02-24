@@ -54,21 +54,22 @@ program atm
     call accessom2%init('matmxx', config_dir=trim(accessom2_config_dir))
     call accessom2%print_version_info()
 
+    ! Initialise forcing object, this reads config and
+    ! tells us how man atm-to-ice fields there are.
+    call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
+
+    ! Initialise forcing fields, involves reading details of each from disk,
+    ! and allocating necessary memory.
+    allocate(fields(num_atm_to_ice_fields))
+    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), &
+                             dt, calendar, num_land_fields)
+    ! Create intermediate fields for runoff,
+    ! these are a copy/variation of the forcing fields
+    allocate(runoff_fields(num_land_fields))
+
     ! Initialise the coupler.
     call coupler%init_begin('matmxx', accessom2%logger, &
                             config_dir=trim(accessom2_config_dir))
-
-    ! Initialise ice grid proxy and get information about it,
-    ! this is needed for local remapping.
-    call ice_grid%init(coupler%ice_root)
-    call ice_grid%recv()
-    ice_shape = ice_grid%get_shape()
-
-    ! Initialise forcing object, this reads config and
-    ! tells us how man atm-to-ice fields there are.
-    print*, 'HELLO 2'
-    call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
-    print*, 'HELLO 3'
 
     ! Tell libaccessom2 about any global configs/state
     call accessom2%set_calendar(calendar)
@@ -76,6 +77,12 @@ program atm
     call accessom2%set_cpl_field_counts(num_atm_to_ice_fields=num_atm_to_ice_fields)
     ! Synchronise accessom2 'state' (i.e. configuration) between all PEs of all models.
     call accessom2%sync_config(coupler)
+
+    ! Initialise ice grid proxy and get information about it,
+    ! this is needed for local remapping.
+    call ice_grid%init(coupler%ice_root)
+    call ice_grid%recv()
+    ice_shape = ice_grid%get_shape()
 
     ! Initialise timers
     call field_read_timer%init('field_read', accessom2%logger, &
@@ -93,15 +100,6 @@ program atm
     call init_runoff_timer%start()
     call runoff%init(ice_grid)
     call init_runoff_timer%stop()
-
-    ! Initialise forcing fields, involves reading details of each from disk,
-    ! and allocating necessary memory.
-    allocate(fields(num_atm_to_ice_fields))
-    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), &
-                             dt, calendar, num_land_fields)
-    ! Create intermediate fields for runoff,
-    ! these are a copy/variation of the forcing fields
-    allocate(runoff_fields(num_land_fields))
 
     ! Create a little map to go from atm_to_ice field indices to
     ! runoff field indices, simplifies the code below
@@ -124,10 +122,8 @@ program atm
             runoff_fields(ri)%domain = fields(i)%domain
             runoff_fields(ri)%timestamp = fields(i)%timestamp
             allocate(runoff_fields(ri)%data_array(ice_shape(1), ice_shape(2)))
-            print*, 'atm calling init_field', i
             call coupler%init_field(runoff_fields(ri), OASIS_OUT)
         else
-            print*, 'atm calling init_field', i
             call coupler%init_field(fields(i), OASIS_OUT)
         endif
     enddo

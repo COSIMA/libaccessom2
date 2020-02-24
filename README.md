@@ -63,11 +63,10 @@ cd libaccessom2
 First do build as above. Then to get some computer resources:
 
 ```{bash}
-qsub -I -P x77 -l ncpus=4 -l mem=16Gb -lstorage=gdata/ua8+gdata/qv56
+qsub -I -P x77 -q express -lncpus=4 -lmem=16Gb -lstorage=gdata/ua8+gdata/qv56
 
 /g/data1b/qv56/
 ```
-
 
 
 ```{bash}

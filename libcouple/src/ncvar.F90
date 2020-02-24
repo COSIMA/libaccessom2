@@ -67,7 +67,7 @@ subroutine ncvar_refresh(self, filename)
     call ncheck(nf90_open(trim(self%filename), NF90_NOWRITE, self%ncid), &
                 'ncvar opening '//trim(self%filename))
     call ncheck(nf90_inq_varid(self%ncid, trim(self%name), self%varid), &
-               'ncvar inquire: '//trim(self%name))
+               'ncvar inquire: '//trim(self%name)//' in '//trim(self%filename))
 
     ! Initialise dimensions
     call get_var_dims(self%ncid, self%varid, ndims, self%nx, self%ny, num_times)
