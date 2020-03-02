@@ -111,7 +111,7 @@ def remove_duplicate_runoff_checksums(checksums):
 def helper():
     return Helper()
 
-@pytest.fixture(params=['JRA55_RYF_MINIMAL', 'JRA55_IAF', 'JRA55_RYF'])
+@pytest.fixture(params=['JRA55_RYF_MINIMAL', 'JRA55_IAF', 'JRA55_RYF', 'JRA55_v1p4_IAF'])
 def exp(request):
     yield request.param
 

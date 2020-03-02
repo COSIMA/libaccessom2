@@ -8,7 +8,7 @@ import ast
 import subprocess as sp
 import f90nml
 
-run_cmd = 'mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 --mca btl self,sm -np 1 {atm_exe} : -np 1 {ice_exe} : -np 1 {ocean_exe}'
+run_cmd = 'mpirun --mca orte_base_help_aggregate 0 --mca opal_abort_print_stack 1 -np 1 {atm_exe} : -np 1 {ice_exe} : -np 1 {ocean_exe}'
 
 def silentremove(filename):
     try:
