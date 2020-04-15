@@ -199,7 +199,7 @@ cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
 INSTANT
-########## 
+##########
 # Field 16 : salt flux   (no ref no for saltflux yet!)
 ##########
 stflx_io salt_flx 454 3600 1 i2o.nc IGNORED
@@ -207,7 +207,7 @@ cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
 INSTANT
-########## 
+##########
 # Field 17 : next heat flux   (heatflux into ocean. '42' not right.)
 ##########
 htflx_io mh_flux 42 3600 1 i2o.nc IGNORED
@@ -215,7 +215,7 @@ cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
 INSTANT
-########## 
+##########
 # Field 18 : swflux penetrating through ice into ocean 
 #########
 swflx_io sw_flux 367 3600 1 i2o.nc IGNORED
@@ -249,7 +249,7 @@ LOCTRANS
 INSTANT
 ##########
 # Field 22 : runoff
-########## 
+##########
 runof_io runof 297 3600 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
@@ -257,7 +257,7 @@ LOCTRANS
 INSTANT
 ##########
 # Field 23 : surface pressure
-########## 
+##########
 press_io p 33 3600 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
@@ -265,15 +265,15 @@ LOCTRANS
 INSTANT
 ##########
 # Field 24 : ice concentration
-########## 
+##########
 aice_io aice 44 3600 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
-LOCTRANS 
+LOCTRANS
 INSTANT
 ##########
 # Field 25 : ice melting waterflux
-########## 
+##########
 melt_io wfimelt 36 3600 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
@@ -281,14 +281,14 @@ LOCTRANS
 INSTANT
 ##########
 # Field 26 : ice forming waterflux
-########## 
+##########
 form_io wfiform 36 3600 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
 INSTANT
 ##########
-# Field 27 : land ice heatflux
+# Field 27 : land ice waterflux
 ########## 
 licefw_io licefw 36 3600 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
@@ -304,15 +304,15 @@ cict cict LAG=0 SEQ=+1
 LOCTRANS
 INSTANT
 ############################################################################
-# 
+#
 #                      OCEAN --->>> ICE
 #                      ----------------
-########## 
+##########
 # Field 29 : Sea surface temperature (Celsius in MOM4, Kelvin in MOM5)
 ##########
 t_surf sst_i 1 3600 1 o2i.nc IGNORED
 cict cict LAG=0 SEQ=+1
-#  
+#
 LOCTRANS
 INSTANT
 ##########
