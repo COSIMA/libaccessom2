@@ -50,6 +50,8 @@ type accessom2
     type(datetime) :: exp_cur_date, forcing_cur_date
     type(datetime) :: run_start_date, run_end_date
 
+    integer, dimension(3) :: skip_date_mismatch_date
+
 contains
     private
     procedure, pass(self), public :: init => accessom2_init
@@ -554,7 +556,19 @@ subroutine accessom2_progress_date(self, timestep)
               self%forcing_cur_date%getDay() == 1)) then
 
         self%forcing_cur_date = self%forcing_cur_date - timedelta(days=1)
-        check_for_date_mismatch = .false.
+        ! Skip the date mismatch checking for the whole day
+        self%skip_date_mismatch_date(1) = self%exp_cur_date%getYear()
+        self%skip_date_mismatch_date(2) = self%exp_cur_date%getMonth()
+        self%skip_date_mismatch_date(3) = self%exp_cur_date%getDay()
+    endif
+
+    ! Don't check for date mismatch if we are replaying the forcing day
+    if (self%exp_cur_date%getYear() == self%skip_date_mismatch_date(1) .and. &
+        self%exp_cur_date%getMonth() == self%skip_date_mismatch_date(2) .and. &
+        self%exp_cur_date%getDay() == self%skip_date_mismatch_date(3)) then
+        return
+    else
+        self%skip_date_mismatch_date(:) = 0
     endif
 
     ! Expect the forcing date and experiment date to only differ on the year.
