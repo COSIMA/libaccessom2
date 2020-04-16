@@ -1,0 +1,7 @@
+&atm_nml
+    accessom2_config_dir = './'
+&end
+
+&runoff_nml
+    remap_weights_file = '../test_data/rmp_jrar_to_cict_CONSERV.nc'
+&end

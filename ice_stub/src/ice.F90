@@ -89,7 +89,6 @@ program ice
     call ice_grid%init(trim(ice_grid_file), trim(ice_mask_file), resolution)
     call ice_grid%send()
 
-
     ! Set up coupling fields
     do i=1, size(from_atm_fields)
         from_atm_fields(i)%name = trim(from_atm_field_names(i))

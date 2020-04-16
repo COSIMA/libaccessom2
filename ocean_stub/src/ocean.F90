@@ -78,9 +78,8 @@ program ocean
     call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
                           accessom2%get_coupling_field_timesteps())
 
-    do while (.not. accessom2%run_finished())
-        cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
-
+    cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
+    do
         ! Get fields from ice
         do i=1, size(in_fields)
             call coupler%get(in_fields(i), cur_runtime_in_seconds, err)
@@ -88,13 +87,17 @@ program ocean
 
         ! Do work, i.e. use the in_fields and populate the out_fields
 
+        call accessom2%progress_date(dt)
+        if (accessom2%run_finished()) then
+            exit
+        endif
+        cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
+
         ! Send fields to ice
         do i=1, size(out_fields)
             out_fields(i)%data_array(:, :) = 0.0
             call coupler%put(out_fields(i), cur_runtime_in_seconds, err)
         enddo
-
-        call accessom2%progress_date(dt)
     enddo
 
     ! Write out restart.

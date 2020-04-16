@@ -60,13 +60,20 @@ cd libaccessom2
 
 # Run tests on Gadi (NCI)
 
-First do build as above. Then:
+First do build as above. Then to get some computer resources:
+
+```{bash}
+qsub -I -P x77 -q normal -lncpus=4 -lmem=16Gb -lwalltime=3:00:00 -lstorage=gdata/ua8+gdata/qv56+gdata/hh5+gdata/ik11
+
+/g/data1b/qv56/
+```
+
 
 ```{bash}
 export LIBACCESSOM2_DIR=$(pwd)
 module load openmpi
 cd tests/
-./copy_test_data_from_gadi.sh
+./copy_test_data.sh
 cd JRA55_IAF
 rm -rf log ; mkdir log ; rm -f accessom2_restart_datetime.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./
 mpirun -np 1 $LIBACCESSOM2_DIR/build/bin/yatm.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ice_stub.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ocean_stub.exe

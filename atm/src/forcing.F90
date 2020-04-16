@@ -11,7 +11,6 @@ use logger_mod, only : logger_type => logger, LOG_DEBUG
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
 implicit none
-
 private
 
 type, public :: forcing
@@ -57,26 +56,28 @@ subroutine forcing_init(self, config, logger, nfields)
 endsubroutine forcing_init
 
 !> Parse forcing file into a dictionary.
-subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
+subroutine forcing_init_fields(self, fields, forcing_date, &
+                               min_dt, calendar, num_land_fields)
 
     class(forcing), intent(inout) :: self
     type(field_type), dimension(:), intent(inout) :: fields
     type(datetime), intent(in) :: forcing_date
-    integer, intent(out) :: min_dt
+    integer, intent(out) :: min_dt, num_land_fields
     character(len=9), intent(out) :: calendar
 
     type(json_value), pointer :: fp
     integer :: i
-    character(kind=CK, len=:), allocatable :: cname, fieldname
+    character(kind=CK, len=:), allocatable :: cname, fieldname, domain
     character(kind=CK, len=:), allocatable :: filename_template
     character(kind=CK, len=:), allocatable :: scaling_filename
     character(len=1024) :: filename
     character(len=9) :: calendar_str
-    logical :: found, scaling_found
+    logical :: found, scaling_found, domain_found
 
     min_dt = huge(min_dt)
     calendar_str = ''
 
+    num_land_fields = 0
     do i=1, size(fields)
         call self%core%get_child(self%inputs, i, fp, found)
         call assert(found, "Input not found in forcing config.")
@@ -92,15 +93,27 @@ subroutine forcing_init_fields(self, fields, forcing_date, min_dt, calendar)
         call self%core%get(fp, "cname", cname, found)
         call assert(found, "Entry 'cname' not found in forcing config.")
 
+        call self%core%get(fp, "domain", domain, domain_found)
+        if (domain_found) then
+            call assert(domain == "land" .or. domain == "atmosphere", &
+                        "forcing_init_fields: invalid domain value.")
+        else
+            domain = "atmosphere"
+        endif
+
+        if (domain == "land") then
+            num_land_fields = num_land_fields + 1
+        endif
+
         ! Get the shape of forcing fields
         filename = filename_for_year(filename_template, forcing_date%getYear())
         ! Initialise a new field object.
         if (scaling_found) then
             call fields(i)%init(cname, fieldname, filename_template, &
-                                filename, self%logger, scaling_filename)
+                                filename, domain, self%logger, scaling_filename)
         else
             call fields(i)%init(cname, fieldname, filename_template, &
-                                filename, self%logger)
+                                filename, domain, self%logger)
         endif
 
         if (fields(i)%dt < min_dt) then
