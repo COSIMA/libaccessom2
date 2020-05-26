@@ -15,6 +15,7 @@ install:
   - sudo apt-get install csh gcc-8 gfortran-8 libgomp1 openmpi-bin libopenmpi-dev  libnetcdf-dev  netcdf-bin
 script:
   - ./build.sh ${TYPE}
+
 # before_deploy:
 #   - git tag "$(date +'%Y%m%d%H%M%S')-$(git log --format=%h -1)"
 #   - tar -czvf binary_release.tar.gz Linux/*
