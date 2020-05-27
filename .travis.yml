@@ -10,9 +10,9 @@ env:
   - FC=gfortran-8
   - OMPI_FC=${FC}
 install:
-  - sudo apt-add-repository --yes ppa:ubuntu-toolchain-r/test
+  # - sudo apt-add-repository --yes ppa:ubuntu-toolchain-r/test
   - sudo apt-get update
-  - sudo apt-get install csh gcc-8 gfortran-8 libgomp1 openmpi-bin libopenmpi-dev libnetcdf-dev libnetcdff-dev  netcdf-bin
+  - sudo apt-get install csh gcc gfortran libgomp1 openmpi-bin libopenmpi-dev libnetcdf-dev libnetcdff-dev  netcdf-bin
 script:
   - ./build.sh ${TYPE}
 
