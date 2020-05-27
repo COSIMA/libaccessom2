@@ -7,7 +7,7 @@ env:
   matrix:
   - TYPE=ubuntu
   global:
-  - FC=gfortran-8
+  - FC=gfortran
   - OMPI_FC=${FC}
 install:
   # - sudo apt-add-repository --yes ppa:ubuntu-toolchain-r/test
