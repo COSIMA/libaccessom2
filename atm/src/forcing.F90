@@ -29,16 +29,16 @@ endtype forcing
 contains
 
 !> Open forcing file and find fields
-subroutine forcing_init(self, config, logger, nfields)
+subroutine forcing_init(self, config, loggerin, nfields)
 
     class(forcing), intent(inout) :: self
     character(len=*), intent(in) :: config
-    type(logger_type), target, intent(in) :: logger
+    type(logger_type), target, intent(in) :: loggerin
     integer, intent(out) :: nfields
 
     type(json_value), pointer :: root
 
-    self%logger => logger
+    self%logger => loggerin
 
     call self%json%initialize()
     call self%json%load_file(filename=trim(config))
