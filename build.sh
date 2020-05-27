@@ -14,5 +14,5 @@ cd $MYDIR && \
 mkdir -p build && \
 cd build && \
 cmake -DPLATFORM=$PLATFORM -DFIND_NETCDF=$FIND_NETCDF ../ && \
-make VERBOSE=1; && \
+make VERBOSE=1 && \
 cd -
