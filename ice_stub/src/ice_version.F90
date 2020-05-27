@@ -12,7 +12,8 @@ module ice_version_mod
 implicit none
 private
 
-character (len=*), parameter, public :: ICE_STUB_COMMIT_HASH = "ICE_STUB_COMMIT_HASH="//GIT_COMMIT_HASH
+character (len=*), parameter, public :: ICE_STUB_COMMIT_HASH = &
+                                        "ICE_STUB_COMMIT_HASH="//GIT_COMMIT_HASH
 
 contains
 
