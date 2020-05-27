@@ -45,10 +45,10 @@ endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, logger, config_dir)
+subroutine coupler_init_begin(self, model_name, loggerin, config_dir)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
-    type(logger_type), optional, target, intent(in) :: logger
+    type(logger_type), optional, target, intent(in) :: loggerin
     character(len=*), optional, intent(in) :: config_dir
 
     character(len=*), parameter :: coupler_nml_fname = 'accessom2.nml'
@@ -67,8 +67,8 @@ subroutine coupler_init_begin(self, model_name, logger, config_dir)
         call MPI_Init(err)
     endif
 
-    if (present(logger)) then
-        self%logger => logger
+    if (present(loggerin)) then
+        self%logger => loggerin
     else
         self%logger => null()
     endif
