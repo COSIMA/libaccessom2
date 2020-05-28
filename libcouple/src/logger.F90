@@ -82,7 +82,7 @@ subroutine logger_write(self, loglevel, str, intnum)
     endif
 
     if (loglevel == LOG_ERROR) then
-        call flush(self%fp)
+        flush(self%fp)
     endif
 
     self%write_called = .true.

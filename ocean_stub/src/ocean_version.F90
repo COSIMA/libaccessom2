@@ -12,7 +12,8 @@ module ocean_version_mod
 implicit none
 private
 
-character (len=*), parameter, public :: OCEAN_STUB_COMMIT_HASH = "OCEAN_STUB_COMMIT_HASH="//GIT_COMMIT_HASH
+character (len=*), parameter, public :: OCEAN_STUB_COMMIT_HASH = &
+                                        "OCEAN_STUB_COMMIT_HASH="//GIT_COMMIT_HASH
 
 contains
 

@@ -1,5 +1,7 @@
 
-[![Build Status](https://accessdev.nci.org.au/jenkins/buildStatus/icon?job=ACCESS-OM2/libaccessom2)](https://accessdev.nci.org.au/jenkins/job/ACCESS-OM2/job/libaccessom2/)
+| Travis CI | Jenkins Tests |
+|:----------------:|:------------------:|
+|[![Build Status](https://travis-ci.org/COSIMA/libaccessom2.svg?branch=master)](https://travis-ci.org/COSIMA/libaccessom2) | [![Test Status](https://accessdev.nci.org.au/jenkins/buildStatus/icon?job=ACCESS-OM2/libaccessom2)](https://accessdev.nci.org.au/jenkins/job/ACCESS-OM2/job/libaccessom2/)|
 
 # libaccessom2
 

@@ -834,7 +834,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
         forcing_cur_date = self%forcing_cur_date%strftime('%Y-%m-%dT%H:%M:%S')
 
         ! Write to RESTART dir if it exists. FIXME: a clearer approach.
-        inquire(directory=trim(self%config_dir)//'/RESTART', exist=dir_exists)
+        inquire(file=trim(self%config_dir)//'/RESTART', exist=dir_exists)
         if (dir_exists) then
             path = trim(self%config_dir)//'/RESTART/'//trim(restart_file)
         else

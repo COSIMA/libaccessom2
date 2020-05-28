@@ -1,0 +1,30 @@
+language: c
+sudo: required
+git:
+  depth: 3
+  quiet: true
+env:
+  matrix:
+  - TYPE=ubuntu
+  global:
+  - FC=gfortran
+  - OMPI_FC=${FC}
+install:
+  # - sudo apt-add-repository --yes ppa:ubuntu-toolchain-r/test
+  - sudo apt-get update
+  - sudo apt-get install csh gcc gfortran libgomp1 openmpi-bin libopenmpi-dev libnetcdf-dev libnetcdff-dev  netcdf-bin
+script:
+  - ./build.sh ${TYPE}
+
+before_deploy:
+  - tar -czvf binary_release.tar.gz build/*
+deploy:
+  provider: releases
+  api_key:
+    secure: Ll8zBChSvzbJ/3BFyKOPxXvpck6y1aKdmm0BhfZEyeQSxFpiv+b6eQ3VYndkL1QJ+WiDhqpf7PXticv3+eh82JT/ajICn2AH4nugjdHCRWWlsj28aO2fpPlbpggXSnX0oqwkAoRzHXW/nzS6Y4mqLS3FqN+o3lRshyF2hPZSrFx4K0SCP49o0pYeSJtaEurlvRgFzz5Bkol1EvhknijZiKXKGHnkDDyHf3fzDUpMTY/wpmPBLu7Ii+/+PqYa6xp6Rf0zcGGs3hN9DuUj9D2Yo2prAPmmA2J29r72ImH7d0k1ty1lD4HDPRpgyg727g1dMXq4P7YuBne0889lec6BnB3JMmzEF1NOhzn5UJ/5Xl53IWZ0okywgC3zHeTACxS4EuAlHa2+Afgh+JNfYttMPaiZ5eqXyqQ5vv4RgWRFZJIwNzCr2Hb+Dr7ZBPZE1i0/jwRiA+EyJL2gF6Iy4p7TiONFj7+SbWDuFjoh4sg19Wm1yHf7AeSen6B+WT4mmPjDHTxg5h6AKeCv/5MJvzFsOE5XUXIx079S5UUiaI8IiJkDlwgeKxuwZKQvP2Vo14nWD9OKObMh1ktd7/Wl6fRtLjGFG3uD2BumOvFYLZiWqWQja37MsuJCb04ntlqLir1XnQpLOP8hmAD4qSwQpXKqOvH97gd7UYIyp1qO2Qk1pW0=
+  file: binary_release.tar.gz
+  skip_cleanup: true
+  on:
+    repo: OceansAus/oasis3-mct
+    branch: master
+    tags: true
