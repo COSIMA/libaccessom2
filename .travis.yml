@@ -25,6 +25,6 @@ deploy:
   file: binary_release.tar.gz
   skip_cleanup: true
   on:
-    repo: OceansAus/oasis3-mct
+    repo: OceansAus/libaccessom2
     branch: master
     tags: true
