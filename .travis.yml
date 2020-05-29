@@ -27,19 +27,16 @@ env:
 #   - build_and_share
 #   - download_and_deploy
 
-jobs:
-  include:
-    - stage: build
-      script: ./build.sh ${TYPE}
-    - stage: build and deploy to staging
-      script: ./build.sh ${TYPE} && tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
-      deploy:
-        provider: releases
-        api_key: '$GITHUB_API_KEY'
-        skip_cleanup: true
-        file: binary_release.tar.gz 
-        on:
-          repo: COSIMA/libaccessom2
-          draft: true
-          # tags: true
-          branch: issue-45
+script: ./build.sh ${TYPE}
+
+deploy:
+  - provider: releases
+    script: ./build.sh ${TYPE} && tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
+    api_key: '$GITHUB_API_KEY'
+    skip_cleanup: true
+    file: binary_release.tar.gz 
+    on:
+      repo: COSIMA/libaccessom2
+      draft: true
+      # tags: true
+      all_branches: true
