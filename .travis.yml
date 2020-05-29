@@ -40,4 +40,4 @@ jobs:
           repo: COSIMA/libaccessom2
           draft: true
           # tags: true
-          # branch: issue-45
+          branch: issue-45
