@@ -1,6 +1,9 @@
 language: c
 sudo: required
 
+# Enable travis validation
+version: ~> 1.0
+
 git:
   depth: 3
   quiet: true
@@ -27,9 +30,9 @@ jobs:
       name: Build archive and share
       steps: 
         - name: buildlib
-          run: ./build.sh ${TYPE}
+          script: ./build.sh ${TYPE}
         - name: archive
-          run: tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
+          script: tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
         - name: archive
           uses: actions/upload-artifact@v1
           with:
