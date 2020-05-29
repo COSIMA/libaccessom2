@@ -26,10 +26,11 @@ jobs:
     - stage: test
       script: 
         - ./build.sh ${TYPE}
-        - ls -lR
+        - echo "TRAVIS_BUILD_DIR: $TRAVIS_BUILD_DIR"
+        - ls -lR $TRAVIS_BUILD_DIR 
     - stage: GitHub Release
       script: 
-        - ls -lR
+        - ls -lR $TRAVIS_BUILD_DIR 
         - tar -czvf binary_release.tar.gz build/*
       deploy:
         provider: releases
