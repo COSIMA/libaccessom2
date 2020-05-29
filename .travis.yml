@@ -26,7 +26,7 @@ jobs:
     build_and_share:
       name: Build archive and share
       steps: 
-        - name: build
+        - name: buildlib
           run: ./build.sh ${TYPE}
         - name: archive
           run: tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
