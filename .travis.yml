@@ -23,10 +23,6 @@ env:
   - FC=gfortran
   - OMPI_FC=${FC}
 
-# stages:
-#   - build_and_share
-#   - download_and_deploy
-
 script: ./build.sh ${TYPE} && tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
 
 deploy:
