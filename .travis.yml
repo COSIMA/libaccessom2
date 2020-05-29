@@ -33,8 +33,7 @@ jobs:
         - tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
       deploy:
         provider: releases
-        api_key:
-          secure: KUUtllzHolCh5/1FNPBU722gtjuZL+ic7FPpa5xjPFN6SIAINd9G+artHhaXlvzgnT8bgf2iaYHmtFVoRlOB5XT47PjMLOcx3rqKv3YOg80ERmeZmLSPiox/TiMJdsI3yqMKWj9z4sx3meS3wt2mjnyt8MZ5iN5n3TF2vod6SsHiG4FRRkfcu1ven5ObhYmkSy+dYR8xlv5cynqd8kD97vjL0LY5YjsLVJrrlf+xdcOIMPpWbpGltUxoYfRUFR9onZFSoEJm1JPRy3x/r+5bFI3Tl58QAPwiacLKYffiKi+SAS/KVAj+y2eaGy4r0GCviGyiK3ApcKok9dXEfDgjIBeOHxxOj78XdNO+3GZKInFzsOEoA4hfiMbc5qFyNBB7lM8wUFSfAm+R2R9SUzpBBSCncpLzGgrTUqAYCWcY4wVKISrjQnuBW3cDEGcS7PUzDnPmnASObQu0ZIQ7SFBCmgfefOAb4sKVU71pePuGqnSyiRXzKe2B64cJOplI7dmrwNMQyppLqlgPTVyYgmKp8XGOLRiKZgLMzvlgnGX/f1cB1mSKmjuF0aUJ+pbEalZ25v18xVx+XMdmSlpOCxldl4CHyHgFVfscVNKGb/g3v+FxritQtfy6uaMDdQwyoxICl5wnKfaaEF5ffgXqB5ZB/eywZaXXWpo5qYiija8Loow=
+        api_key: '$GITHUB_API_KEY'
         skip_cleanup: true
         on:
           repo: COSIMA/libaccessom2
