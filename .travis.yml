@@ -40,4 +40,4 @@ jobs:
           repo: OceansAus/libaccessom2
           draft: true
           # tags: true
-          # branch: master
+          branch: issue-45
