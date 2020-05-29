@@ -27,11 +27,10 @@ env:
 #   - build_and_share
 #   - download_and_deploy
 
-script: ./build.sh ${TYPE}
+script: ./build.sh ${TYPE} && tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
 
 deploy:
   - provider: releases
-    script: ./build.sh ${TYPE} && tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
     api_key: '$GITHUB_API_KEY'
     skip_cleanup: true
     file: binary_release.tar.gz 
