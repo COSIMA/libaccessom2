@@ -26,8 +26,8 @@ env:
 
 jobs:
   include:
-    build_and_share:
-      name: Build archive and share
+    - stage: build_and_share
+      name: "Build archive and share"
       steps: 
         - name: buildlib
           script: ./build.sh ${TYPE}
@@ -38,15 +38,15 @@ jobs:
           with:
             name: library
             path: binary_release.tar.gz
-    download_and_deploy:
+    - stage: download_and_deploy
       name: Download and deploy release
       needs: build_and_share
       steps:
-        - name: Download archive
+        - name: "Download archive"
           uses: actions/download-artifact@v1
           with:
             name: library
-        - name: deploy release
+        - name: "deploy release"
           deploy:
             provider: releases
             api_key: '$GITHUB_API_KEY'
@@ -57,3 +57,4 @@ jobs:
               draft: true
               # tags: true
               branch: issue-45
+
