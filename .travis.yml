@@ -32,7 +32,7 @@ jobs:
     name: "Build archive and share"
     steps:
       - name: buildlib
-        run: |
+        script: |
           ./build.sh ${TYPE} && tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
       - name: uploadlib
         uses: actions/upload-artifact@v1
