@@ -22,21 +22,36 @@ env:
   - OMPI_FC=${FC}
 
 jobs:
-  include:
-    - stage: test
-      script: 
-        - ./build.sh ${TYPE}
-        - ls -l $TRAVIS_BUILD_DIR 
-    - stage: GitHub Release
-      script: 
-        - ls -l $TRAVIS_BUILD_DIR 
-        - tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
-      deploy:
-        provider: releases
-        api_key: '$GITHUB_API_KEY'
-        skip_cleanup: true
-        on:
-          repo: COSIMA/libaccessom2
-          draft: true
-          # tags: true
-          branch: issue-45
+
+  build_and_share:
+    name: Build archive and share
+    steps: 
+      - name: build
+        run: ./build.sh ${TYPE}
+      - name: archive
+        run: tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
+      - name: archive
+        uses: actions/upload-artifact@v1
+        with:
+          name: library
+          path: binary_release.tar.gz
+
+  download_and_deploy:
+    name: Download and deploy release
+    needs: build_and_share
+    steps:
+      - name: Download archive
+        uses: actions/download-artifact@v1
+        with:
+          name: library
+      - name: deploy release
+        deploy:
+          provider: releases
+          api_key: '$GITHUB_API_KEY'
+          skip_cleanup: true
+          file: binary_release.tar.gz 
+          on:
+            repo: COSIMA/libaccessom2
+            draft: true
+            # tags: true
+            branch: issue-45
