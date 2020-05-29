@@ -27,13 +27,12 @@ env:
 #   - build_and_share
 #   - download_and_deploy
 
+script: ./build.sh ${TYPE} && tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
 jobs:
   build_and_share:
     name: "Build archive and share"
     steps:
       - name: buildlib
-        script: |
-          ./build.sh ${TYPE} && tar -czvf binary_release.tar.gz $TRAVIS_BUILD_DIR/*
       - name: uploadlib
         uses: actions/upload-artifact@v1
         with:
