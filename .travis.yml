@@ -23,7 +23,7 @@ env:
   - FC=gfortran
   - OMPI_FC=${FC}
 
-script: ./build.sh ${TYPE} && tar -C $TRAVIS_BUILD_DIR -czvf binary_release.tar.gz build/bin/* build/lib/*
+script: ./build.sh ${TYPE} && tar -C $TRAVIS_BUILD_DIR --transform 's,build,libaccessom2,' -czvf binary_release.tar.gz build/bin/* build/lib/*
 
 deploy:
   - provider: releases
