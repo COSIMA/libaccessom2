@@ -23,13 +23,15 @@ env:
   - FC=gfortran
   - OMPI_FC=${FC}
 
-script: ./build.sh ${TYPE}
+script: ./build.sh ${TYPE} && 
+        tar -C $TRAVIS_BUILD_DIR 
+            --transform 's,build,libaccessom2,' 
+            -czvf binary_release.tar.gz build/bin/* build/lib/*
 
 deploy:
   - provider: releases
     api_key: '$GITHUB_API_KEY'
     skip_cleanup: true
-    script: tar -C $TRAVIS_BUILD_DIR --transform 's,build,libaccessom2,' -czvf binary_release.tar.gz build/bin/* build/lib/*
     file: binary_release.tar.gz 
     on:
       repo: COSIMA/libaccessom2
