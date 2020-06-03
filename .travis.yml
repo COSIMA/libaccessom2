@@ -26,7 +26,7 @@ env:
 script: ./build.sh ${TYPE} && 
         tar -C $TRAVIS_BUILD_DIR 
             --transform 's,build,libaccessom2,' 
-            -czvf binary_release.tar.gz build/bin/* build/lib/*
+            -czvf binary_release.tar.gz build/bin/* build/lib/* build/include/*
 
 deploy:
   - provider: releases
@@ -37,3 +37,4 @@ deploy:
       repo: COSIMA/libaccessom2
       tags: true
       branch: master
+
