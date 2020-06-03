@@ -26,7 +26,7 @@ env:
 script: ./build.sh ${TYPE} && 
         tar -C $TRAVIS_BUILD_DIR 
             --transform 's,build,libaccessom2,' 
-            -czvf binary_release.tar.gz build/bin/* build/lib/* build/nclude/*
+            -czvf binary_release.tar.gz build/bin/* build/lib/* build/include/*
 
 deploy:
   - provider: releases
