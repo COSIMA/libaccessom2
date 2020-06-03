@@ -35,8 +35,6 @@ deploy:
     file: binary_release.tar.gz 
     on:
       repo: COSIMA/libaccessom2
-      # tags: true
-      # branch: master
-      all_branches: true
-      draft: true
+      tags: true
+      branch: master
 
