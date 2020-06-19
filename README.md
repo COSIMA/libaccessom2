@@ -70,13 +70,13 @@ qsub -I -P x77 -q normal -lncpus=4 -lmem=16Gb -lwalltime=3:00:00 -lstorage=gdata
 
 
 ```{bash}
-export LIBACCESSOM2_DIR=$(pwd)
+export LIBACCESSOM2_ROOT=$(pwd)
 module load openmpi
 cd tests/
 ./copy_test_data.sh
 cd JRA55_IAF
-rm -rf log ; mkdir log ; rm -f accessom2_restart_datetime.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./
-mpirun -np 1 $LIBACCESSOM2_DIR/build/bin/yatm.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ice_stub.exe : -np 1 $LIBACCESSOM2_DIR/build/bin/ocean_stub.exe
+rm -rf log ; mkdir log ; rm -f accessom2_restart.nml ; cp ../test_data/i2o.nc ./ ; cp ../test_data/o2i.nc ./
+export UCX_LOG_LEVEL=error; mpirun -np 1 $LIBACCESSOM2_ROOT/build/bin/yatm.exe : -np 1 $LIBACCESSOM2_ROOT/build/bin/ice_stub.exe : -np 1 $LIBACCESSOM2_ROOT/build/bin/ocean_stub.exe
 ```
 
 Or, if Python3 and pytest is installed:

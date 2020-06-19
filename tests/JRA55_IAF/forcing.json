@@ -29,7 +29,8 @@
     {
       "filename": "/g/data/ua8/JRA55-do/latest/runoff_all.{{year}}.nc",
       "fieldname": "friver",
-      "cname": "runof_ai"
+      "cname": "runof_ai",
+      "domain": "land"
     },
     {
       "filename": "/g/data/ua8/JRA55-do/latest/t_10.{{year}}.nc",
