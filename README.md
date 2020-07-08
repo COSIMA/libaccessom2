@@ -68,6 +68,7 @@ qsub -I -P x77 -q normal -lncpus=4 -lmem=16Gb -lwalltime=3:00:00 -lstorage=gdata
 /g/data1b/qv56/
 ```
 
+The tests: `JRA55_IAF JRA55_IAF_SINGLE_FIELD JRA55_RYF JRA55_RYF_MINIMAL JRA55_v1p4_IAF` can all be run manually as follows. Replace `JRA55_IAF` with the test to be run.
 
 ```{bash}
 export LIBACCESSOM2_ROOT=$(pwd)
@@ -79,10 +80,20 @@ rm -rf log ; mkdir log ; rm -f accessom2_restart.nml ; cp ../test_data/i2o.nc ./
 export UCX_LOG_LEVEL=error; mpirun -np 1 $LIBACCESSOM2_ROOT/build/bin/yatm.exe : -np 1 $LIBACCESSOM2_ROOT/build/bin/ice_stub.exe : -np 1 $LIBACCESSOM2_ROOT/build/bin/ocean_stub.exe
 ```
 
-Or, if Python3 and pytest is installed:
+If Python3 and pytest are installed then all of the above and some additional tests can be run with:
 
 ```{bash}
 module load openmpi
 python -m pytest tests/
 ```
+
+Any individual pytest test can be run using pytest as follows:
+
+```{bash}
+module load openmpi
+python -m pytest test_stubs.py::TestStubs::test_field_scaling
+```
+
+The above is the only way to run the `FORCING_SCALING` test case because it relies on the Python test code to create one of the inputs.
+
 

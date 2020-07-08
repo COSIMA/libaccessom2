@@ -5,7 +5,9 @@ import json
 import ast
 import pytest
 import datetime
+import netCDF4 as nc
 import dateutil.parser
+import shutil
 from collections import OrderedDict
 from helper import Helper
 
@@ -152,17 +154,17 @@ class TestStubs:
 
     def test_field_scaling(self, helper):
         """
-        Test forcing field scaling feature of libaccessom2. 
-        
+        Test forcing field scaling feature of libaccessom2.
+
         This feature allows a 'scaling' file to be specified for each forcing
         field. This file has the same structure as a forcing file for each
         location and time point it contains a multiplier that will be applied
         to the forcing field before being used.
         """
 
-        def setup_scaling_file():            
+        def setup_scaling_file():
             scaling_file = 'test_data/scaling.RYF.rsds.1990_1991.nc'
-            os.copyfile('/g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc',
+            shutil.copy('/g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc',
                         scaling_file)
 
             with nc.Dataset(scaling_file, 'r+') as f:
@@ -178,11 +180,10 @@ class TestStubs:
         run_checksums = helper.filter_checksums(log)
         stored_checksums = helper.checksums('FORCING_SCALING')
 
-        # FIXME: don't hard-code this, calculate that times/keys are correct.
-        keys = ['checksum-matmxx-swfld_ai-0000043200',
-                'checksum-matmxx-swfld_ai-0000054000',
-                'checksum-matmxx-swfld_ai-0000064800',
-                'checksum-matmxx-swfld_ai-0000075600']
+        keys = ['checksum-matmxx-swfld_ai-0000000000',
+                'checksum-matmxx-swfld_ai-0000010800',
+                'checksum-matmxx-swfld_ai-0000021600',
+                'checksum-matmxx-swfld_ai-0000032400']
 
         # Scaling multiplied by 0, 1, 2, 3
         for mult, k in enumerate(keys):
