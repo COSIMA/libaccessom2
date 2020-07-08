@@ -58,7 +58,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_conserve.nc dst
+../test_data/rmp_jra55_cice_1st_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.

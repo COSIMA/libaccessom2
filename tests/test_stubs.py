@@ -5,7 +5,9 @@ import json
 import ast
 import pytest
 import datetime
+import netCDF4 as nc
 import dateutil.parser
+import shutil
 from collections import OrderedDict
 from helper import Helper
 
@@ -149,22 +151,44 @@ class TestStubs:
         # Check that everything is the same
         assert run_checksums == stored_checksums
 
+
     def test_field_scaling(self, helper):
+        """
+        Test forcing field scaling feature of libaccessom2.
+
+        This feature allows a 'scaling' file to be specified for each forcing
+        field. This file has the same structure as a forcing file for each
+        location and time point it contains a multiplier that will be applied
+        to the forcing field before being used.
+        """
+
+        def setup_scaling_file():
+            scaling_file = 'test_data/scaling.RYF.rsds.1990_1991.nc'
+            shutil.copy('/g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc',
+                        scaling_file)
+
+            with nc.Dataset(scaling_file, 'r+') as f:
+                f.variables['rsds'][:] = 1.0
+                for i in range(4):
+                    f.variables['rsds'][i] = i
+
+        setup_scaling_file()
+
         ret, output, log, matm_log = helper.run_exp('FORCING_SCALING')
         assert ret == 0
 
         run_checksums = helper.filter_checksums(log)
         stored_checksums = helper.checksums('FORCING_SCALING')
 
-        # FIXME: don't hard-code this, calculate that times/keys are correct.
-        keys = ['checksum-matmxx-swfld_ai-0000043200',
-                'checksum-matmxx-swfld_ai-0000054000',
-                'checksum-matmxx-swfld_ai-0000064800',
-                'checksum-matmxx-swfld_ai-0000075600']
+        keys = ['checksum-matmxx-swfld_ai-0000000000',
+                'checksum-matmxx-swfld_ai-0000010800',
+                'checksum-matmxx-swfld_ai-0000021600',
+                'checksum-matmxx-swfld_ai-0000032400']
 
         # Scaling multiplied by 0, 1, 2, 3
         for mult, k in enumerate(keys):
             assert abs(run_checksums[k] - mult*stored_checksums[k]) < 0.1
+
 
     @pytest.mark.slow
     def test_forcing_fields(self, helper, exp):

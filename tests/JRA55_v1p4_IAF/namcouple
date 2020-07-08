@@ -57,7 +57,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_conserve.nc dst
+../test_data/rmp_jra55_cice_1st_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 #########
 # Field 02 : lwflx down
@@ -68,7 +68,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_conserve.nc dst
+../test_data/rmp_jra55_cice_1st_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 03 : rainfall
@@ -79,7 +79,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_conserve.nc dst
+../test_data/rmp_jra55_cice_1st_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 04 : snowfall
@@ -90,7 +90,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_conserve.nc dst
+../test_data/rmp_jra55_cice_1st_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 05 : surface pressure
@@ -101,7 +101,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_smooth.nc dst
+../test_data/rmp_jra55_cice_patch.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.
@@ -121,7 +121,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_smooth.nc dst
+../test_data/rmp_jra55_cice_patch.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 08 : 2m air humidity
@@ -132,7 +132,7 @@ P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_smooth.nc dst
+../test_data/rmp_jra55_cice_patch.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 09 : 10m wind (u)
@@ -142,7 +142,7 @@ jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 MAPPING SCRIPR
-../test_data/rmp_jra55_cice_smooth.nc dst
+../test_data/rmp_jra55_cice_patch.nc dst
 DISTWGT LR VECTOR LATLON 10 4 vwnd_ai
 ##########
 # Field 10 : 10m wind (v)
@@ -152,7 +152,7 @@ jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 MAPPING SCRIPR
-../test_data/rmp_jra55_cice_smooth.nc dst
+../test_data/rmp_jra55_cice_patch.nc dst
 DISTWGT LR VECTOR LATLON 10 4 uwnd_ai
 ##########
 # Field 11 : land ice calving flux, like runoff it is passed on the destination grid
@@ -298,7 +298,7 @@ INSTANT
 ##########
 # Field 28 : land ice heatflux
 ########## 
-liceht_io liceht 36 3600 1 i2o.nc IGNORED
+licefh_io liceht 36 3600 1 i2o.nc IGNORED
 cict cict LAG=0 SEQ=+1
 #
 LOCTRANS
