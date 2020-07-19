@@ -23,7 +23,7 @@ program ocean
     integer, dimension(2) :: resolution
     type(field_type), dimension(:), allocatable :: in_fields, out_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
-        from_ice_field_names = '', to_ice_field_names = ''
+        from_ice_field_names = '', from_atm_field_names = '', to_ice_field_names = ''
     integer :: num_from_ice_fields, num_to_ice_fields
     integer :: cur_runtime_in_seconds
     logical :: file_exists
@@ -53,10 +53,14 @@ program ocean
 
     ! Count and allocate the coupling fields
     num_from_ice_fields = 0
+    num_from_atm_fields = 0
     num_to_ice_fields = 0
     do i=1, MAX_FIELDS
         if (from_ice_field_names(i) /= '') then
             num_from_ice_fields = num_from_ice_fields + 1
+        endif
+        if (from_atm_field_names(i) /= '') then
+            num_from_atm_fields = num_from_atm_fields + 1
         endif
         if (to_ice_field_names(i) /= '') then
             num_to_ice_fields = num_to_ice_fields + 1

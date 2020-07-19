@@ -21,7 +21,7 @@ program atm
     type(forcing_type) :: forcing
     type(ice_grid_type) :: ice_grid
     type(runoff_type) :: runoff
-    type(field_type), dimension(:), allocatable :: fields
+    type(field_type), dimension(:), allocatable :: atm_fields, atm_to_ocn_fields
     integer, dimension(:), allocatable :: to_runoff_map
     ! Liquid (river) and solid (iceberg) runoff
     type(field_type), dimension(:), allocatable :: runoff_fields
@@ -30,7 +30,8 @@ program atm
     integer, dimension(2) :: ice_shape
     integer :: i, ri, err, tmp_unit
     logical :: file_exists
-    integer :: num_atm_to_ice_fields, dt, cur_runtime_in_seconds
+    integer :: num_atm_fields, num_atm_to_ice_fields, num_atm_to_ocn_fields
+    integer :: dt, cur_runtime_in_seconds
     integer :: num_land_fields
 
     type(simple_timer_type) :: field_read_timer, ice_wait_timer
@@ -56,12 +57,12 @@ program atm
 
     ! Initialise forcing object, this reads config and
     ! tells us how man atm-to-ice fields there are.
-    call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
+    call forcing%init(forcing_file, accessom2%logger, num_atm_fields)
 
     ! Initialise forcing fields, involves reading details of each from disk,
     ! and allocating necessary memory.
-    allocate(fields(num_atm_to_ice_fields))
-    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), &
+    allocate(atm_fields(num_atm_fields))
+    call forcing%init_fields(atm_fields, accessom2%get_cur_forcing_date(), &
                              dt, calendar, num_land_fields)
     ! Create intermediate fields for runoff,
     ! these are a copy/variation of the forcing fields
@@ -74,7 +75,8 @@ program atm
     ! Tell libaccessom2 about any global configs/state
     call accessom2%set_calendar(calendar)
     call accessom2%set_atm_timestep(dt)
-    call accessom2%set_cpl_field_counts(num_atm_to_ice_fields=num_atm_to_ice_fields)
+    call accessom2%set_cpl_field_counts(num_atm_to_ice_fields=num_atm_fields, &
+                                        num_atm_to_ocn_fields=num_atm_to_ocn_fields)
     ! Synchronise accessom2 'state' (i.e. configuration) between all PEs of all models.
     call accessom2%sync_config(coupler)
 
@@ -103,10 +105,10 @@ program atm
 
     ! Create a little map to go from atm_to_ice field indices to
     ! runoff field indices, simplifies the code below
-    allocate(to_runoff_map(num_atm_to_ice_fields))
+    allocate(to_runoff_map(num_atm_fields))
     ri = 1
     do i=1, num_atm_to_ice_fields
-        if (fields(i)%domain == FIELD_DOMAIN_LAND) then
+        if (atm_fields(i)%domain == FIELD_DOMAIN_LAND) then
             to_runoff_map(i) = ri
             ri = ri + 1
         else
@@ -114,25 +116,24 @@ program atm
         endif
     enddo
 
-    ! Initialise coupling fields, runoff fields need special treatment.
+    ! Initialise atm->ice coupling fields, runoff fields need special treatment.
     do i=1, num_atm_to_ice_fields
         if (to_runoff_map(i) /= 0) then
             ri = to_runoff_map(i)
-            runoff_fields(ri)%name = fields(i)%name
-            runoff_fields(ri)%domain = fields(i)%domain
-            runoff_fields(ri)%timestamp = fields(i)%timestamp
+            runoff_fields(ri)%name = atm_fields(i)%name
+            runoff_fields(ri)%domain = atm_fields(i)%domain
+            runoff_fields(ri)%timestamp = fatm_ields(i)%timestamp
             allocate(runoff_fields(ri)%data_array(ice_shape(1), ice_shape(2)))
             call coupler%init_field(runoff_fields(ri), OASIS_OUT)
         else
-            call coupler%init_field(fields(i), OASIS_OUT)
+            call coupler%init_field(atm_fields(i), OASIS_OUT)
         endif
     enddo
 
+    ! Initialise atm->ocean coupling fields
     do i=1, num_atm_to_ocn_fields
         call coupler%init_field(fields(i), OASIS_OUT)
     enddo
-
-
 
     ! Finish coupler initialisation. Tell oasis how long the run is and the
     ! coupling timesteps.
@@ -144,17 +145,17 @@ program atm
         cur_runtime_in_seconds = int(accessom2%get_cur_runtime_in_seconds())
 
         ! Send each atm to ice forcing field
-        do i=1, num_atm_to_ice_fields
+        do i=1, num_atm_fields
             ri = to_runoff_map(i)
 
-            if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
+            if (mod(cur_runtime_in_seconds, atm_fields(i)%dt) == 0) then
                 call field_read_timer%start()
-                call forcing%update_field(fields(i), &
+                call forcing%update_field(atm_fields(i), &
                                           accessom2%get_cur_forcing_date())
                 call field_read_timer%stop()
                 if (ri /= 0) then
                     call remap_runoff_timer%start()
-                    call runoff%remap(fields(i)%data_array, &
+                    call runoff%remap(atm_fields(i)%data_array, &
                                       runoff_fields(ri)%data_array, ice_grid%mask)
                     call remap_runoff_timer%stop()
                 endif
@@ -168,33 +169,6 @@ program atm
             endif
             call coupler_put_timer%stop()
         enddo
-
-        ! Send each atm to ocean forcing field
-        do i=1, num_atm_to_ocn_fields
-
-            if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
-                call field_read_timer%start()
-                call forcing%update_field(fields(i), &
-                                          accessom2%get_cur_forcing_date())
-                call field_read_timer%stop()
-                if (ri /= 0) then
-                    call remap_runoff_timer%start()
-                    call runoff%remap(fields(i)%data_array, &
-                                      runoff_fields(ri)%data_array, ice_grid%mask)
-                    call remap_runoff_timer%stop()
-                endif
-            endif
-
-            call coupler_put_timer%start()
-            if (ri /= 0) then
-                call coupler%put(runoff_fields(ri), cur_runtime_in_seconds, err)
-            else
-                call coupler%put(fields(i), cur_runtime_in_seconds, err)
-            endif
-            call coupler_put_timer%stop()
-        enddo
-
-
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
         ! after receiving the above fields. This prevents the atm from sending continuously.
