@@ -128,6 +128,12 @@ program atm
         endif
     enddo
 
+    do i=1, num_atm_to_ocn_fields
+        call coupler%init_field(fields(i), OASIS_OUT)
+    enddo
+
+
+
     ! Finish coupler initialisation. Tell oasis how long the run is and the
     ! coupling timesteps.
     call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
@@ -137,7 +143,7 @@ program atm
 
         cur_runtime_in_seconds = int(accessom2%get_cur_runtime_in_seconds())
 
-        ! Send each forcing field
+        ! Send each atm to ice forcing field
         do i=1, num_atm_to_ice_fields
             ri = to_runoff_map(i)
 
@@ -162,6 +168,33 @@ program atm
             endif
             call coupler_put_timer%stop()
         enddo
+
+        ! Send each atm to ocean forcing field
+        do i=1, num_atm_to_ocn_fields
+
+            if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
+                call field_read_timer%start()
+                call forcing%update_field(fields(i), &
+                                          accessom2%get_cur_forcing_date())
+                call field_read_timer%stop()
+                if (ri /= 0) then
+                    call remap_runoff_timer%start()
+                    call runoff%remap(fields(i)%data_array, &
+                                      runoff_fields(ri)%data_array, ice_grid%mask)
+                    call remap_runoff_timer%stop()
+                endif
+            endif
+
+            call coupler_put_timer%start()
+            if (ri /= 0) then
+                call coupler%put(runoff_fields(ri), cur_runtime_in_seconds, err)
+            else
+                call coupler%put(fields(i), cur_runtime_in_seconds, err)
+            endif
+            call coupler_put_timer%stop()
+        enddo
+
+
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
         ! after receiving the above fields. This prevents the atm from sending continuously.
