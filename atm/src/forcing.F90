@@ -73,6 +73,8 @@ subroutine forcing_init_fields(self, fields, forcing_date, &
     character(len=1024) :: filename
     character(len=9) :: calendar_str
     logical :: found, scaling_found, domain_found
+    real    :: scale_constant
+    logical :: scale_constant_found
 
     min_dt = huge(min_dt)
     calendar_str = ''
@@ -105,12 +107,21 @@ subroutine forcing_init_fields(self, fields, forcing_date, &
             num_land_fields = num_land_fields + 1
         endif
 
+        ! simple scale_constant
+        call self%core%get(fp, "scale_constant", scale_constant, scale_constant_found)
+
+        call assert( .not. (scaling_found .and. scale_constant_found), &
+                     "Cannot have scaling_fiilename and scale_constant")
+
         ! Get the shape of forcing fields
         filename = filename_for_year(filename_template, forcing_date%getYear())
         ! Initialise a new field object.
         if (scaling_found) then
             call fields(i)%init(cname, fieldname, filename_template, &
-                                filename, domain, self%logger, scaling_filename)
+                                filename, domain, self%logger, scaling_filename=scaling_filename)
+        else if (scale_constant_found) then
+            call fields(i)%init(cname, fieldname, filename_template, &
+                                filename, domain, self%logger, scale_constant=scale_constant)
         else
             call fields(i)%init(cname, fieldname, filename_template, &
                                 filename, domain, self%logger)
