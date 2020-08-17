@@ -111,7 +111,7 @@ subroutine forcing_init_fields(self, fields, forcing_date, &
         call self%core%get(fp, "scale_constant", scale_constant, scale_constant_found)
 
         call assert( .not. (scaling_found .and. scale_constant_found), &
-                     "Cannot have scaling_fiilename and scale_constant")
+                     "Cannot have scaling_filename and scale_constant")
 
         ! Get the shape of forcing fields
         filename = filename_for_year(filename_template, forcing_date%getYear())
@@ -119,7 +119,7 @@ subroutine forcing_init_fields(self, fields, forcing_date, &
         if (scaling_found) then
             call fields(i)%init(cname, fieldname, filename_template, &
                                 filename, domain, self%logger, scaling_filename=scaling_filename)
-        else if (scale_constant_found) then
+        elseif (scale_constant_found) then
             call fields(i)%init(cname, fieldname, filename_template, &
                                 filename, domain, self%logger, scale_constant=scale_constant)
         else
