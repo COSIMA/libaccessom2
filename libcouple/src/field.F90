@@ -29,6 +29,7 @@ type, public :: field
     type(ncvar_type) :: ncvar, scaling_ncvar
     real, dimension(:, :), allocatable :: data_array
     real, dimension(:, :), allocatable :: scaling_data_array
+    real :: scale_constant
 
     type(logger_type) :: logger
 contains
@@ -40,13 +41,14 @@ endtype field
 contains
 
 subroutine field_init(self, name, ncname, filename_template, &
-                      filename, domain, loggerin, scaling_filename)
+                      filename, domain, loggerin, scaling_filename, scale_constant)
     class(field), intent(inout) :: self
     character(len=*), intent(in) :: name, ncname
     character(len=*), intent(in) :: filename_template, filename
     character(len=*), intent(in) :: domain
     type(logger_type), intent(in) :: loggerin
     character(len=*), intent(in), optional :: scaling_filename
+    real, intent(in), optional :: scale_constant
 
     self%name = name
     self%filename_template = filename_template
@@ -64,6 +66,11 @@ subroutine field_init(self, name, ncname, filename_template, &
         call self%scaling_ncvar%init(ncname, scaling_filename)
         allocate(self%scaling_data_array(self%ncvar%nx, self%ncvar%ny))
         self%scaling_data_array(:, :) = HUGE(1.0)
+    endif
+
+    self%scale_constant = 1.0
+    if(present(scale_constant)) then
+        self%scale_constant = scale_constant
     endif
 
     ! Set the field domain
@@ -123,6 +130,10 @@ subroutine field_update_data(self, filename, forcing_date)
             self%data_array(:, :) = self%data_array(:, :) * &
                                         self%scaling_data_array(:, :)
         endif
+    endif
+
+    if( self%scale_constant /= 1.0 ) then
+        self%data_array = self%scale_constant*self%data_array
     endif
 
 end subroutine field_update_data
