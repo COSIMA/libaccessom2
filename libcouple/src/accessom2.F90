@@ -9,7 +9,7 @@ use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
 use datetime_module, only : date2num, num2date
 use error_handler, only : assert
 use coupler_mod, only : coupler_type => coupler
-use logger_mod, only : logger_type => logger
+use logger_mod, only : logger_type => logger, LOG_ERROR
 use libaccessom2_version_mod, only : LIBACCESSOM2_COMMIT_HASH
 
 implicit none
@@ -147,9 +147,13 @@ subroutine accessom2_init(self, model_name, config_dir)
     if (present(config_dir)) then
         self%config_dir = config_dir
     else
-        self%config_dir = '../globabl/'
+        self%config_dir = '../global/'
     endif
 
+    ! Initialise namelist parameters with defaults
+    log_level = 'ERROR'
+    ice_ocean_timestep = 300
+    enable_simple_timers = .false.
     allow_forcing_and_exp_date_mismatch = .false.
 
     ! Read namelist which includes information about the forcing start and end date
