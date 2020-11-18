@@ -36,6 +36,8 @@ program atm
     type(simple_timer_type) :: field_read_timer, ice_wait_timer
     type(simple_timer_type) :: init_runoff_timer, remap_runoff_timer
     type(simple_timer_type) :: coupler_put_timer
+    type(simple_timer_type) :: init_oasis_timer, init_model_timer
+    type(simple_timer_type) :: init_fields_timer
 
     namelist /atm_nml/ forcing_file, accessom2_config_dir
 
@@ -54,6 +56,25 @@ program atm
     call accessom2%init('matmxx', config_dir=trim(accessom2_config_dir))
     call accessom2%print_version_info()
 
+    ! Initialise timers
+    call field_read_timer%init('field_read', accessom2%logger, &
+                               accessom2%simple_timers_enabled())
+    call ice_wait_timer%init('ice_wait', accessom2%logger, &
+                             accessom2%simple_timers_enabled())
+    call init_runoff_timer%init('init_runoff', accessom2%logger, &
+                                 accessom2%simple_timers_enabled())
+    call remap_runoff_timer%init('remap_runoff', accessom2%logger, &
+                                 accessom2%simple_timers_enabled())
+    call coupler_put_timer%init('coupler_put', accessom2%logger, &
+                                 accessom2%simple_timers_enabled())
+    call init_model_timer%init('init_model', accessom2%logger, &
+                                accessom2%simple_timers_enabled())
+    call init_oasis_timer%init('init_oasis', accessom2%logger, &
+                                accessom2%simple_timers_enabled())
+    call init_fields_timer%init('init_fields', accessom2%logger, &
+                                accessom2%simple_timers_enabled())
+    call init_model_timer%start()
+
     ! Initialise forcing object, this reads config and
     ! tells us how man atm-to-ice fields there are.
     call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
@@ -61,8 +82,10 @@ program atm
     ! Initialise forcing fields, involves reading details of each from disk,
     ! and allocating necessary memory.
     allocate(fields(num_atm_to_ice_fields))
+    call init_fields_timer%start()
     call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), &
                              dt, calendar, num_land_fields)
+    call init_fields_timer%stop()
     ! Create intermediate fields for runoff,
     ! these are a copy/variation of the forcing fields
     allocate(runoff_fields(num_land_fields))
@@ -83,18 +106,6 @@ program atm
     call ice_grid%init(coupler%ice_root)
     call ice_grid%recv()
     ice_shape = ice_grid%get_shape()
-
-    ! Initialise timers
-    call field_read_timer%init('field_read', accessom2%logger, &
-                               accessom2%simple_timers_enabled())
-    call ice_wait_timer%init('ice_wait', accessom2%logger, &
-                             accessom2%simple_timers_enabled())
-    call init_runoff_timer%init('init_runoff', accessom2%logger, &
-                                 accessom2%simple_timers_enabled())
-    call remap_runoff_timer%init('remap_runoff', accessom2%logger, &
-                                 accessom2%simple_timers_enabled())
-    call coupler_put_timer%init('coupler_put', accessom2%logger, &
-                                 accessom2%simple_timers_enabled())
 
     ! Initialise the runoff remapping object with ice grid information.
     call init_runoff_timer%start()
@@ -129,9 +140,13 @@ program atm
     enddo
 
     ! Finish coupler initialisation. Tell oasis how long the run is and the
-    ! coupling timesteps.
+    ! coupling timesteps. This call also does MCT routing table initialisation
+    ! which can be slow.
+    call init_oasis_timer%start()
     call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
                           accessom2%get_coupling_field_timesteps())
+    call init_oasis_timer%stop()
+    call init_model_timer%stop()
 
     do while (.not. accessom2%run_finished())
 
@@ -173,6 +188,8 @@ program atm
         call accessom2%logger%write(LOG_INFO, '{ "cur_forcing-datetime" : "'//accessom2%get_cur_forcing_date_str()//'" }')
         call accessom2%logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
                                     int(accessom2%get_cur_runtime_in_seconds()))
+        ! Print out current model speed in h/h
+        !call accessom2%logger%write(LOG_INFO, '{ "modeltime_over_walltime_hour_per_hour" : "" ', 
 
         call accessom2%progress_date(dt)
     enddo
@@ -182,6 +199,9 @@ program atm
     call init_runoff_timer%write_stats()
     call remap_runoff_timer%write_stats()
     call coupler_put_timer%write_stats()
+    call init_oasis_timer%write_stats()
+    call init_model_timer%write_stats()
+    call init_fields_timer%write_stats()
 
     call accessom2%logger%write(LOG_INFO, 'Run complete, calling deinit')
 
