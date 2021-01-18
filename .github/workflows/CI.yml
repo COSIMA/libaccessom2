@@ -35,24 +35,23 @@ jobs:
         with:
           submodules: 'recursive'
       
-      # Get OASIS dependency
-      - name: Checkout OASIS3-mct
-        uses: actions/checkout@v2
-        with:
-          repository: COSIMA/oasis3-mct
-          path: oasis3-mct
-
       # Install dependencies
       - name: Install dependencies
         run: sudo apt-get install -y csh openmpi-bin libopenmpi-dev libopenmpi2 netcdf-bin libnetcdf-dev libnetcdff-dev libnetcdf13 
 
-      # Compile OASIS
-      - name: Compile OASIS3-mct
-        run: cd ${{ github.workspace }}/oasis3-mct && make ${platform}
+      # Download 
+      - name: Download OASIS3-mct build
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          repo: COSIMA/oasis3-mct
+          workflow: CI.yml
+          name: binary_release
+          path: oasis3-mct
 
       # Build libaccessom2
       - name: Build libaccessom2
         run: |
+          ls -lR
           echo Building 1 degree
           env
           ./build.sh ${platform} 
