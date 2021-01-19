@@ -46,7 +46,4 @@ jobs:
       
       - name: Prepare release
         run: |
-          ls -lR
-          tar -C $LIBACCESSOM2_ROOT
-              --transform 's,build,libaccessom2,' 
-              -czvf binary_release.tar.gz build/bin/* build/lib/* build/include/*
+          tar --transform 's,build,libaccessom2,' -cvf binary_release.tar.gz build/lib/ build/include/
