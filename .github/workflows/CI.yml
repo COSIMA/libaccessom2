@@ -46,4 +46,10 @@ jobs:
       
       - name: Prepare release
         run: |
-          tar --transform 's,build,libaccessom2,' -cvf binary_release.tar.gz build/lib/ build/include/
+          tar --transform 's,build,libaccessom2,' -cvf binary_release.tar build/lib/ build/include/
+
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v2
+        with:
+          name: binary_release
+          path: binary_release.tar
