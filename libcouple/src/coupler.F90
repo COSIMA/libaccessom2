@@ -11,8 +11,7 @@ use error_handler, only : assert
 use logger_mod, only : logger_type => logger, LOG_DEBUG
 use field_mod, only : field_type => field
 
-use mod_oasis_namcouple, only : prism_nmodels, prism_modnam
-use mod_oasis_data, only : mpi_root_global
+use mod_oasis_data, only : mpi_root_global, prism_nmodels, prism_modnam
 
 implicit none
 private
