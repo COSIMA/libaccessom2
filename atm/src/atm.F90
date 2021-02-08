@@ -8,6 +8,7 @@ program atm
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
     use runoff_mod, only : runoff_type => runoff
     use accessom2_mod, only : accessom2_type => accessom2
+    use pio_wrapper_mod, only : pio_wrapper_type => pio_wrapper
     use simple_timer_mod, only : simple_timer_type => simple_timer
     use logger_mod, only : LOG_INFO, LOG_DEBUG
     use yatm_version_mod, only : YATM_COMMIT_HASH
@@ -17,6 +18,7 @@ program atm
     integer, parameter :: MAX_FILE_NAME_LEN = 1024
 
     type(accessom2_type) :: accessom2
+    type(pio_wrapper_type) :: pio_wrapper
     type(coupler_type) :: coupler
     type(forcing_type) :: forcing
     type(ice_grid_type) :: ice_grid

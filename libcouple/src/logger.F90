@@ -26,8 +26,9 @@ endtype logger
 
 contains
 
-subroutine logger_init(self, basename, logfiledir, loglevel)
+subroutine logger_init(self, mpi_comp_comm_world, basename, logfiledir, loglevel)
     class(logger), intent(inout) :: self
+    integer, intent(in) :: mpi_comp_comm_world
     character(len=*), intent(in) :: basename
     character(len=*), optional, intent(in) :: logfiledir
     character(len=*), optional, intent(in) :: loglevel
@@ -51,7 +52,7 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
         self%loglevel = LOG_ERROR
     endif
 
-    call MPI_Comm_rank(MPI_COMM_WORLD, pe, err)
+    call MPI_Comm_rank(mpi_comp_comm_world, pe, err)
     write(pe_str, '(I5.5)') pe
 
     self%logfilename = trim(basename)//'.pe'//pe_str//'.log'

@@ -10,6 +10,7 @@ use datetime_module, only : date2num, num2date
 use error_handler, only : assert
 use coupler_mod, only : coupler_type => coupler
 use logger_mod, only : logger_type => logger, LOG_ERROR
+use pio_wrapper_mod, only : pio_wrapper_type => pio_wrapper
 use libaccessom2_version_mod, only : LIBACCESSOM2_COMMIT_HASH
 
 implicit none
@@ -51,6 +52,10 @@ type accessom2
     type(datetime) :: run_start_date, run_end_date
 
     integer, dimension(3) :: skip_date_mismatch_date
+
+    type(pio_wrapper_type) :: pio_wrapper
+
+    integer, public :: mpi_comm_comp_world, mpi_comm_io_world
 
 contains
     private
@@ -102,6 +107,13 @@ contains
                                         accessom2_get_ice_ocean_timestep
     procedure, pass(self), public :: get_atm_ice_timestep => &
                                         accessom2_get_atm_ice_timestep
+
+    procedure, pass(self), public :: get_pio_subsystem => &
+                                        accessom2_get_pio_subsystem
+
+    procedure, pass(self), public :: get_mpi_comm_comp_world => &
+                                        accessom2_get_mpi_comm_comp_world
+
 endtype accessom2
 
 integer, parameter :: CALENDAR_NOLEAP = 1, CALENDAR_GREGORIAN = 2
@@ -133,6 +145,8 @@ subroutine accessom2_init(self, model_name, config_dir)
     type(tm_struct) :: ctime
     logical :: initialized, file_exists
     character(len=1024) :: path
+
+    self%mpi_comm_comp_world = MPI_COMM_WORLD
 
     ! Shared config
     self%num_atm_to_ice_fields = CONIG_NOT_INITIALISED
@@ -214,9 +228,15 @@ subroutine accessom2_init(self, model_name, config_dir)
         call MPI_Init(err)
     endif
 
+    ! Now that MPI_Init has been called initialise parallel IO wrapper
+    ! This splits MPI_COMM_WORLD into computational and io communicators.
+    ! The tasks associated with the IO communicators do not return
+    ! from the call.
+    self%pio_wrapper%init(self%mpi_comm_comp_world, self%mpi_comm_io_world)
+
     ! Now that MPI_Init has been called can set up a logger
-    call self%logger%init(self%model_name, logfiledir='log', &
-                            loglevel=self%log_level)
+    call self%logger%init(self%mpi_comm_comp_world, self%model_name, &
+                          logfiledir='log', loglevel=self%log_level)
 
 endsubroutine accessom2_init
 
@@ -304,7 +324,7 @@ subroutine accessom2_sync_config(self, coupler)
     buf(6) = self%calendar
     tag = 5792
 
-    call MPI_Comm_Rank(MPI_COMM_WORLD, my_global_pe, err)
+    call MPI_Comm_Rank(self%mpi_comm_comp_world, my_global_pe, err)
     call assert(err == MPI_SUCCESS, 'accessom2_sync_config: could not get rank')
 
     if (self%model_name == 'matmxx') then
@@ -312,11 +332,11 @@ subroutine accessom2_sync_config(self, coupler)
 
         ! Receive configs from root processes of different models.
         call MPI_recv(buf_from_ice, NUM_CONFIGS, MPI_INTEGER, &
-                      self%ice_ic_root, tag, MPI_COMM_WORLD, stat, err)
+                      self%ice_ic_root, tag, self%mpi_comm_comp_world, stat, err)
         call assert(err == MPI_SUCCESS, &
                     'accessom2_sync_config: MPI_recv from ice error')
         call MPI_recv(buf_from_ocean, NUM_CONFIGS, MPI_INTEGER, &
-                      self%ocean_ic_root, tag, MPI_COMM_WORLD, stat, err)
+                      self%ocean_ic_root, tag, self%mpi_comm_comp_world, stat, err)
         call assert(err == MPI_SUCCESS, &
                     'accessom2_sync_config: MPI_recv from ocean error')
 
@@ -346,19 +366,19 @@ subroutine accessom2_sync_config(self, coupler)
         enddo
 
         ! Broadcast to all processes
-        call MPI_Bcast(buf, NUM_CONFIGS, MPI_INTEGER, 0, MPI_COMM_WORLD, err)
+        call MPI_Bcast(buf, NUM_CONFIGS, MPI_INTEGER, 0, self%mpi_comm_comp_world, err)
         call assert(err == MPI_SUCCESS, &
                     'accessom2_sync_config: MPI_Bcast error')
     else
         if (coupler%my_local_pe == 0) then
             call MPI_isend(buf, NUM_CONFIGS, MPI_INTEGER, self%atm_ic_root, &
-                           tag, MPI_COMM_WORLD, request, err)
+                           tag, self%mpi_comm_comp_world, request, err)
             call assert(err == MPI_SUCCESS, &
                        'accessom2_sync_config: MPI_isend to atm error')
         endif
 
         ! Broadcast recv
-        call MPI_Bcast(buf, NUM_CONFIGS, MPI_INTEGER, 0, MPI_COMM_WORLD, err)
+        call MPI_Bcast(buf, NUM_CONFIGS, MPI_INTEGER, 0, self%mpi_comm_comp_world, err)
         call assert(err == MPI_SUCCESS, &
                     'accessom2_sync_config: MPI_Bcast error')
     endif
@@ -416,11 +436,11 @@ subroutine accessom2_atm_ice_sync(self)
     if (self%model_name == 'matmxx') then
         tag = 5793
         call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
-                      MPI_COMM_WORLD, stat, err)
+                      self%mpi_comp_comm_world, stat, err)
     elseif (self%model_name == 'cicexx') then
         tag = 5793
         call MPI_isend(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
-                       MPI_COMM_WORLD, request, err)
+                       self%mpi_comp_comm_world, request, err)
     endif
 
 endsubroutine accessom2_atm_ice_sync
@@ -592,7 +612,7 @@ subroutine accessom2_progress_date(self, timestep)
         write(stderr, '(A)') 'experiment date: '//trim(self%exp_cur_date%isoformat())
 
         if (.not. self%allow_forcing_and_exp_date_mismatch) then
-            call MPI_Abort(MPI_COMM_WORLD, 1, err)
+            call MPI_Abort(self%mpi_comp_comm_world, 1, err)
         endif
     endif
 
@@ -746,6 +766,14 @@ function accessom2_get_atm_ice_timestep(self)
 
 endfunction accessom2_get_atm_ice_timestep
 
+function accessom2_get_pio_wrapper(self)
+    class(accessom2), intent(inout) :: self
+    type(pio_wrapper_type) :: accessom2_get_pio_wrapper
+
+    accessom2_get_pio_wrapper = self%pio_wrapper
+
+endfunction accessom2_get_pio_wrapper
+
 function accessom2_run_finished(self)
     class(accessom2), intent(inout) :: self
 
@@ -800,7 +828,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     ! same between all models.
     if (self%model_name == 'matmxx') then
         call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
-                      MPI_COMM_WORLD, stat, err)
+                      self%mpi_comp_comm_world, stat, err)
         if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
                                  'ice models are out of sync.'
@@ -809,11 +837,11 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ice end date: '//trim(tmp_date%isoformat())
 
-            call MPI_Abort(MPI_COMM_WORLD, 1, err)
+            call MPI_Abort(self%mpi_comp_comm_world, 1, err)
         endif
 
         call MPI_recv(buf, 1, MPI_INTEGER, self%ocean_ic_root, tag, &
-                      MPI_COMM_WORLD, stat, err)
+                      self%mpi_comp_comm_world, stat, err)
         if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
                                  'ocean models are out of sync.'
@@ -822,13 +850,13 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ocean end date: '//trim(tmp_date%isoformat())
 
-            call MPI_Abort(MPI_COMM_WORLD, 1, err)
+            call MPI_Abort(self%mpi_comp_comm_world, 1, err)
         endif
     else
         if (self%my_local_pe == 0) then
             buf(1) = checksum
             call MPI_send(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
-                           MPI_COMM_WORLD, err)
+                           self%mpi_comp_comm_world, err)
         endif
     endif
 
