@@ -1,6 +1,6 @@
 # cmake version, project name, language
 cmake_minimum_required(VERSION 3.5 FATAL_ERROR)
-project(matm Fortran)
+project(matm Fortran C)
 
 # set output paths for modules, archives, and executables
 set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/include)
@@ -16,29 +16,27 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Release")
 endif()
 
-if (MPIFORT_EXE STREQUAL "MPIFORT_EXE-NOTFOUND")
-  message("mpifort not found, searching for MPI libraries" )
-  find_package(MPI)
-else()
-  message("mpifort executable found: " ${MPIFORT_EXE})
-  message("Will assume system MPI implementation is sound. Remove mpifort from PATH to automatically configure MPI")
-  if (CMAKE_FC_COMPILER STREQUAL "scorep-mpif90")
-    set(MPI_FORTRAN_COMPILER scorep-mpif90)
-    set(CMAKE_Fortran_COMPILER scorep-mpif90)
-  else()
-    set(MPI_FORTRAN_COMPILER mpifort)
-    set(CMAKE_Fortran_COMPILER mpifort)
-  endif()
-endif()
+# Do our best to find MPI
+find_package(MPI)
 
-option(FIND_NETCDF "Use FindNetCDF to generate NetCDF configuration" ON)
-if(${FIND_NETCDF})
-  set (NETCDF_F90 "YES")
-  find_package(NetCDF REQUIRED)
-  include_directories(${NETCDF_F90_INCLUDE_DIRS})
-else()
-  set(NETCDF_LIBRARIES netcdff)
+if (${PLATFORM} STREQUAL "nci")
+    # On nci the find_package(MPI) is likely to fail - give it some help
+    # depending on the compiler
+    if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
+        set(MPI_Fortran_F77_HEADER_DIR "${MPI_C_HEADER_DIR}/Intel/")
+    else()
+        set(MPI_Fortran_F77_HEADER_DIR "${MPI_C_HEADER_DIR}/GNU/")
+    endif()
+    find_package(MPI REQUIRED)
+    set(MPI_FORTRAN_COMPILER mpifort)
 endif()
+set(CMAKE_Fortran_COMPILER ${MPI_FORTRAN_COMPILER})
+
+set (NETCDF_F90 "YES")
+if (DEFINED ENV{NETCDF})
+    set (NETCDF_DIR $ENV{NETCDF})
+endif()
+find_package(NetCDF REQUIRED)
 
 # compiler flags for gfortran
 if(CMAKE_Fortran_COMPILER_ID MATCHES GNU)
@@ -83,8 +81,27 @@ add_library(jsonfortran STATIC IMPORTED)
 add_dependencies(jsonfortran json-fortran)
 set_property(TARGET jsonfortran PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/libjsonfortran.a)
 
+# ParallelIO external project
+ExternalProject_Add(ParallelIO
+    DOWNLOAD_COMMAND ""
+    SOURCE_DIR ${CMAKE_SOURCE_DIR}/ParallelIO
+    CMAKE_ARGS "-DNetCDF_Fortran_INCLUDE_DIR=${NETCDF_F90_INCLUDE_DIRS}"
+    CMAKE_ARGS "-DNetCDF_Fortran_LIBRARY=${NETCDF_LIBRARIES}"
+    CMAKE_ARGS "-DCMAKE_Fortran_COMPILER=${MPI_FORTRAN_COMPILER}"
+    CMAKE_ARGS "-DMPI_Fortran_F77_HEADER_DIR=${MPI_Fortran_F77_HEADER_DIR}"
+    INSTALL_COMMAND cmake -E echo "Skipping ParallelIO install step."
+)
+
+ExternalProject_Get_property(ParallelIO BINARY_DIR)
+include_directories(${BINARY_DIR}/include)
+add_library(pioc STATIC IMPORTED)
+add_library(piof STATIC IMPORTED)
+add_dependencies(pioc ParallelIO)
+add_dependencies(piof ParallelIO)
+set_property(TARGET pioc PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/libpioc.a)
+set_property(TARGET piof PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/lib/libpiof.a)
+
 # oasis external project
-# json-fortran external project
 ExternalProject_Add(oasis3-mct
     DOWNLOAD_COMMAND ""
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/oasis3-mct
@@ -130,7 +147,7 @@ add_definitions("-DGIT_URL='${GIT_URL}'")
 # libcouple.a library
 file(GLOB LIB_SOURCES libcouple/src/*.F90)
 add_library(couple ${LIB_SOURCES})
-add_dependencies(couple datetime oasis3-mct)
+add_dependencies(couple datetime oasis3-mct pioc piof)
 
 # Join all of the above together to make libaccesom2
 # See https://stackoverflow.com/questions/37924383/combining-several-static-libraries-into-one-using-cmake
@@ -143,10 +160,12 @@ add_custom_target(combined
         COMMAND ar -x $<TARGET_FILE:mpeu>
         COMMAND ar -x $<TARGET_FILE:psmile.MPI1>
         COMMAND ar -x $<TARGET_FILE:scrip>
+        COMMAND ar -x $<TARGET_FILE:pioc>
+        COMMAND ar -x $<TARGET_FILE:piof>
         COMMAND ar -x $<TARGET_FILE:couple>
         COMMAND ar -qcs ${LIBACCESSOM2} *.o
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS datetime jsonfortran mct mpeu psmile.MPI1 scrip couple
+        DEPENDS datetime jsonfortran mct mpeu psmile.MPI1 scrip pioc piof couple
         )
 
 add_library(accessom2 STATIC IMPORTED GLOBAL)
@@ -157,6 +176,11 @@ set_target_properties(accessom2 PROPERTIES IMPORTED_LOCATION ${LIBACCESSOM2})
 file(GLOB ATM_SOURCES atm/src/*.F90)
 add_executable(yatm.exe ${ATM_SOURCES})
 target_link_libraries(yatm.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+
+# ioserver executable
+file(GLOB IOSERVER_SOURCES ioserver/src/*.F90)
+add_executable(ioserver.exe ${IOSERVER_SOURCES})
+target_link_libraries(ioserver.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ice stub executable
 file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)

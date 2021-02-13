@@ -7,3 +7,6 @@
 [submodule "oasis3-mct"]
 	path = oasis3-mct
 	url = https://github.com/COSIMA/oasis3-mct.git
+[submodule "ParallelIO"]
+	path = ParallelIO
+	url = https://github.com/NCAR/ParallelIO.git
