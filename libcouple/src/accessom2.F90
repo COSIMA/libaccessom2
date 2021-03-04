@@ -108,8 +108,8 @@ contains
     procedure, pass(self), public :: get_atm_ice_timestep => &
                                         accessom2_get_atm_ice_timestep
 
-    procedure, pass(self), public :: get_pio_subsystem => &
-                                        accessom2_get_pio_subsystem
+    procedure, pass(self), public :: get_pio_wrapper => &
+                                        accessom2_get_pio_wrapper
 
     procedure, pass(self), public :: get_mpi_comm_comp_world => &
                                         accessom2_get_mpi_comm_comp_world
@@ -231,8 +231,8 @@ subroutine accessom2_init(self, model_name, config_dir)
     ! Now that MPI_Init has been called initialise parallel IO wrapper
     ! This splits MPI_COMM_WORLD into computational and io communicators.
     ! The tasks associated with the IO communicators do not return
-    ! from the call.
-    self%pio_wrapper%init(self%mpi_comm_comp_world, self%mpi_comm_io_world)
+    ! from this call.
+    call self%pio_wrapper%init(2, self%mpi_comm_comp_world, self%mpi_comm_io_world)
 
     ! Now that MPI_Init has been called can set up a logger
     call self%logger%init(self%mpi_comm_comp_world, self%model_name, &
@@ -436,11 +436,11 @@ subroutine accessom2_atm_ice_sync(self)
     if (self%model_name == 'matmxx') then
         tag = 5793
         call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
-                      self%mpi_comp_comm_world, stat, err)
+                      self%mpi_comm_comp_world, stat, err)
     elseif (self%model_name == 'cicexx') then
         tag = 5793
         call MPI_isend(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
-                       self%mpi_comp_comm_world, request, err)
+                       self%mpi_comm_comp_world, request, err)
     endif
 
 endsubroutine accessom2_atm_ice_sync
@@ -612,7 +612,7 @@ subroutine accessom2_progress_date(self, timestep)
         write(stderr, '(A)') 'experiment date: '//trim(self%exp_cur_date%isoformat())
 
         if (.not. self%allow_forcing_and_exp_date_mismatch) then
-            call MPI_Abort(self%mpi_comp_comm_world, 1, err)
+            call MPI_Abort(self%mpi_comm_comp_world, 1, err)
         endif
     endif
 
@@ -774,6 +774,15 @@ function accessom2_get_pio_wrapper(self)
 
 endfunction accessom2_get_pio_wrapper
 
+function accessom2_get_mpi_comm_comp_world(self)
+    class(accessom2), intent(inout) :: self
+    type(integer) :: accessom2_get_mpi_comm_comp_world
+
+    accessom2_get_mpi_comm_comp_world = self%mpi_comm_comp_world
+
+endfunction accessom2_get_mpi_comm_comp_world
+
+
 function accessom2_run_finished(self)
     class(accessom2), intent(inout) :: self
 
@@ -828,7 +837,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
     ! same between all models.
     if (self%model_name == 'matmxx') then
         call MPI_recv(buf, 1, MPI_INTEGER, self%ice_ic_root, tag, &
-                      self%mpi_comp_comm_world, stat, err)
+                      self%mpi_comm_comp_world, stat, err)
         if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
                                  'ice models are out of sync.'
@@ -837,11 +846,11 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ice end date: '//trim(tmp_date%isoformat())
 
-            call MPI_Abort(self%mpi_comp_comm_world, 1, err)
+            call MPI_Abort(self%mpi_comm_comp_world, 1, err)
         endif
 
         call MPI_recv(buf, 1, MPI_INTEGER, self%ocean_ic_root, tag, &
-                      self%mpi_comp_comm_world, stat, err)
+                      self%mpi_comm_comp_world, stat, err)
         if (buf(1) /= checksum) then
             write(stderr, '(A)') 'Error in accessom2_deinit: atm and '// &
                                  'ocean models are out of sync.'
@@ -850,13 +859,13 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ocean end date: '//trim(tmp_date%isoformat())
 
-            call MPI_Abort(self%mpi_comp_comm_world, 1, err)
+            call MPI_Abort(self%mpi_comm_comp_world, 1, err)
         endif
     else
         if (self%my_local_pe == 0) then
             buf(1) = checksum
             call MPI_send(buf, 1, MPI_INTEGER, self%atm_ic_root, tag, &
-                           self%mpi_comp_comm_world, err)
+                           self%mpi_comm_comp_world, err)
         endif
     endif
 
