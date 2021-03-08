@@ -20,8 +20,8 @@ endif()
 find_package(MPI)
 
 if (${PLATFORM} STREQUAL "nci")
-    # On nci the find_package(MPI) is likely to fail - give it some help
-    # depending on the compiler
+    # On nci the find_package(MPI)
+    # likely to fail - give it some help depending on the compiler
     if(CMAKE_Fortran_COMPILER_ID MATCHES Intel)
         set(MPI_Fortran_F77_HEADER_DIR "${MPI_C_HEADER_DIR}/Intel/")
     else()
@@ -87,6 +87,8 @@ ExternalProject_Add(ParallelIO
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/ParallelIO
     CMAKE_ARGS "-DNetCDF_Fortran_INCLUDE_DIR=${NETCDF_F90_INCLUDE_DIRS}"
     CMAKE_ARGS "-DNetCDF_Fortran_LIBRARY=${NETCDF_LIBRARIES}"
+    CMAKE_ARGS "-DNetCDF_C_INCLUDE_DIR=${NETCDF_C_INCLUDE_DIRS}"
+    CMAKE_ARGS "-DNetCDF_C_LIBRARY=${NETCDF_C_LIBRARIES}"
     CMAKE_ARGS "-DCMAKE_Fortran_COMPILER=${MPI_FORTRAN_COMPILER}"
     CMAKE_ARGS "-DMPI_Fortran_F77_HEADER_DIR=${MPI_Fortran_F77_HEADER_DIR}"
     INSTALL_COMMAND cmake -E echo "Skipping ParallelIO install step."
@@ -112,7 +114,7 @@ ExternalProject_Add(oasis3-mct
     CONFIGURE_COMMAND ""
     BUILD_IN_SOURCE 1
     BUILD_COMMAND make VERBOSE=1 ${PLATFORM}
-    INSTALL_COMMAND cmake -E echo "Skipping json-fortran install step."
+    INSTALL_COMMAND cmake -E echo "Skipping oasis3-mct install step."
 )
 ExternalProject_Get_property(oasis3-mct BINARY_DIR)
 include_directories(${BINARY_DIR}/Linux/build/lib/psmile.MPI1/)

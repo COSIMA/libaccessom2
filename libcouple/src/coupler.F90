@@ -44,11 +44,12 @@ endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, loggerin, config_dir)
+subroutine coupler_init_begin(self, model_name, loggerin, config_dir, comm_world)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
     type(logger_type), optional, target, intent(in) :: loggerin
     character(len=*), optional, intent(in) :: config_dir
+    integer, optional, intent(in) :: comm_world
 
     character(len=*), parameter :: coupler_nml_fname = 'accessom2.nml'
 
@@ -73,9 +74,20 @@ subroutine coupler_init_begin(self, model_name, loggerin, config_dir)
     endif
 
     if (present(config_dir)) then
-        call oasis_init_comp(self%comp_id, model_name, err, config_dir=config_dir)
+        if (present(comm_world)) then
+            call oasis_init_comp(self%comp_id, model_name, err, &
+                                config_dir=config_dir, commworld=comm_world)
+        else
+            call oasis_init_comp(self%comp_id, model_name, err,  &
+                                 config_dir=config_dir)
+        endif
     else
-        call oasis_init_comp(self%comp_id, model_name, err)
+        if (present(comm_world)) then
+            call oasis_init_comp(self%comp_id, model_name, err, &
+                                 commworld=comm_world)
+        else
+            call oasis_init_comp(self%comp_id, model_name, err)
+        endif
     endif
     call assert(err == OASIS_OK, 'oasis_init_comp')
 

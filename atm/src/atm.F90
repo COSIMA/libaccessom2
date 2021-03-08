@@ -92,7 +92,8 @@ program atm
 
     ! Initialise the coupler.
     call coupler%init_begin('matmxx', accessom2%logger, &
-                            config_dir=trim(accessom2_config_dir))
+                            config_dir=trim(accessom2_config_dir), &
+                            comm_world=accessom2%get_mpi_comm_comp_world())
 
     ! Tell libaccessom2 about any global configs/state
     call accessom2%set_calendar(calendar)

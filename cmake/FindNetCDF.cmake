@@ -49,7 +49,9 @@ mark_as_advanced (NETCDF_INCLUDE_DIR)
 set (NETCDF_C_INCLUDE_DIRS ${NETCDF_INCLUDE_DIR})
 
 find_library (NETCDF_LIBRARY NAMES netcdf
-  HINTS "${NETCDF_DIR}/lib" "${NETCDF_DIR}/lib/x86_64-linux-gnu")
+  HINTS "${NETCDF_DIR}/lib"
+  HINTS "${NETCDF_DIR}/lib/ompi3"
+  HINTS "${NETCDF_DIR}/lib/x86_64-linux-gnu")
 mark_as_advanced (NETCDF_LIBRARY)
 
 set (NETCDF_C_LIBRARIES ${NETCDF_LIBRARY})
@@ -72,7 +74,8 @@ macro (NetCDF_check_interface lang header libs)
 
     find_library (NETCDF_${lang}_LIBRARY NAMES ${libs}
       HINTS "${NetCDF_lib_dirs}"
-      HINTS "${NetCDF_lib_dirs}/Intel"      # NCI format
+      HINTS "${NetCDF_lib_dirs}/Intel"        # NCI format
+      HINTS "${NetCDF_lib_dirs}/ompi3/Intel"  # NCI format
       HINTS "${NETCDF_${lang}_ROOT}/lib"
       ${USE_DEFAULT_PATHS})
 
@@ -81,6 +84,13 @@ macro (NetCDF_check_interface lang header libs)
     #export to internal varS that rest of project can use directly
     set (NETCDF_${lang}_LIBRARIES ${NETCDF_${lang}_LIBRARY})
     set (NETCDF_${lang}_INCLUDE_DIRS ${NETCDF_${lang}_INCLUDE_DIR})
+
+    if (NETCDF_${lang}_INCLUDE_DIR)
+      message (STATUS "Found NetCDF interfaces for ${lang}")
+    endif()
+    if (NETCDF_${lang}_LIBRARY)
+      message (STATUS "Found NetCDF library for ${lang}")
+    endif()
 
     if (NETCDF_${lang}_INCLUDE_DIR AND NETCDF_${lang}_LIBRARY)
       list (APPEND NetCDF_libs ${NETCDF_${lang}_LIBRARY})
