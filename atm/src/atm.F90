@@ -91,9 +91,10 @@ program atm
     allocate(runoff_fields(num_land_fields))
 
     ! Initialise the coupler.
-    call coupler%init_begin('matmxx', accessom2%logger, &
-                            config_dir=trim(accessom2_config_dir), &
-                            comm_world=accessom2%get_mpi_comm_comp_world())
+    call coupler%init_begin('matmxx', &
+                            accessom2%get_mpi_comm_comp_world(), &
+                            accessom2%logger, &
+                            config_dir=trim(accessom2_config_dir))
 
     ! Tell libaccessom2 about any global configs/state
     call accessom2%set_calendar(calendar)
@@ -104,7 +105,7 @@ program atm
 
     ! Initialise ice grid proxy and get information about it,
     ! this is needed for local remapping.
-    call ice_grid%init(coupler%ice_root)
+    call ice_grid%init(coupler%ice_root, accessom2%get_mpi_comm_comp_world())
     call ice_grid%recv()
     ice_shape = ice_grid%get_shape()
 

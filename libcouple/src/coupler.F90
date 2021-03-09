@@ -44,12 +44,12 @@ endtype coupler
 
 contains
 
-subroutine coupler_init_begin(self, model_name, loggerin, config_dir, comm_world)
+subroutine coupler_init_begin(self, model_name, comm_world, loggerin, config_dir)
     class(coupler), intent(inout) :: self
     character(len=6), intent(in) :: model_name
+    integer, intent(in) :: comm_world
     type(logger_type), optional, target, intent(in) :: loggerin
     character(len=*), optional, intent(in) :: config_dir
-    integer, optional, intent(in) :: comm_world
 
     character(len=*), parameter :: coupler_nml_fname = 'accessom2.nml'
 
@@ -74,27 +74,18 @@ subroutine coupler_init_begin(self, model_name, loggerin, config_dir, comm_world
     endif
 
     if (present(config_dir)) then
-        if (present(comm_world)) then
-            call oasis_init_comp(self%comp_id, model_name, err, &
-                                config_dir=config_dir, commworld=comm_world)
-        else
-            call oasis_init_comp(self%comp_id, model_name, err,  &
-                                 config_dir=config_dir)
-        endif
+        call oasis_init_comp(self%comp_id, model_name, err, &
+                            config_dir=config_dir, commworld=comm_world)
     else
-        if (present(comm_world)) then
-            call oasis_init_comp(self%comp_id, model_name, err, &
-                                 commworld=comm_world)
-        else
-            call oasis_init_comp(self%comp_id, model_name, err)
-        endif
+        call oasis_init_comp(self%comp_id, model_name, err, &
+                             commworld=comm_world)
     endif
     call assert(err == OASIS_OK, 'oasis_init_comp')
 
     call oasis_get_localcomm(self%localcomm, err)
     call assert(err == OASIS_OK, 'oasis_get_localcomm')
     call MPI_Comm_rank(self%localcomm, self%my_local_pe, err)
-    call MPI_Comm_rank(MPI_COMM_WORLD, self%my_global_pe, err)
+    call MPI_Comm_rank(comm_world, self%my_global_pe, err)
 
     ! Get root PE for each model.
     do n = 1, prism_nmodels
