@@ -232,7 +232,7 @@ subroutine accessom2_init(self, model_name, config_dir)
     ! This splits MPI_COMM_WORLD into computational and io communicators.
     ! The tasks associated with the IO communicators do not return
     ! from this call.
-    call self%pio_wrapper%init(2, self%mpi_comm_comp_world, self%mpi_comm_io_world)
+    call self%pio_wrapper%init(1, self%mpi_comm_comp_world, self%mpi_comm_io_world)
 
     ! Now that MPI_Init has been called can set up a logger
     call self%logger%init(self%mpi_comm_comp_world, self%model_name, &

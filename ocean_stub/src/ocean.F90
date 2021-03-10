@@ -47,7 +47,10 @@ program ocean
     call accessom2%init('mom5xx', config_dir=accessom2_config_dir)
     call accessom2%print_version_info()
 
-    call coupler%init_begin('mom5xx',  accessom2%logger, config_dir=accessom2_config_dir)
+    call coupler%init_begin('mom5xx',  &
+                            accessom2%get_mpi_comm_comp_world(), &
+                            accessom2%logger, &
+                            config_dir=accessom2_config_dir)
     ! Synchronise accessom2 'state' (i.e. configuration) between all models.
     call accessom2%sync_config(coupler)
 

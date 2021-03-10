@@ -31,6 +31,7 @@ subroutine pio_wrapper_init(self, num_io_procs, new_comp_comm, io_comm)
     integer, intent(in) :: num_io_procs
     integer, intent(out) :: new_comp_comm, io_comm
 
+    integer :: pio_log_level
     integer :: num_total_procs
     integer :: ierr, i, num_comp_procs, my_pe
     integer, dimension(1) :: procs_per_component, comp_comm
@@ -63,8 +64,9 @@ subroutine pio_wrapper_init(self, num_io_procs, new_comp_comm, io_comm)
     print*, 'num_comp_procs: ', num_io_procs
     print*, 'io_proc_list: ', io_proc_list
 
-    ierr = pio_set_log_level(10)
-    print*, 'log level set to 10, ierr: ', ierr
+    pio_log_level = 10
+    ierr = pio_set_log_level(pio_log_level)
+    print*, 'log level set to: ', pio_log_level
 
     call pio_init(tmp_pio_subsystem,          & ! iosystem
                   MPI_COMM_WORLD,             & ! MPI communicator
