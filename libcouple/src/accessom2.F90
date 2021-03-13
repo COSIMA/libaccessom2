@@ -38,6 +38,8 @@ type accessom2
     character(len=6) :: model_name
     character(len=1024) :: config_dir
 
+    integer :: model_id
+
     ! These are set by the user.
     type(datetime) :: forcing_start_date, forcing_end_date
     integer, dimension(3) :: restart_period
@@ -232,7 +234,8 @@ subroutine accessom2_init(self, model_name, config_dir)
     ! This splits MPI_COMM_WORLD into computational and io communicators.
     ! The tasks associated with the IO communicators do not return
     ! from this call.
-    call self%pio_wrapper%init(1, self%mpi_comm_comp_world, self%mpi_comm_io_world)
+    call self%pio_wrapper%init(self%model_name, 1, self%mpi_comm_comp_world, &
+                               self%mpi_comm_io_world)
 
     ! Now that MPI_Init has been called can set up a logger
     call self%logger%init(self%mpi_comm_comp_world, self%model_name, &
