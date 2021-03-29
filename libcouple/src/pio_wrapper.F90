@@ -26,20 +26,21 @@ endtype pio_wrapper
 
 contains
 
-subroutine pio_wrapper_init(self, model_name, num_io_procs, new_comp_comm, io_comm)
+subroutine pio_wrapper_init(self, model_name, num_io_procs, new_comm)
     class(pio_wrapper), intent(inout) :: self
 
     character(len=*), intent(in) :: model_name
     integer, intent(in) :: num_io_procs
-    integer, intent(out) :: new_comp_comm, io_comm
+    integer, intent(out) :: new_comm
 
     integer :: pio_log_level
     integer :: num_total_procs
     integer :: ierr, i, num_comp_procs, my_pe, proc_counter
+    integer :: io_comm
     integer, dimension(3) :: procs_per_component, comp_comm
     integer, dimension(num_io_procs) :: io_proc_list
     integer, allocatable, dimension(:, :) :: comp_proc_list
-    type(iosystem_desc_t), dimension(3) :: tmp_pio_subsystem
+    type(iosystem_desc_t), allocatable, dimension(:) :: tmp_pio_subsystem
 
     if (self%pio_initialized) then
         return
@@ -54,7 +55,7 @@ subroutine pio_wrapper_init(self, model_name, num_io_procs, new_comp_comm, io_co
     procs_per_component(3) = 24
 
     allocate(comp_proc_list(216, 3))
-    comp_proc_list(:, :) = -1
+    comp_proc_list(:, :) = 0
     proc_counter = 0
     comp_proc_list(1, 1) = proc_counter
 
@@ -81,9 +82,9 @@ subroutine pio_wrapper_init(self, model_name, num_io_procs, new_comp_comm, io_co
     ! Create new world communicator that contains only the comp_procs,
     ! this will become the new COMM_WORLD
     if (any(io_proc_list == my_pe)) then
-        call MPI_Comm_split(MPI_COMM_WORLD, 0, my_pe, new_comp_comm, ierr)
+        call MPI_Comm_split(MPI_COMM_WORLD, 0, my_pe, new_comm, ierr)
     else
-        call MPI_Comm_split(MPI_COMM_WORLD, 1, my_pe, new_comp_comm, ierr)
+        call MPI_Comm_split(MPI_COMM_WORLD, 1, my_pe, new_comm, ierr)
     endif
     call assert(ierr == MPI_SUCCESS, &
                 'pio_wrapper_init: could not make new communicator')
@@ -92,6 +93,9 @@ subroutine pio_wrapper_init(self, model_name, num_io_procs, new_comp_comm, io_co
     ierr = pio_set_log_level(pio_log_level)
     print*, 'log level set to: ', pio_log_level
 
+    allocate(tmp_pio_subsystem(3))
+
+    ! FIXME: we could also try to use PIOc_init_async_from_comms()
     call pio_init(tmp_pio_subsystem,          & ! iosystem
                   MPI_COMM_WORLD,             & ! MPI communicator
                   procs_per_component,        & ! number of tasks per component model
@@ -101,7 +105,7 @@ subroutine pio_wrapper_init(self, model_name, num_io_procs, new_comp_comm, io_co
                   comp_comm,                  & ! comp_comm to be returned
                   io_comm)                      ! io_comm to be returned
 
-    ! FIXME: Correct way to do this. 
+    ! FIXME: Correct way to do this.
     if (io_comm == MPI_COMM_NULL) then
         if (trim(model_name) == 'matmxx') then
             self%pio_subsystem = tmp_pio_subsystem(1)

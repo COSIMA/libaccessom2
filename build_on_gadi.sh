@@ -1,7 +1,7 @@
 #!/bin/bash
 
 module purge
-module load intel-compiler/2019.5.281
+module load intel-compiler/2020.3.304
 module load netcdf/4.7.4p
 module load openmpi/4.0.2
 
