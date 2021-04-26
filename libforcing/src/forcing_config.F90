@@ -6,7 +6,8 @@ use json_kinds
 use datetime_module, only : datetime
 use util_mod, only : get_var_dims, replace_text
 use forcing_field_mod, only : forcing_field
-use forcing_field_mod, only : FORCING_PERTUBATION_TYPE_SCALING, &
+
+use forcing_pertubation_mod, only : FORCING_PERTUBATION_TYPE_SCALING, &
                               FORCING_PERTUBATION_TYPE_OFFSET, &
                               FORCING_PERTUBATION_DIMENSION_SPATIAL, &
                               FORCING_PERTUBATION_DIMENSION_TEMPORAL, &

@@ -18,6 +18,6 @@ program basic_test
 
     ! Read in base forcing, apply pertubations and write out
 
-    exit 0
+    call exit(0)
 
 end program basic_test

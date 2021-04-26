@@ -161,7 +161,7 @@ set_target_properties(accessom2 PROPERTIES IMPORTED_LOCATION ${LIBACCESSOM2})
 # libforcing test executable
 file(GLOB FORCING_TEST_SOURCES libforcing/test/*.F90)
 add_executable(forcing_test.exe ${FORCING_TEST_SOURCES})
-target_link_libraries(forcing_test.exe forcing jsonfortran ${NETCDF_LIBRARIES})
+target_link_libraries(forcing_test.exe forcing datetime jsonfortran ${NETCDF_LIBRARIES})
 set_target_properties(forcing_test.exe PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY libforcing/test/
 )

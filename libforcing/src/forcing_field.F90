@@ -1,30 +1,12 @@
 module forcing_field_mod
 
 use error_handler, only : assert
+use datetime_module, only : datetime
+use forcing_pertubation_mod, only : forcing_pertubation_type => forcing_pertubation
+use ncvar_mod, only : ncvar_type => ncvar
 
 implicit none
 private
-
-integer, parameter, public :: FORCING_PERTUBATION_TYPE_SCALING = 0
-integer, parameter, public :: FORCING_PERTUBATION_TYPE_OFFSET = 10
-
-integer, parameter, public :: FORCING_PERTUBATION_DIMENSION_SPATIAL = 0
-integer, parameter, public :: FORCING_PERTUBATION_DIMENSION_TEMPORAL = 10
-integer, parameter, public :: FORCING_PERTUBATION_DIMENSION_SPATIOTEMPORAL = 20
-integer, parameter, public :: FORCING_PERTUBATION_DIMENSION_CONSTANT = 30
-
-integer, parameter, public :: FORCING_PERTUBATION_CALENDAR_EXPERIMENT = 0
-integer, parameter, public :: FORCING_PERTUBATION_CALENDAR_FORCING = 10
-
-type, public :: forcing_pertubation
-    integer :: pertubation_type ! Can be 'scaling' or 'offset'
-    integer :: dimension_type   ! Can be 'spatial', 'temporal',
-                                ! 'spatiotemporal' or 'constant'
-    integer :: calendar         ! Can be 'experiment' or 'forcing'
-    character(len=1024) :: filename
-    integer :: constant_value
-endtype forcing_pertubation
-
 
 ! Forcing fields can have a domain
 integer, parameter, public :: FORCING_FIELD_DOMAIN_NONE = 0
@@ -36,9 +18,18 @@ type, public :: forcing_field
     character(len=64) :: cname
     character(len=1024) :: filename
     integer :: domain
-    type(forcing_pertubation), dimension(:), allocatable :: pertubations
+    type(datetime) :: timestamp
+
+    integer :: dt
+    type(ncvar_type) :: ncvar
+    real, dimension(:, :), allocatable :: data_array
+    type(forcing_pertubation_type), dimension(:), allocatable :: pertubations
+
 contains
     procedure, pass(self), public :: init => forcing_field_init
+    procedure, pass(self), public :: update => forcing_field_update
+    procedure, pass(self), private :: apply_pertubations => &
+                forcing_field_apply_pertubations
 endtype forcing_field
 
 contains
@@ -61,6 +52,43 @@ subroutine forcing_field_init(self, name, filename, cname, domain)
         self%domain = FORCING_FIELD_DOMAIN_LAND
     endif
 
+    call self%ncvar%init(name, filename)
+    allocate(self%data_array(self%ncvar%nx, self%ncvar%ny))
+    self%data_array(:, :) = HUGE(1.0)
+    self%dt = self%ncvar%dt
+
 endsubroutine forcing_field_init
+
+
+subroutine forcing_field_update(self, filename, forcing_date)
+    class(forcing_field), intent(inout) :: self
+    character(len=*), intent(in) :: filename
+    type(datetime), intent(in) :: forcing_date
+
+    integer :: indx
+
+    if (trim(filename) /= trim(self%ncvar%filename)) then
+        call self%ncvar%refresh(filename)
+    endif
+
+    indx = self%ncvar%get_index_for_datetime(forcing_date)
+    if (indx == -1) then
+        ! Search from the beginning before failing
+        indx = self%ncvar%get_index_for_datetime(forcing_date, .true.)
+    endif
+    call assert(indx /= -1, &
+                "No forcing date "//forcing_date%isoformat()//" in "// &
+                trim(filename))
+
+    call self%ncvar%read_data(indx, self%data_array)
+    self%timestamp = forcing_date
+
+end subroutine forcing_field_update
+
+! Iterate throught pertubations and apply to base field
+subroutine forcing_field_apply_pertubations(self)
+    class(forcing_field), intent(inout) :: self
+
+endsubroutine forcing_field_apply_pertubations
 
 endmodule forcing_field_mod
