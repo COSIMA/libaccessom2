@@ -132,6 +132,11 @@ file(GLOB LIB_SOURCES libcouple/src/*.F90)
 add_library(couple ${LIB_SOURCES})
 add_dependencies(couple datetime oasis3-mct)
 
+# libforcing.a library
+file(GLOB LIB_SOURCES libforcing/src/*.F90)
+add_library(forcing ${LIB_SOURCES})
+add_dependencies(forcing jsonfortran)
+
 # Join all of the above together to make libaccesom2
 # See https://stackoverflow.com/questions/37924383/combining-several-static-libraries-into-one-using-cmake
 set(LIBACCESSOM2 ${CMAKE_BINARY_DIR}/lib/libaccessom2.a)
@@ -153,18 +158,26 @@ add_library(accessom2 STATIC IMPORTED GLOBAL)
 add_dependencies(accessom2 combined)
 set_target_properties(accessom2 PROPERTIES IMPORTED_LOCATION ${LIBACCESSOM2})
 
+# libforcing test executable
+file(GLOB FORCING_TEST_SOURCES libforcing/test/*.F90)
+add_executable(forcing_test.exe ${FORCING_TEST_SOURCES})
+target_link_libraries(forcing_test.exe forcing jsonfortran ${NETCDF_LIBRARIES})
+set_target_properties(forcing_test.exe PROPERTIES
+                      RUNTIME_OUTPUT_DIRECTORY libforcing/test/
+)
+
 # yatm executable
-file(GLOB ATM_SOURCES atm/src/*.F90)
-add_executable(yatm.exe ${ATM_SOURCES})
-target_link_libraries(yatm.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+#file(GLOB ATM_SOURCES atm/src/*.F90)
+#add_executable(yatm.exe ${ATM_SOURCES})
+#target_link_libraries(yatm.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ice stub executable
-file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
-add_executable(ice_stub.exe ${ICE_STUB_SOURCES})
-target_link_libraries(ice_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+#file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
+#add_executable(ice_stub.exe ${ICE_STUB_SOURCES})
+#target_link_libraries(ice_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ocean stub executable
-file(GLOB OCEAN_STUB_SOURCES ocean_stub/src/*.F90)
-add_executable(ocean_stub.exe ${OCEAN_STUB_SOURCES})
-target_link_libraries(ocean_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+#file(GLOB OCEAN_STUB_SOURCES ocean_stub/src/*.F90)
+#add_executable(ocean_stub.exe ${OCEAN_STUB_SOURCES})
+#target_link_libraries(ocean_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
