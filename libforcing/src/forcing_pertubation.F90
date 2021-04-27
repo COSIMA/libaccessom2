@@ -1,6 +1,9 @@
 module forcing_pertubation_mod
 
+use error_handler, only : assert
 use ncvar_mod, only : ncvar_type => ncvar
+use util_mod, only : filename_for_year
+use datetime_module, only : datetime
 
 implicit none
 private
@@ -25,16 +28,18 @@ type, public :: forcing_pertubation
     character(len=1024) :: filename_template
     integer :: constant_value
     type(ncvar_type) :: ncvar
+    logical :: initialised
 contains
     procedure, pass(self), public :: init => forcing_pertubation_init
     procedure, pass(self), public :: load => forcing_pertubation_load
 endtype forcing_pertubation
 
+contains
 
-subroutine forcing_pertubation_init(self, start_date)
+subroutine forcing_pertubation_init(self)
     class(forcing_pertubation), intent(inout) :: self
-    type(datetime), intent(in) :: start_date
 
+    self%initialised = .false.
 
 end subroutine forcing_pertubation_init
 
@@ -47,7 +52,8 @@ subroutine forcing_pertubation_load(self, forcing_date, experiment_date, &
     real, dimension(:, :), intent(inout) :: data_array
 
     type(datetime) :: date
-    integer :: constant_value
+    integer :: constant_value, indx
+    character(len=1024) :: filename
 
     if (self%dimension_type == FORCING_PERTUBATION_DIMENSION_CONSTANT) then
         data_array(:, :) = self%constant_value
@@ -60,9 +66,9 @@ subroutine forcing_pertubation_load(self, forcing_date, experiment_date, &
         date = forcing_date
     endif
 
-    if (.not. self%initalised) then
+    if (.not. self%initialised) then
         filename = filename_for_year(self%filename_template, date%getYear())
-        call self%ncvar%init(name, filename)
+        call self%ncvar%init(self%name, filename)
         self%initialised = .true.
     endif
 
@@ -86,15 +92,12 @@ subroutine forcing_pertubation_load(self, forcing_date, experiment_date, &
                 "No pertubation date "//date%isoformat()//" in "// &
                 trim(filename))
 
-    if (self%dimension_type == FORCING_PERTUBATION_DIMENSION_TEMPORAL) then
-        call self%ncvar%read_data(indx, constant_value)
-        data_array(:, :) = constant_value
-    else
-        call assert(self%dimension_type == &
-                    FORCING_PERTUBATION_DIMENSION_TEMPORAL, &
-                    'Unexpected pertubation type')
-        call self%ncvar%read_data(indx, data_array)
-    endif
+    call assert((self%dimension_type == &
+                 FORCING_PERTUBATION_DIMENSION_TEMPORAL) .or. &
+                (self%dimension_type == &
+                FORCING_PERTUBATION_DIMENSION_SPATIOTEMPORAL), &
+                'Unexpected pertubation type')
+    call self%ncvar%read_data(indx, data_array)
 
 end subroutine forcing_pertubation_load
 

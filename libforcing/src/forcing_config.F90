@@ -25,7 +25,6 @@ type, public :: forcing_config
     type(datetime) :: start_date
     type(json_file) :: json
     type(json_core) :: core
-    type(json_value), pointer :: inputs
     integer :: num_land_fields
     type(forcing_field), dimension(:), allocatable :: forcing_fields
 contains
@@ -38,14 +37,10 @@ endtype forcing_config
 contains
 
 !> Open forcing file and find fields
-subroutine forcing_config_init(self, config, nfields)
+subroutine forcing_config_init(self, config)
 
     class(forcing_config), intent(inout) :: self
     character(len=*), intent(in) :: config
-    integer, intent(out) :: nfields
-
-    type(json_value), pointer :: root
-    logical :: found
 
     call self%json%initialize()
     call self%json%load_file(filename=trim(config))
@@ -55,30 +50,30 @@ subroutine forcing_config_init(self, config, nfields)
     endif
 
     call self%core%initialize()
-    call self%json%get(root)
-    call self%core%get_child(root, "inputs", self%inputs, found)
-    call assert(found, "No inputs found in forcing config.")
-
-    nfields = self%core%count(self%inputs)
     self%num_land_fields = 0
 
 endsubroutine forcing_config_init
 
 
 !> Parse forcing file into a dictionary.
-subroutine forcing_config_parse(self)
-
+subroutine forcing_config_parse(self, num_inputs)
     class(forcing_config), intent(inout) :: self
+    integer, intent(out) :: num_inputs
 
     type(json_value), pointer :: field_jv_ptr
-    integer :: i, num_inputs
+    integer :: i
     logical :: found
+    type(json_value), pointer :: root, inputs
 
-    num_inputs = self%core%count(self%inputs)
+    call self%json%get(root)
+    call self%core%get_child(root, "inputs", inputs, found)
+    call assert(found, "No inputs found in forcing config.")
+
+    num_inputs = self%core%count(inputs)
     allocate(self%forcing_fields(num_inputs))
 
     do i=1, num_inputs
-        call self%core%get_child(self%inputs, i, field_jv_ptr, found)
+        call self%core%get_child(inputs, i, field_jv_ptr, found)
         call assert(found, "No inputs found in forcing config.")
         call self%parse_field(field_jv_ptr, self%forcing_fields(i))
     enddo
@@ -139,6 +134,8 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
         call self%core%get_child(pertubation_list, i, pertubation_jv_ptr, found)
         call assert(found, "Expected to find pertubation entry.")
 
+        field_ptr%pertubations(i)%name = fieldname
+
         call self%core%get(pertubation_jv_ptr, "type", pertubation_type, found)
         call assert(found, "No type in pertubation entry.")
         call assert(trim(pertubation_type) == 'scaling' .or. &
@@ -184,7 +181,7 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
             call self%core%get(pertubation_jv_ptr, "value", &
                                pertubation_filename, found)
             call assert(found, "No value in pertubation entry.")
-            field_ptr%pertubations(i)%filename = pertubation_filename
+            field_ptr%pertubations(i)%filename_template = pertubation_filename
         endif
 
         call self%core%get(pertubation_jv_ptr, "calendar", calendar, found)
@@ -205,7 +202,7 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
             endif
         endif
 
-        field_ptr%pertubations(i)%init()
+        call field_ptr%pertubations(i)%init()
     enddo
 
 end subroutine forcing_config_parse_field

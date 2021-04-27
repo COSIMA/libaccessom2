@@ -47,6 +47,7 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
     real, dimension(:, :), intent(out) :: dataout
 
     integer, dimension(:), allocatable :: count, start
+    real, dimension(1) :: scalar_dataout
     integer :: ndims, nx, ny, time
 
     call get_var_dims(ncid, varid, ndims, nx, ny, time)
@@ -61,18 +62,26 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
     if (ndims == 1) then
         start = (/ indx /)
         count = (/ 1 /)
-    elseif (ndims == 2) then
-        start = (/ 1, 1 /)
-        count = (/ nx, ny /)
-    elseif (ndims == 3) then
-        start = (/ 1, 1, indx /)
-        count = (/ nx, ny, 1 /)
+
+        call ncheck(nf90_get_var(ncid, varid, scalar_dataout, start=start, &
+                                 count=count), &
+                    'Get var '//trim(varname))
+        dataout(:, :) = scalar_dataout(1)
     else
-        start = (/ 1, 1, 1, indx /)
-        count = (/ nx, ny, 1, 1 /)
-    end if
-    call ncheck(nf90_get_var(ncid, varid, dataout, start=start, count=count), &
-                'Get var '//trim(varname))
+        if (ndims == 2) then
+            start = (/ 1, 1 /)
+            count = (/ nx, ny /)
+        elseif (ndims == 3) then
+            start = (/ 1, 1, indx /)
+            count = (/ nx, ny, 1 /)
+        else
+            start = (/ 1, 1, 1, indx /)
+            count = (/ nx, ny, 1, 1 /)
+        end if
+        call ncheck(nf90_get_var(ncid, varid, dataout, start=start, count=count), &
+                    'Get var '//trim(varname))
+    endif
+
     deallocate(count, start)
 
 end subroutine read_data

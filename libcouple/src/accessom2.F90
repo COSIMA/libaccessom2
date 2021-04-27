@@ -3,7 +3,7 @@ module accessom2_mod
 
 use mpi
 use, intrinsic :: iso_c_binding, only: c_null_char
-use,intrinsic :: iso_fortran_env, only: real64
+use, intrinsic :: iso_fortran_env, only: real64
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 use datetime_module, only : datetime, c_strptime, tm2date, tm_struct, timedelta
 use datetime_module, only : date2num, num2date

@@ -3,7 +3,10 @@ module forcing_field_mod
 use error_handler, only : assert
 use datetime_module, only : datetime
 use forcing_pertubation_mod, only : forcing_pertubation_type => forcing_pertubation
+use forcing_pertubation_mod, only : FORCING_PERTUBATION_TYPE_SCALING, &
+                                    FORCING_PERTUBATION_TYPE_OFFSET
 use ncvar_mod, only : ncvar_type => ncvar
+use util_mod, only : filename_for_year
 
 implicit none
 private
@@ -65,18 +68,17 @@ subroutine forcing_field_init(self, start_date, dt)
 
     filename = filename_for_year(self%filename_template, start_date%getYear())
 
-    call self%ncvar%init(name, filename)
+    call self%ncvar%init(self%name, filename)
     allocate(self%data_array(self%ncvar%nx, self%ncvar%ny))
     self%data_array(:, :) = HUGE(1.0)
     self%dt = self%ncvar%dt
     dt = self%dt
 
-endsubroutine forcing_field_init(self, date)
+endsubroutine forcing_field_init
 
 
 subroutine forcing_field_update(self, forcing_date, experiment_date)
     class(forcing_field), intent(inout) :: self
-    character(len=*), intent(in) :: filename
     type(datetime), intent(in) :: forcing_date, experiment_date
 
     character(len=1024) :: filename
@@ -100,7 +102,7 @@ subroutine forcing_field_update(self, forcing_date, experiment_date)
     call self%ncvar%read_data(indx, self%data_array)
     self%timestamp = forcing_date
 
-    self%apply_pertubations(forcing_date, experiment_date)
+    call self%apply_pertubations(forcing_date, experiment_date)
 
 end subroutine forcing_field_update
 
@@ -111,29 +113,29 @@ subroutine forcing_field_apply_pertubations(self, forcing_date, experiment_date)
     type(datetime), intent(in) :: forcing_date, experiment_date
 
     integer :: i
-    logical :: has_scaling
+    logical :: do_scaling
     real, dimension(:, :), allocatable :: pertub_array, tmp
 
     if (size(self%pertubations) == 0) then
         return
-    endif 
+    endif
 
     allocate(pertub_array(self%ncvar%nx, self%ncvar%ny))
     allocate(tmp(self%ncvar%nx, self%ncvar%ny))
     pertub_array(:, :) = 1.0
 
     ! First iterate over all of the scaling fields
-    has_scaling = .false.
+    do_scaling = .false.
     do i=1, size(self%pertubations)
         if (self%pertubations(i)%pertubation_type == &
             FORCING_PERTUBATION_TYPE_SCALING) then
             call self%pertubations(i)%load(forcing_date, experiment_date, tmp)
             pertub_array = pertub_array * tmp
-            has_scaling = .true.
+            do_scaling = .true.
         endif
     enddo
 
-    if (.not. has_scaling) then
+    if (.not. do_scaling) then
         pertub_array(:, :) = 0.0
     endif
     ! Iterate over offset fields

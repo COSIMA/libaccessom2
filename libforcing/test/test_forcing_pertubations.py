@@ -40,3 +40,9 @@ class TestForcingPertubations:
         ret = sp.run(['./forcing_test.exe'])
         assert ret.returncode == 0
 
+        # FIXME: this does not work - need to write out as a netcdf
+        assert Path('test.dat').exists()
+
+        import pdb
+        pdb.set_trace()
+
