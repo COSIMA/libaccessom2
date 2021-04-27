@@ -125,7 +125,7 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
         self%num_land_fields = self%num_land_fields + 1
     endif
 
-    call field_ptr%init(fieldname, filename, cname, domain_str)
+    call field_ptr%new(fieldname, filename, cname, domain_str)
 
     call self%core%get_child(field_jv_ptr, "pertubations", pertubation_list, found)
     if (.not. found) then
@@ -204,6 +204,8 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
                     FORCING_PERTUBATION_CALENDAR_EXPERIMENT
             endif
         endif
+
+        field_ptr%pertubations(i)%init()
     enddo
 
 end subroutine forcing_config_parse_field

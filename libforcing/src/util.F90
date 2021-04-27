@@ -50,14 +50,18 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
     integer :: ndims, nx, ny, time
 
     call get_var_dims(ncid, varid, ndims, nx, ny, time)
-    call assert(ndims == 2 .or. ndims == 3 .or. ndims == 4, 'Unsupported number of dims')
+    call assert(ndims == 1 .or. ndims == 2 .or. ndims == 3 .or. ndims == 4, &
+                'Unsupported number of dims')
 
     allocate(count(ndims), start(ndims))
     nx = size(dataout, 1)
     ny = size(dataout, 2)
 
     ! Get data, we select a specfic time-point of data to read
-    if (ndims == 2) then
+    if (ndims == 1) then
+        start = (/ indx /)
+        count = (/ 1 /)
+    elseif (ndims == 2) then
         start = (/ 1, 1 /)
         count = (/ nx, ny /)
     elseif (ndims == 3) then
@@ -145,5 +149,22 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
     deallocate(dimids)
 
 endsubroutine get_var_dims
+
+
+function filename_for_year(filename, year)
+    character(len=*), intent(in) :: filename
+    integer, intent(in) :: year
+    character(len=1024) :: filename_for_year
+    character(len=4) :: year_str, yearp1_str
+
+    write(year_str, "(I4)") year
+    write(yearp1_str, "(I4)") year+1
+
+    filename_for_year = replace_text(filename, "{{ year }}", year_str)
+    filename_for_year = replace_text(filename_for_year, "{{year}}", year_str)
+    filename_for_year = replace_text(filename_for_year, "{{ year+1 }}", yearp1_str)
+    filename_for_year = replace_text(filename_for_year, "{{year+1}}", yearp1_str)
+endfunction filename_for_year
+
 
 end module util_mod

@@ -21,11 +21,82 @@ type, public :: forcing_pertubation
     integer :: dimension_type   ! Can be 'spatial', 'temporal',
                                 ! 'spatiotemporal' or 'constant'
     integer :: calendar         ! Can be 'experiment' or 'forcing'
-    character(len=1024) :: filename
+    character(len=64) :: name
+    character(len=1024) :: filename_template
     integer :: constant_value
     type(ncvar_type) :: ncvar
-    real, dimension(:, :), allocatable :: data_array
+contains
+    procedure, pass(self), public :: init => forcing_pertubation_init
+    procedure, pass(self), public :: load => forcing_pertubation_load
 endtype forcing_pertubation
+
+
+subroutine forcing_pertubation_init(self, start_date)
+    class(forcing_pertubation), intent(inout) :: self
+    type(datetime), intent(in) :: start_date
+
+
+end subroutine forcing_pertubation_init
+
+
+subroutine forcing_pertubation_load(self, forcing_date, experiment_date, &
+                                    data_array)
+
+    class(forcing_pertubation), intent(inout) :: self
+    type(datetime), intent(in) :: forcing_date, experiment_date
+    real, dimension(:, :), intent(inout) :: data_array
+
+    type(datetime) :: date
+    integer :: constant_value
+
+    if (self%dimension_type == FORCING_PERTUBATION_DIMENSION_CONSTANT) then
+        data_array(:, :) = self%constant_value
+        return 
+    endif
+
+    if (self%calendar == FORCING_PERTUBATION_CALENDAR_EXPERIMENT) then
+        date = experiment_date
+    else
+        date = forcing_date
+    endif
+
+    if (.not. self%initalised) then
+        filename = filename_for_year(self%filename_template, date%getYear())
+        call self%ncvar%init(name, filename)
+        self%initialised = .true.
+    endif
+
+    if (self%dimension_type == FORCING_PERTUBATION_DIMENSION_SPATIAL) then
+        call self%ncvar%read_data(-1, data_array)
+        return
+    endif
+
+    filename = filename_for_year(self%filename_template, date%getYear())
+    call assert(trim(filename) /= '', "File not found: "//filename)
+    if (trim(filename) /= trim(self%ncvar%filename)) then
+        call self%ncvar%refresh(filename)
+    endif
+
+    indx = self%ncvar%get_index_for_datetime(date)
+    if (indx == -1) then
+        ! Search from the beginning before failing
+        indx = self%ncvar%get_index_for_datetime(date, .true.)
+    endif
+    call assert(indx /= -1, &
+                "No pertubation date "//date%isoformat()//" in "// &
+                trim(filename))
+
+    if (self%dimension_type == FORCING_PERTUBATION_DIMENSION_TEMPORAL) then
+        call self%ncvar%read_data(indx, constant_value)
+        data_array(:, :) = constant_value
+    else
+        call assert(self%dimension_type == &
+                    FORCING_PERTUBATION_DIMENSION_TEMPORAL, &
+                    'Unexpected pertubation type')
+        call self%ncvar%read_data(indx, data_array)
+    endif
+
+end subroutine forcing_pertubation_load
 
 
 endmodule forcing_pertubation_mod

@@ -16,7 +16,7 @@ integer, parameter, public :: FORCING_FIELD_DOMAIN_LAND = 20
 type, public :: forcing_field
     character(len=64) :: name
     character(len=64) :: cname
-    character(len=1024) :: filename
+    character(len=1024) :: filename_template
     integer :: domain
     type(datetime) :: timestamp
 
@@ -26,6 +26,7 @@ type, public :: forcing_field
     type(forcing_pertubation_type), dimension(:), allocatable :: pertubations
 
 contains
+    procedure, pass(self), public :: new => forcing_field_new
     procedure, pass(self), public :: init => forcing_field_init
     procedure, pass(self), public :: update => forcing_field_update
     procedure, pass(self), private :: apply_pertubations => &
@@ -34,7 +35,7 @@ endtype forcing_field
 
 contains
 
-subroutine forcing_field_init(self, name, filename, cname, domain)
+subroutine forcing_field_new(self, name, filename, cname, domain)
     class(forcing_field), intent(inout) :: self
     character(len=*), intent(in) :: name
     character(len=*), intent(in) :: cname
@@ -43,8 +44,8 @@ subroutine forcing_field_init(self, name, filename, cname, domain)
 
     self%name = name
     self%cname = cname
-    self%filename = filename
-    if (domain == 'atmosphere') then 
+    self%filename_template = filename
+    if (domain == 'atmosphere') then
         self%domain = FORCING_FIELD_DOMAIN_ATMOSPHERE
     else
         call assert(trim(domain) == 'land', &
@@ -52,21 +53,37 @@ subroutine forcing_field_init(self, name, filename, cname, domain)
         self%domain = FORCING_FIELD_DOMAIN_LAND
     endif
 
+endsubroutine forcing_field_new
+
+
+subroutine forcing_field_init(self, start_date, dt)
+    class(forcing_field), intent(inout) :: self
+    type(datetime), intent(in) :: start_date
+    integer, intent(out) :: dt
+
+    character(len=1024) :: filename
+
+    filename = filename_for_year(self%filename_template, start_date%getYear())
+
     call self%ncvar%init(name, filename)
     allocate(self%data_array(self%ncvar%nx, self%ncvar%ny))
     self%data_array(:, :) = HUGE(1.0)
     self%dt = self%ncvar%dt
+    dt = self%dt
 
-endsubroutine forcing_field_init
+endsubroutine forcing_field_init(self, date)
 
 
-subroutine forcing_field_update(self, filename, forcing_date)
+subroutine forcing_field_update(self, forcing_date, experiment_date)
     class(forcing_field), intent(inout) :: self
     character(len=*), intent(in) :: filename
-    type(datetime), intent(in) :: forcing_date
+    type(datetime), intent(in) :: forcing_date, experiment_date
 
+    character(len=1024) :: filename
     integer :: indx
 
+    filename = filename_for_year(self%filename_template, forcing_date%getYear())
+    call assert(trim(filename) /= '', "File not found: "//filename)
     if (trim(filename) /= trim(self%ncvar%filename)) then
         call self%ncvar%refresh(filename)
     endif
@@ -83,11 +100,51 @@ subroutine forcing_field_update(self, filename, forcing_date)
     call self%ncvar%read_data(indx, self%data_array)
     self%timestamp = forcing_date
 
+    self%apply_pertubations(forcing_date, experiment_date)
+
 end subroutine forcing_field_update
 
-! Iterate throught pertubations and apply to base field
-subroutine forcing_field_apply_pertubations(self)
+
+! Iterate through pertubations and apply to base field in self%data
+subroutine forcing_field_apply_pertubations(self, forcing_date, experiment_date)
     class(forcing_field), intent(inout) :: self
+    type(datetime), intent(in) :: forcing_date, experiment_date
+
+    integer :: i
+    logical :: has_scaling
+    real, dimension(:, :), allocatable :: pertub_array, tmp
+
+    if (size(self%pertubations) == 0) then
+        return
+    endif 
+
+    allocate(pertub_array(self%ncvar%nx, self%ncvar%ny))
+    allocate(tmp(self%ncvar%nx, self%ncvar%ny))
+    pertub_array(:, :) = 1.0
+
+    ! First iterate over all of the scaling fields
+    has_scaling = .false.
+    do i=1, size(self%pertubations)
+        if (self%pertubations(i)%pertubation_type == &
+            FORCING_PERTUBATION_TYPE_SCALING) then
+            call self%pertubations(i)%load(forcing_date, experiment_date, tmp)
+            pertub_array = pertub_array * tmp
+            has_scaling = .true.
+        endif
+    enddo
+
+    if (.not. has_scaling) then
+        pertub_array(:, :) = 0.0
+    endif
+    ! Iterate over offset fields
+    do i=1, size(self%pertubations)
+        if (self%pertubations(i)%pertubation_type == &
+            FORCING_PERTUBATION_TYPE_OFFSET) then
+            call self%pertubations(i)%load(forcing_date, experiment_date, tmp)
+            pertub_array = pertub_array + tmp
+        endif
+    enddo
+
 
 endsubroutine forcing_field_apply_pertubations
 
