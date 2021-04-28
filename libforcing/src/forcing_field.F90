@@ -113,7 +113,6 @@ subroutine forcing_field_apply_pertubations(self, forcing_date, experiment_date)
     type(datetime), intent(in) :: forcing_date, experiment_date
 
     integer :: i
-    logical :: do_scaling
     real, dimension(:, :), allocatable :: pertub_array, tmp
 
     if (size(self%pertubations) == 0) then
@@ -125,19 +124,18 @@ subroutine forcing_field_apply_pertubations(self, forcing_date, experiment_date)
     pertub_array(:, :) = 1.0
 
     ! First iterate over all of the scaling fields
-    do_scaling = .false.
     do i=1, size(self%pertubations)
         if (self%pertubations(i)%pertubation_type == &
             FORCING_PERTUBATION_TYPE_SCALING) then
             call self%pertubations(i)%load(forcing_date, experiment_date, tmp)
             pertub_array = pertub_array * tmp
-            do_scaling = .true.
         endif
     enddo
 
-    if (.not. do_scaling) then
-        pertub_array(:, :) = 0.0
-    endif
+    ! Scale data
+    self%data_array(:, :) = self%data_array(:, :) * pertub_array(:, :)
+
+     pertub_array(:, :) = 0.0
     ! Iterate over offset fields
     do i=1, size(self%pertubations)
         if (self%pertubations(i)%pertubation_type == &
@@ -147,6 +145,8 @@ subroutine forcing_field_apply_pertubations(self, forcing_date, experiment_date)
         endif
     enddo
 
+    ! Offset data
+    self%data_array(:, :) = self%data_array(:, :) + pertub_array(:, :)
 
 endsubroutine forcing_field_apply_pertubations
 

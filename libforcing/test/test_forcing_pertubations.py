@@ -4,6 +4,9 @@ from pathlib import Path
 from jinja2 import Template
 import random
 import subprocess as sp
+import json
+import netCDF4 as nc
+import numpy as np
 
 forcing_tmpl = Template("""
 {
@@ -23,6 +26,7 @@ forcing_tmpl = Template("""
   ]
 }""")
 
+
 class TestForcingPertubations:
 
     TEST_DATA = Path('../../test_data')
@@ -32,17 +36,35 @@ class TestForcingPertubations:
         Test constant offset
         """
 
-        constant_str = '{"type": "scaling", "dimension": "constant", "value": 10}'
+        scale_value = random.randint(0, 100)
+
+        constant_str = '{"type": "scaling", "dimension": "constant",' + \
+                         '"value":' + str(scale_value) + '}'
         with open('forcing.json', 'w') as f:
             s = forcing_tmpl.render(scaling_constant=constant_str)
             f.write(s)
 
-        ret = sp.run(['./forcing_test.exe'])
+        # Read forcing input
+        with open('forcing.json') as f:
+            config = json.load(f)
+
+        forcing_file = config['inputs'][0]['filename']
+        fieldname = config['inputs'][0]['fieldname']
+
+        with nc.Dataset(forcing_file) as f:
+            # Read out a time point
+            time_var = f.variables['time']
+            times = nc.num2date(time_var[:], time_var.units)
+            tidx = random.randint(0, len(times))
+
+            date_str = times[tidx].strftime('%Y-%m-%dT%H:%M:%S')
+            src_data = f.variables[fieldname][tidx, :]
+
+        ret = sp.run(['./forcing_test.exe', date_str])
         assert ret.returncode == 0
 
-        # FIXME: this does not work - need to write out as a netcdf
-        assert Path('test.dat').exists()
+        assert Path('test.nc').exists()
+        with nc.Dataset('test.nc') as f:
+            dest_data = f.variables[fieldname][:]
 
-        import pdb
-        pdb.set_trace()
-
+        assert np.array_equal(src_data*scale_value, dest_data)
