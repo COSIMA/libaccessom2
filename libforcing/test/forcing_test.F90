@@ -49,7 +49,7 @@ program forcing_test
     ny = size(forcing_config%forcing_fields(1)%data_array, 1)
     nx = size(forcing_config%forcing_fields(1)%data_array, 2)
 
-    call check(nf90_create("test.nc", NF90_CLOBBER, ncid))
+    call check(nf90_create("test_output.nc", NF90_CLOBBER, ncid))
     call check(nf90_def_dim(ncid, "x", nx, x_dimid))
     call check(nf90_def_dim(ncid, "y", ny, y_dimid))
 
