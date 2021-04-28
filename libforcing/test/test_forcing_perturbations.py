@@ -20,28 +20,38 @@ forcing_tmpl = Template("""
         {{scaling_spatial}}
         {{scaling_spatiotemporal}}
         {{scaling_temporal}}
-        {{scaling_constant}}
+        {{constant}}
+        {{offset_spatial}}
+        {{offset_spatiotemporal}}
+        {{offset_temporal}}
       ]
     }
   ]
 }""")
 
+perturb_tmpl = Template("""
+{
+    "type": "{{type}}",
+    "dimension": "{{dimension}}",
+    "value": "{{value}}"
+}""")
 
-class TestForcingPertubations:
 
-    TEST_DATA = Path('../../test_data')
+class TestForcingPerturbations:
 
-    def test_scaling_constant(self):
+    @pytest.mark.parametrize("perturbation_type", ['scaling', 'offset'])
+    def test_constant(self, perturbation_type):
         """
-        Test constant offset
+        Test constant scaling and offset
         """
 
-        scale_value = random.randint(0, 100)
+        perturb_value = random.randint(0, 100)
 
-        constant_str = '{"type": "scaling", "dimension": "constant",' + \
-                         '"value":' + str(scale_value) + '}'
+        perturb_str = perturb_tmpl.render(type=perturbation_type,
+                                          dimension='constant',
+                                          value=str(perturb_value))
         with open('forcing.json', 'w') as f:
-            s = forcing_tmpl.render(scaling_constant=constant_str)
+            s = forcing_tmpl.render(constant=perturb_str)
             f.write(s)
 
         # Read forcing input
@@ -67,4 +77,8 @@ class TestForcingPertubations:
         with nc.Dataset('test.nc') as f:
             dest_data = f.variables[fieldname][:]
 
-        assert np.array_equal(src_data*scale_value, dest_data)
+        if perturbation_type == 'scaling':
+            assert np.array_equal(src_data*perturb_value, dest_data)
+        else:
+            assert np.array_equal(src_data+perturb_value, dest_data)
+
