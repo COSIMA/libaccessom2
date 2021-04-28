@@ -37,24 +37,52 @@ endtype ncvar
 
 contains
 
-subroutine ncvar_init(self, name, filename)
+subroutine ncvar_init(self, name, filename, &
+                      expect_temporal_only, expect_spatial_only)
     class(ncvar), intent(inout) :: self
     character(len=*), intent(in) :: name, filename
+    logical, intent(in), optional :: expect_temporal_only
+    logical, intent(in), optional :: expect_spatial_only
+
+    logical :: temporal_only, spatial_only
+
+    temporal_only = .false.
+    spatial_only = .false.
+    if (present(expect_temporal_only)) then
+        temporal_only = expect_temporal_only
+    endif
+    if (present(expect_spatial_only)) then
+        spatial_only = expect_spatial_only
+    endif
 
     self%name = name
     self%ncid = -1
-    call self%refresh(filename)
+    call self%refresh(filename, temporal_only, spatial_only)
 
 end subroutine
 
-subroutine ncvar_refresh(self, filename)
+subroutine ncvar_refresh(self, filename, &
+                         expect_temporal_only, expect_spatial_only)
     class(ncvar), intent(inout) :: self
     character(len=*), intent(in) :: filename
+    logical, intent(in), optional :: expect_temporal_only
+    logical, intent(in), optional :: expect_spatial_only
 
     character(len=nf90_max_name) :: time_bnds_name, dimname
     integer :: time_varid, time_dimid, time_bnds_id, len, ndims, num_times
     integer, dimension(2) :: dimids
     integer :: status
+    logical :: temporal_only, spatial_only
+    logical :: found_time_varid
+
+    temporal_only = .false.
+    spatial_only = .false.
+    if (present(expect_temporal_only)) then
+        temporal_only = expect_temporal_only
+    endif
+    if (present(expect_spatial_only)) then
+        spatial_only = expect_spatial_only
+    endif
 
     call assert(trim(self%filename) /= trim(filename), &
                 'ncvar unnecessary refresh')
@@ -71,10 +99,21 @@ subroutine ncvar_refresh(self, filename)
 
     ! Initialise dimensions
     call get_var_dims(self%ncid, self%varid, ndims, self%nx, self%ny, num_times)
-    call assert(self%nx /= 0 .and. self%ny /= 0, 'ncvar bad dimensions')
+    if (.not. temporal_only) then
+        call assert(self%nx /= 0 .and. self%ny /= 0, &
+                    'ncvar bad spatial dimensions')
+    endif
 
     ! Initialise and cache time variable
-    call get_time_varid_and_dimid(self%ncid, time_dimid, time_varid)
+    call get_time_varid_and_dimid(self%ncid, time_dimid, time_varid, &
+                                  found_time_varid)
+    if (.not. spatial_only) then
+        call assert(found_time_varid, 'ncvar bad temporal dimensions')
+    else
+        ! Nothing more to do if there is not time variable
+        return
+    endif
+
     call ncheck(nf90_inquire_dimension(self%ncid, time_dimid, len=num_times), &
                 'ncvar inquire_dimension time in: '//trim(self%filename))
     allocate(self%times(num_times))

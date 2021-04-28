@@ -57,7 +57,7 @@ subroutine forcing_pertubation_load(self, forcing_date, experiment_date, &
 
     if (self%dimension_type == FORCING_PERTUBATION_DIMENSION_CONSTANT) then
         data_array(:, :) = self%constant_value
-        return 
+        return
     endif
 
     if (self%calendar == FORCING_PERTUBATION_CALENDAR_EXPERIMENT) then
@@ -68,7 +68,17 @@ subroutine forcing_pertubation_load(self, forcing_date, experiment_date, &
 
     if (.not. self%initialised) then
         filename = filename_for_year(self%filename_template, date%getYear())
-        call self%ncvar%init(self%name, filename)
+
+        if (self%dimension_type == FORCING_PERTUBATION_DIMENSION_SPATIAL) then
+            call self%ncvar%init(self%name, filename, &
+                                 expect_spatial_only=.true.)
+        elseif (self%dimension_type == &
+                FORCING_PERTUBATION_DIMENSION_TEMPORAL) then
+            call self%ncvar%init(self%name, filename, &
+                                 expect_temporal_only=.true.)
+        else
+            call self%ncvar%init(self%name, filename)
+        endif
         self%initialised = .true.
     endif
 

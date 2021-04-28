@@ -190,8 +190,8 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
                         FORCING_PERTUBATION_DIMENSION_CONSTANT, &
                         "forcing_parse_field: missing calendar type")
         else
-            call assert(trim(pertubation_type) == 'forcing' .or. &
-                        trim(pertubation_type) == 'experiment', &
+            call assert(trim(calendar) == 'forcing' .or. &
+                        trim(calendar) == 'experiment', &
                         "forcing_parse_field: invalid pertubation calendar type")
             if (trim(calendar) == 'forcing') then
                 field_ptr%pertubations(i)%calendar = &

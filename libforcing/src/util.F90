@@ -87,9 +87,10 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
 end subroutine read_data
 
 !> Try a number of different names to get the 'time' varid and dimid.
-subroutine get_time_varid_and_dimid(ncid, dimid, varid)
+subroutine get_time_varid_and_dimid(ncid, dimid, varid, found)
     integer, intent(in) :: ncid
     integer, intent(out) :: dimid, varid
+    logical, intent(out) :: found
 
     integer :: i, status
     character(len=4), dimension(4) :: names
@@ -106,11 +107,13 @@ subroutine get_time_varid_and_dimid(ncid, dimid, varid)
         endif
     enddo
 
-    call assert(status == nf90_noerr, &
-                "get_time_varid_and_dimid: Can't find time dim")
-
-    call ncheck(nf90_inq_varid(ncid, trim(names(i)), varid), &
-                "get_time_varid_and_dimid: Can't find time var")
+    if (status == nf90_noerr) then
+        found = .true.
+        call ncheck(nf90_inq_varid(ncid, trim(names(i)), varid), &
+                    "get_time_varid_and_dimid: Can't find time var")
+    else
+        found = .false.
+    endif
 
 end subroutine get_time_varid_and_dimid
 
