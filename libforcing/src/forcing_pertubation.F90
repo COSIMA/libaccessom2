@@ -41,6 +41,9 @@ subroutine forcing_pertubation_init(self)
 
     self%initialised = .false.
 
+    ! FIXME: would be good to check that spatial dimensions of pertubation
+    ! and forcing files match.
+
 end subroutine forcing_pertubation_init
 
 

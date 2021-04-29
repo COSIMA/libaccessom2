@@ -86,8 +86,15 @@ class TestForcingPerturbations:
         # Get the configured pertubation value
         if Path(str(pvalue)).exists():
             with nc.Dataset(pvalue) as f:
-                perturb_array = f.variables[FORCING_FIELDNAME][:]
+                if pdimension == 'spatial':
+                    perturb_array = f.variables[FORCING_FIELDNAME][:]
+                elif pdimension  == 'temporal':
+                    perturb_array = f.variables[FORCING_FIELDNAME][tidx]
+                else:
+                    assert pdimension == 'spatiotemporal'
+                    perturb_array = f.variables[FORCING_FIELDNAME][tidx, :]
         else:
+            assert pdimension == 'constant'
             perturb_array = int(pvalue)
 
         # Do the pertubation in Python code and check that it is as expected
@@ -121,7 +128,7 @@ class TestForcingPerturbations:
                        time_vals=times,
                        time_units=time_units, calendar=calendar)
 
-        self.run_test(perturb_type, 'spatial', perturb_value, 'forcing')
+        self.run_test(perturb_type, 'temporal', perturb_value, 'forcing')
 
 
     @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
