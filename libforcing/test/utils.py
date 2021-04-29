@@ -51,7 +51,7 @@ def create_nc_file(output_name, var_name, data_array,
             lat.axis = 'Y'
 
         if time_dim and spatial_dims:
-            dimensions = ('lat', 'lon', 'time')
+            dimensions = ('time', 'lat', 'lon')
         elif spatial_dims and not time_dim:
             dimensions = ('lat', 'lon')
         else:
@@ -60,4 +60,3 @@ def create_nc_file(output_name, var_name, data_array,
 
         var = f.createVariable(var_name, 'f4', dimensions=dimensions)
         var[:] = data_array
-

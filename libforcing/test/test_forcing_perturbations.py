@@ -107,10 +107,23 @@ class TestForcingPerturbations:
     @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
     def test_spatiotemporal(self, perturb_type):
         """
-        Test spatial scaling and offset
+        Test spatiotemporal scaling and offset
         """
 
-        pass
+        # Create 2d pertubation file
+        perturb_value = './test_input.nc'
+
+        times, time_units, calendar = get_forcing_field_times()
+        shape =  get_forcing_field_shape()
+        nx = shape[2]
+        ny = shape[1]
+
+        data_array = np.random.rand(len(times), ny, nx)
+        create_nc_file(perturb_value, FORCING_FIELDNAME, data_array,
+                       time_vals=times,
+                       time_units=time_units, calendar=calendar)
+
+        self.run_test(perturb_type, 'spatiotemporal', perturb_value, 'forcing')
 
 
     @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])

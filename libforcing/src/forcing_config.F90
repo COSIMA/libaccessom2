@@ -162,10 +162,12 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
         elseif (trim(dimension_type) == 'temporal') then
             field_ptr%pertubations(i)%dimension_type = &
                 FORCING_PERTUBATION_DIMENSION_TEMPORAL
-        elseif (trim(dimension_type) == 'spatiotemparal') then
+        elseif (trim(dimension_type) == 'spatiotemporal') then
             field_ptr%pertubations(i)%dimension_type = &
                 FORCING_PERTUBATION_DIMENSION_SPATIOTEMPORAL
         else
+            call assert(trim(dimension_type) == 'constant', &
+                        "forcing_parse_field: bad dimension type")
             field_ptr%pertubations(i)%dimension_type = &
                 FORCING_PERTUBATION_DIMENSION_CONSTANT
         endif
@@ -180,7 +182,7 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
         else
             call self%core%get(pertubation_jv_ptr, "value", &
                                pertubation_filename, found)
-            call assert(found, "No value in pertubation entry.")
+            call assert(found, "No filename in pertubation entry.")
             field_ptr%pertubations(i)%filename_template = pertubation_filename
         endif
 
