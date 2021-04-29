@@ -42,6 +42,12 @@ def get_forcing_field_shape():
     with nc.Dataset(FORCING_FILE) as f:
         return f.variables[FORCING_FIELDNAME].shape
 
+def get_forcing_field_times():
+    with nc.Dataset(FORCING_FILE) as f:
+        time_var = f.variables['time']
+        times = nc.num2date(time_var[:], time_var.units)
+        return times, time_var.units, time_var.calendar
+
 
 class TestForcingPerturbations:
 
@@ -106,8 +112,16 @@ class TestForcingPerturbations:
         Test temporal scaling and offset
         """
 
-        pass
+        # Create 2d pertubation file
+        perturb_value = './test_input.nc'
 
+        times, time_units, calendar = get_forcing_field_times()
+        data_array = np.random.rand(len(times))
+        create_nc_file(perturb_value, FORCING_FIELDNAME, data_array,
+                       time_vals=times,
+                       time_units=time_units, calendar=calendar)
+
+        self.run_test(perturb_type, 'spatial', perturb_value, 'forcing')
 
 
     @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
@@ -119,6 +133,8 @@ class TestForcingPerturbations:
         # Create 2d pertubation file
         perturb_value = './test_input.nc'
 
+        # FIXME: check that the spatial grids actually match between forcing
+        # and pertubation.
         shape =  get_forcing_field_shape()
         nx = shape[2]
         ny = shape[1]
