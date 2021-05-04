@@ -6,15 +6,16 @@ use json_kinds
 use datetime_module, only : datetime
 use util_mod, only : get_var_dims, replace_text
 use forcing_field_mod, only : forcing_field
+use logger_mod, only : logger_type => logger, LOG_DEBUG
 
-use forcing_pertubation_mod, only : FORCING_PERTUBATION_TYPE_SCALING, &
-                              FORCING_PERTUBATION_TYPE_OFFSET, &
-                              FORCING_PERTUBATION_DIMENSION_SPATIAL, &
-                              FORCING_PERTUBATION_DIMENSION_TEMPORAL, &
-                              FORCING_PERTUBATION_DIMENSION_SPATIOTEMPORAL, &
-                              FORCING_PERTUBATION_DIMENSION_CONSTANT, &
-                              FORCING_PERTUBATION_CALENDAR_EXPERIMENT, &
-                              FORCING_PERTUBATION_CALENDAR_FORCING
+use forcing_perturbation_mod, only : FORCING_PERTURBATION_TYPE_SCALING, &
+                              FORCING_PERTURBATION_TYPE_OFFSET, &
+                              FORCING_PERTURBATION_DIMENSION_SPATIAL, &
+                              FORCING_PERTURBATION_DIMENSION_TEMPORAL, &
+                              FORCING_PERTURBATION_DIMENSION_SPATIOTEMPORAL, &
+                              FORCING_PERTURBATION_DIMENSION_CONSTANT, &
+                              FORCING_PERTURBATION_CALENDAR_EXPERIMENT, &
+                              FORCING_PERTURBATION_CALENDAR_FORCING
 
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
@@ -22,11 +23,14 @@ implicit none
 private
 
 type, public :: forcing_config
-    type(datetime) :: start_date
     type(json_file) :: json
     type(json_core) :: core
+    integer :: num_inputs
     integer :: num_land_fields
-    type(forcing_field), dimension(:), allocatable :: forcing_fields
+    integer :: min_dt
+    character(len=9) :: calendar
+
+    type(logger_type), pointer :: logger
 contains
     procedure, pass(self), public :: init => forcing_config_init
     procedure, pass(self), public :: deinit => forcing_config_deinit
@@ -37,10 +41,15 @@ endtype forcing_config
 contains
 
 !> Open forcing file and find fields
-subroutine forcing_config_init(self, config)
+subroutine forcing_config_init(self, config, loggerin, num_fields)
 
     class(forcing_config), intent(inout) :: self
     character(len=*), intent(in) :: config
+    type(logger_type), target, intent(in) :: loggerin
+    integer, intent(out) :: num_fields
+
+    type(json_value), pointer :: root, inputs
+    logical :: found
 
     call self%json%initialize()
     call self%json%load_file(filename=trim(config))
@@ -50,54 +59,83 @@ subroutine forcing_config_init(self, config)
     endif
 
     call self%core%initialize()
-    self%num_land_fields = 0
-
-endsubroutine forcing_config_init
-
-
-!> Parse forcing file into a dictionary.
-subroutine forcing_config_parse(self, num_inputs)
-    class(forcing_config), intent(inout) :: self
-    integer, intent(out) :: num_inputs
-
-    type(json_value), pointer :: field_jv_ptr
-    integer :: i
-    logical :: found
-    type(json_value), pointer :: root, inputs
 
     call self%json%get(root)
     call self%core%get_child(root, "inputs", inputs, found)
     call assert(found, "No inputs found in forcing config.")
 
-    num_inputs = self%core%count(inputs)
-    allocate(self%forcing_fields(num_inputs))
+    self%num_inputs = self%core%count(inputs)
+    num_fields = self%num_inputs
+    self%logger => loggerin
 
-    do i=1, num_inputs
+endsubroutine forcing_config_init
+
+
+!> Parse forcing file into a dictionary.
+subroutine forcing_config_parse(self, fields, start_date, &
+                                num_land_fields, min_dt, calendar)
+    class(forcing_config), intent(inout) :: self
+    type(forcing_field), dimension(:), intent(inout) :: fields
+    type(datetime), intent(in) :: start_date
+    integer, intent(out) :: min_dt, num_land_fields
+    character(len=9), intent(out) :: calendar
+
+    type(json_value), pointer :: field_jv_ptr
+    integer :: i, dt
+    character(len=9) :: calendar_str
+
+    type(json_value), pointer :: root, inputs
+    logical :: found
+
+    call assert(size(fields) == self%num_inputs, &
+                "Insufficient number of fields allocated.")
+
+    call self%json%get(root)
+    call self%core%get_child(root, "inputs", inputs, found)
+    call assert(found, "No inputs found in forcing config.")
+
+    min_dt = HUGE(1)
+    calendar = ''
+    do i=1, self%num_inputs
         call self%core%get_child(inputs, i, field_jv_ptr, found)
         call assert(found, "No inputs found in forcing config.")
-        call self%parse_field(field_jv_ptr, self%forcing_fields(i))
+        call self%parse_field(field_jv_ptr, fields(i), start_date, &
+                              dt, calendar_str)
+        if (dt < min_dt) then
+            min_dt = dt
+        endif
+        if (calendar == '') then
+            calendar = calendar_str
+        else
+            call assert(calendar == calendar_str, &
+                        "Inconsistent calendar between forcing fields.")
+        endif
     enddo
 
 endsubroutine forcing_config_parse
 
 
-subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
+subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
+                                      start_date, dt, forcing_calendar)
 
     class(forcing_config), intent(inout) :: self
     type(json_value), pointer :: field_jv_ptr
     type(forcing_field) :: field_ptr
+    type(datetime), intent(in) :: start_date
+    integer, intent(out) :: dt
+    character(len=9), intent(out) :: forcing_calendar
 
     character(kind=CK, len=:), allocatable :: cname, fieldname, domain_str
-    character(kind=CK, len=:), allocatable :: filename, pertubation_filename
-    character(kind=CK, len=:), allocatable :: pertubation_type
+    character(kind=CK, len=:), allocatable :: filename, perturbation_filename
+    character(kind=CK, len=:), allocatable :: perturbation_type
     character(kind=CK, len=:), allocatable :: dimension_type
-    character(kind=CK, len=:), allocatable :: calendar
-    integer :: pertubation_constant_value
+    character(kind=CK, len=:), allocatable :: perturbation_calendar
+    integer :: perturbation_constant_value
     logical :: found, domain_found
-    integer :: i, num_pertubations
+    integer :: i, num_perturbations
 
-    type(json_value), pointer :: pertubation_jv_ptr
-    type(json_value), pointer :: pertubation_list
+    type(json_value), pointer :: perturbation_jv_ptr
+    type(json_value), pointer :: perturbation_list
 
     call self%core%get(field_jv_ptr, "fieldname", fieldname, found)
     call assert(found, "Entry 'fieldname' not found in forcing config.")
@@ -120,91 +158,93 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr)
         self%num_land_fields = self%num_land_fields + 1
     endif
 
-    call field_ptr%new(fieldname, filename, cname, domain_str)
+    call field_ptr%init(fieldname, filename, cname, domain_str, start_date, &
+                        self%logger, dt, forcing_calendar)
 
-    call self%core%get_child(field_jv_ptr, "pertubations", pertubation_list, found)
+    call self%core%get_child(field_jv_ptr, "perturbations", perturbation_list, found)
     if (.not. found) then
         return
     endif
 
-    num_pertubations = self%core%count(pertubation_list)
-    allocate(field_ptr%pertubations(num_pertubations))
+    num_perturbations = self%core%count(perturbation_list)
+    allocate(field_ptr%perturbations(num_perturbations))
 
-    do i=1, num_pertubations
-        call self%core%get_child(pertubation_list, i, pertubation_jv_ptr, found)
-        call assert(found, "Expected to find pertubation entry.")
+    do i=1, num_perturbations
+        call self%core%get_child(perturbation_list, i, perturbation_jv_ptr, found)
+        call assert(found, "Expected to find perturbation entry.")
 
-        field_ptr%pertubations(i)%name = fieldname
+        field_ptr%perturbations(i)%name = fieldname
 
-        call self%core%get(pertubation_jv_ptr, "type", pertubation_type, found)
-        call assert(found, "No type in pertubation entry.")
-        call assert(trim(pertubation_type) == 'scaling' .or. &
-                    trim(pertubation_type) == 'offset', &
-                    "forcing_parse_field: invalid pertubation type")
-        if (trim(pertubation_type) == 'scaling') then
-            field_ptr%pertubations(i)%pertubation_type = &
-                FORCING_PERTUBATION_TYPE_SCALING
+        call self%core%get(perturbation_jv_ptr, "type", perturbation_type, found)
+        call assert(found, "No type in perturbation entry.")
+        call assert(trim(perturbation_type) == 'scaling' .or. &
+                    trim(perturbation_type) == 'offset', &
+                    "forcing_parse_field: invalid perturbation type")
+        if (trim(perturbation_type) == 'scaling') then
+            field_ptr%perturbations(i)%perturbation_type = &
+                FORCING_PERTURBATION_TYPE_SCALING
         else
-            field_ptr%pertubations(i)%pertubation_type = &
-                FORCING_PERTUBATION_TYPE_OFFSET
+            field_ptr%perturbations(i)%perturbation_type = &
+                FORCING_PERTURBATION_TYPE_OFFSET
         endif
 
-        call self%core%get(pertubation_jv_ptr, "dimension", dimension_type, found)
-        call assert(found, "No dimension in pertubation entry.")
+        call self%core%get(perturbation_jv_ptr, "dimension", dimension_type, found)
+        call assert(found, "No dimension in perturbation entry.")
         call assert(trim(dimension_type) == 'spatial' .or. &
                     trim(dimension_type) == 'temporal' .or. &
                     trim(dimension_type) == 'spatiotemporal' .or. &
                     trim(dimension_type) == 'constant', &
-                    "forcing_parse_field: invalid pertubation dimension type")
+                    "forcing_parse_field: invalid perturbation dimension type")
         if (trim(dimension_type) == 'spatial') then
-            field_ptr%pertubations(i)%dimension_type = &
-                FORCING_PERTUBATION_DIMENSION_SPATIAL
+            field_ptr%perturbations(i)%dimension_type = &
+                FORCING_PERTURBATION_DIMENSION_SPATIAL
         elseif (trim(dimension_type) == 'temporal') then
-            field_ptr%pertubations(i)%dimension_type = &
-                FORCING_PERTUBATION_DIMENSION_TEMPORAL
+            field_ptr%perturbations(i)%dimension_type = &
+                FORCING_PERTURBATION_DIMENSION_TEMPORAL
         elseif (trim(dimension_type) == 'spatiotemporal') then
-            field_ptr%pertubations(i)%dimension_type = &
-                FORCING_PERTUBATION_DIMENSION_SPATIOTEMPORAL
+            field_ptr%perturbations(i)%dimension_type = &
+                FORCING_PERTURBATION_DIMENSION_SPATIOTEMPORAL
         else
             call assert(trim(dimension_type) == 'constant', &
                         "forcing_parse_field: bad dimension type")
-            field_ptr%pertubations(i)%dimension_type = &
-                FORCING_PERTUBATION_DIMENSION_CONSTANT
+            field_ptr%perturbations(i)%dimension_type = &
+                FORCING_PERTURBATION_DIMENSION_CONSTANT
         endif
 
-        if (field_ptr%pertubations(i)%dimension_type == &
-                FORCING_PERTUBATION_DIMENSION_CONSTANT) then
-            call self%core%get(pertubation_jv_ptr, "value", &
-                               pertubation_constant_value, found)
-            call assert(found, "No value in pertubation entry.")
-            field_ptr%pertubations(i)%constant_value = &
-                pertubation_constant_value
+        if (field_ptr%perturbations(i)%dimension_type == &
+                FORCING_PERTURBATION_DIMENSION_CONSTANT) then
+            call self%core%get(perturbation_jv_ptr, "value", &
+                               perturbation_constant_value, found)
+            call assert(found, "No value in perturbation entry.")
+            field_ptr%perturbations(i)%constant_value = &
+                perturbation_constant_value
         else
-            call self%core%get(pertubation_jv_ptr, "value", &
-                               pertubation_filename, found)
-            call assert(found, "No filename in pertubation entry.")
-            field_ptr%pertubations(i)%filename_template = pertubation_filename
+            call self%core%get(perturbation_jv_ptr, "value", &
+                               perturbation_filename, found)
+            call assert(found, "No filename in perturbation entry.")
+            field_ptr%perturbations(i)%filename_template = perturbation_filename
         endif
 
-        call self%core%get(pertubation_jv_ptr, "calendar", calendar, found)
+        call self%core%get(perturbation_jv_ptr, "calendar", &
+                           perturbation_calendar, found)
         if (.not. found) then
-            call assert(field_ptr%pertubations(i)%dimension_type == &
-                        FORCING_PERTUBATION_DIMENSION_CONSTANT, &
+            call assert(field_ptr%perturbations(i)%dimension_type == &
+                        FORCING_PERTURBATION_DIMENSION_CONSTANT, &
                         "forcing_parse_field: missing calendar type")
         else
-            call assert(trim(calendar) == 'forcing' .or. &
-                        trim(calendar) == 'experiment', &
-                        "forcing_parse_field: invalid pertubation calendar type")
-            if (trim(calendar) == 'forcing') then
-                field_ptr%pertubations(i)%calendar = &
-                    FORCING_PERTUBATION_CALENDAR_FORCING
+            call assert(trim(perturbation_calendar) == 'forcing' .or. &
+                        trim(perturbation_calendar) == 'experiment', &
+                        "forcing_parse_field: invalid perturbation calendar type")
+            if (trim(perturbation_calendar) == 'forcing') then
+                field_ptr%perturbations(i)%calendar = &
+                    FORCING_PERTURBATION_CALENDAR_FORCING
             else
-                field_ptr%pertubations(i)%calendar = &
-                    FORCING_PERTUBATION_CALENDAR_EXPERIMENT
+                field_ptr%perturbations(i)%calendar = &
+                    FORCING_PERTURBATION_CALENDAR_EXPERIMENT
             endif
         endif
 
-        call field_ptr%pertubations(i)%init()
+        call field_ptr%perturbations(i)%init()
     enddo
 
 end subroutine forcing_config_parse_field

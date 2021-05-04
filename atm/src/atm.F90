@@ -37,7 +37,7 @@ program atm
     type(simple_timer_type) :: init_runoff_timer, remap_runoff_timer
     type(simple_timer_type) :: coupler_put_timer
     type(simple_timer_type) :: init_oasis_timer, init_model_timer
-    type(simple_timer_type) :: init_fields_timer
+    type(simple_timer_type) :: parse_fields_timer
 
     namelist /atm_nml/ forcing_file, accessom2_config_dir
 
@@ -77,15 +77,18 @@ program atm
 
     ! Initialise forcing object, this reads config and
     ! tells us how man atm-to-ice fields there are.
-    call forcing%init(forcing_file, accessom2%logger, num_atm_to_ice_fields)
+    call forcing_config%init(forcing_file, accessom2%logger, &
+                             num_atm_to_ice_fields)
 
-    ! Initialise forcing fields, involves reading details of each from disk,
-    ! and allocating necessary memory.
-    allocate(fields(num_atm_to_ice_fields))
-    call init_fields_timer%start()
-    call forcing%init_fields(fields, accessom2%get_cur_forcing_date(), &
-                             dt, calendar, num_land_fields)
-    call init_fields_timer%stop()
+    ! Initialise forcing fields, involves reading details of each from
+    ! config file and from netcdf files on disk, and allocating
+    ! necessary memory.
+    allocate(forcing_fields(num_atm_to_ice_fields))
+    call parse_fields_timer%start()
+    call forcing_config%parse(forcing_fields, accessom2%get_cur_forcing_date(), &
+                              num_land_fields, dt, calendar)
+    call parse_fields_timer%stop()
+
     ! Create intermediate fields for runoff,
     ! these are a copy/variation of the forcing fields
     allocate(runoff_fields(num_land_fields))
@@ -111,6 +114,12 @@ program atm
     call init_runoff_timer%start()
     call runoff%init(ice_grid)
     call init_runoff_timer%stop()
+
+    ! Initialise coupling fields.
+    allocate(coupling_fields(num_atm_to_ice_fields))
+    do i=1, num_atm_to_ice_fields
+        coupling_fields(i)%init()
+    enddo
 
     ! Create a little map to go from atm_to_ice field indices to
     ! runoff field indices, simplifies the code below

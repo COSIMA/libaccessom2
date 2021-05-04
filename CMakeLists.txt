@@ -127,15 +127,20 @@ execute_process(
 add_definitions("-DGIT_COMMIT_HASH='${GIT_COMMIT_HASH}'")
 add_definitions("-DGIT_URL='${GIT_URL}'")
 
+# libutil.a library
+file(GLOB LIB_SOURCES libutil/src/*.F90)
+add_library(util ${LIB_SOURCES})
+add_dependencies(util datetime oasis3-mct)
+
 # libcouple.a library
 file(GLOB LIB_SOURCES libcouple/src/*.F90)
 add_library(couple ${LIB_SOURCES})
-add_dependencies(couple datetime oasis3-mct)
+add_dependencies(couple util datetime oasis3-mct)
 
 # libforcing.a library
 file(GLOB LIB_SOURCES libforcing/src/*.F90)
 add_library(forcing ${LIB_SOURCES})
-add_dependencies(forcing jsonfortran)
+add_dependencies(forcing util jsonfortran)
 
 # Join all of the above together to make libaccesom2
 # See https://stackoverflow.com/questions/37924383/combining-several-static-libraries-into-one-using-cmake
@@ -148,10 +153,12 @@ add_custom_target(combined
         COMMAND ar -x $<TARGET_FILE:mpeu>
         COMMAND ar -x $<TARGET_FILE:psmile.MPI1>
         COMMAND ar -x $<TARGET_FILE:scrip>
+        COMMAND ar -x $<TARGET_FILE:util>
+        COMMAND ar -x $<TARGET_FILE:forcing>
         COMMAND ar -x $<TARGET_FILE:couple>
         COMMAND ar -qcs ${LIBACCESSOM2} *.o
         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-        DEPENDS datetime jsonfortran mct mpeu psmile.MPI1 scrip couple
+        DEPENDS datetime jsonfortran mct mpeu psmile.MPI1 scrip util forcing couple
         )
 
 add_library(accessom2 STATIC IMPORTED GLOBAL)
@@ -161,7 +168,7 @@ set_target_properties(accessom2 PROPERTIES IMPORTED_LOCATION ${LIBACCESSOM2})
 # libforcing test executable
 file(GLOB FORCING_TEST_SOURCES libforcing/test/*.F90)
 add_executable(forcing_test.exe ${FORCING_TEST_SOURCES})
-target_link_libraries(forcing_test.exe forcing datetime jsonfortran ${NETCDF_LIBRARIES})
+target_link_libraries(forcing_test.exe forcing util datetime jsonfortran ${NETCDF_LIBRARIES})
 set_target_properties(forcing_test.exe PROPERTIES
                       RUNTIME_OUTPUT_DIRECTORY libforcing/test/
 )

@@ -34,6 +34,7 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
 
     character(len=5) :: pe_str
     integer :: pe, err
+    logical :: flag
 
     if (present(loglevel)) then
         if (trim(loglevel) == 'DEBUG') then
@@ -51,7 +52,12 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
         self%loglevel = LOG_ERROR
     endif
 
-    call MPI_Comm_rank(MPI_COMM_WORLD, pe, err)
+    call MPI_initialized(flag, err)
+    if (flag) then
+        call MPI_Comm_rank(MPI_COMM_WORLD, pe, err)
+    else
+        pe = 0
+    endif
     write(pe_str, '(I5.5)') pe
 
     self%logfilename = trim(basename)//'.pe'//pe_str//'.log'
@@ -59,7 +65,8 @@ subroutine logger_init(self, basename, logfiledir, loglevel)
         self%logfilename = trim(logfiledir)//'/'//trim(self%logfilename)
     endif
 
-    open(newunit=self%fp, file=trim(self%logfilename), status='new')
+    open(newunit=self%fp, file=trim(self%logfilename), action='write', &
+         status='replace')
     self%write_called = .false.
 
 endsubroutine

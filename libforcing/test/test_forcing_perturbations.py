@@ -21,9 +21,9 @@ forcing_tmpl = Template("""
       "filename": "{{forcing_filename}}",
       "fieldname": "{{forcing_fieldname}}",
       "cname": "{{coupling_fieldname}}",
-      "pertubations": [
-        {{pertubation0}}
-        {{pertubation1}}
+      "perturbations": [
+        {{perturbation0}}
+        {{perturbation1}}
       ]
     }
   ]
@@ -51,7 +51,7 @@ def get_forcing_field_times():
 
 class TestForcingPerturbations:
 
-    def run_test(self, ptype, pdimension, pvalue, pcalendar):
+    def run_simple_test(self, ptype, pdimension, pvalue, pcalendar):
 
         perturb_str = perturb_tmpl.render(type=ptype,
                                           dimension=pdimension,
@@ -62,7 +62,7 @@ class TestForcingPerturbations:
             s = forcing_tmpl.render(forcing_filename=FORCING_FILE,
                                     forcing_fieldname=FORCING_FIELDNAME,
                                     coupling_fieldname=COUPLING_FIELDNAME,
-                                    pertubation0=perturb_str)
+                                    perturbation0=perturb_str)
             f.write(s)
 
         # Read out a random time point to test against
@@ -83,7 +83,7 @@ class TestForcingPerturbations:
         with nc.Dataset('test_output.nc') as f:
             dest_data = f.variables[FORCING_FIELDNAME][:]
 
-        # Get the configured pertubation value
+        # Get the configured perturbation value
         if Path(str(pvalue)).exists():
             with nc.Dataset(pvalue) as f:
                 if pdimension == 'spatial':
@@ -97,11 +97,57 @@ class TestForcingPerturbations:
             assert pdimension == 'constant'
             perturb_array = int(pvalue)
 
-        # Do the pertubation in Python code and check that it is as expected
+        # Do the perturbation in Python code and check that it is as expected
         if ptype == 'scaling':
             assert np.allclose(src_data*perturb_array, dest_data)
         else:
             assert np.allclose(src_data+perturb_array, dest_data)
+
+
+    @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
+    def test_constant(self, perturb_type):
+        """
+        Test constant scaling and offset
+        """
+
+        perturb_value = random.randint(0, 100)
+        self.run_simple_test(perturb_type, 'constant', perturb_value, 'forcing')
+
+
+    @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
+    def test_temporal(self, perturb_type):
+        """
+        Test temporal scaling and offset
+        """
+
+        # Create 2d perturbation file
+        perturb_value = './test_input.nc'
+
+        times, time_units, calendar = get_forcing_field_times()
+        data_array = np.random.rand(len(times))
+        create_nc_file(perturb_value, FORCING_FIELDNAME, data_array,
+                       time_vals=times,
+                       time_units=time_units, calendar=calendar)
+
+        self.run_simple_test(perturb_type, 'temporal', perturb_value, 'forcing')
+
+
+    @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
+    def test_spatial(self, perturb_type):
+        """
+        Test spatial scaling and offset
+        """
+
+        # Create 2d perturbation file
+        perturb_value = './test_input.nc'
+
+        shape =  get_forcing_field_shape()
+        nx = shape[2]
+        ny = shape[1]
+        data_array = np.random.rand(ny, nx)
+        create_nc_file(perturb_value, FORCING_FIELDNAME, data_array)
+
+        self.run_simple_test(perturb_type, 'spatial', perturb_value, 'forcing')
 
 
     @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
@@ -110,7 +156,7 @@ class TestForcingPerturbations:
         Test spatiotemporal scaling and offset
         """
 
-        # Create 2d pertubation file
+        # Create 2d perturbation file
         perturb_value = './test_input.nc'
 
         times, time_units, calendar = get_forcing_field_times()
@@ -123,53 +169,6 @@ class TestForcingPerturbations:
                        time_vals=times,
                        time_units=time_units, calendar=calendar)
 
-        self.run_test(perturb_type, 'spatiotemporal', perturb_value, 'forcing')
+        self.run_simple_test(perturb_type, 'spatiotemporal', perturb_value, 'forcing')
 
-
-    @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
-    def test_temporal(self, perturb_type):
-        """
-        Test temporal scaling and offset
-        """
-
-        # Create 2d pertubation file
-        perturb_value = './test_input.nc'
-
-        times, time_units, calendar = get_forcing_field_times()
-        data_array = np.random.rand(len(times))
-        create_nc_file(perturb_value, FORCING_FIELDNAME, data_array,
-                       time_vals=times,
-                       time_units=time_units, calendar=calendar)
-
-        self.run_test(perturb_type, 'temporal', perturb_value, 'forcing')
-
-
-    @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
-    def test_spatial(self, perturb_type):
-        """
-        Test spatial scaling and offset
-        """
-
-        # Create 2d pertubation file
-        perturb_value = './test_input.nc'
-
-        # FIXME: check that the spatial grids actually match between forcing
-        # and pertubation.
-        shape =  get_forcing_field_shape()
-        nx = shape[2]
-        ny = shape[1]
-        data_array = np.random.rand(ny, nx)
-        create_nc_file(perturb_value, FORCING_FIELDNAME, data_array)
-
-        self.run_test(perturb_type, 'spatial', perturb_value, 'forcing')
-
-
-    @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
-    def test_constant(self, perturb_type):
-        """
-        Test constant scaling and offset
-        """
-
-        perturb_value = random.randint(0, 100)
-        self.run_test(perturb_type, 'constant', perturb_value, 'forcing')
 
