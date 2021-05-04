@@ -9,7 +9,6 @@ use mod_oasis, only : oasis_init_comp, oasis_def_var, &
 use datetime_module, only : datetime
 use error_handler, only : assert
 use logger_mod, only : logger_type => logger, LOG_DEBUG
-use field_mod, only : field_type => field
 
 use mod_oasis_namcouple, only : prism_nmodels, prism_modnam
 use mod_oasis_data, only : mpi_root_global
@@ -17,6 +16,17 @@ use mod_oasis_data, only : mpi_root_global
 implicit none
 private
 public coupler
+
+integer, parameter :: MAX_COUPLING_FIELDS = 64
+
+type :: coupling_field
+    character(len=64) :: name
+    type(datetime) :: timestamp
+    integer :: oasis_varid
+    integer :: oasis_partid
+    integer :: direction
+endtype coupling_field
+
 
 type coupler
     private
@@ -31,6 +41,8 @@ type coupler
     character(len=6) :: model_name
 
     type(logger_type), pointer :: logger
+    type(coupling_field), dimension(MAX_COUPLING_FIELDS) :: fields
+    integer :: num_fields
 
 contains
     private
@@ -41,6 +53,7 @@ contains
     procedure, pass(self), public :: put => coupler_put
     procedure, pass(self), public :: get => coupler_get
     procedure, pass(self) :: write_checksum
+    procedure, pass(self) :: lookup_oasis_varid
 endtype coupler
 
 contains
@@ -60,6 +73,8 @@ subroutine coupler_init_begin(self, model_name, loggerin, config_dir)
     call assert(model_name == 'matmxx' .or. model_name == 'cicexx' &
                 .or. model_name == 'mom5xx' .or. model_name == 'monito', &
                 'Bad model name')
+
+    self%num_fields = 0
     self%model_name = model_name
 
     call MPI_Initialized(initialized, err)
@@ -99,10 +114,11 @@ subroutine coupler_init_begin(self, model_name, loggerin, config_dir)
 
 endsubroutine coupler_init_begin
 
-subroutine coupler_init_field(self, field, direction)
+subroutine coupler_init_field(self, name, direction, field_shape)
     class(coupler), intent(inout) :: self
-    class(field_type), intent(inout) :: field
+    character(len=*), intent(in) :: name
     integer, intent(in) :: direction
+    integer, dimension(2) :: field_shape
 
     integer, dimension(2) :: var_nodims
     integer, dimension(4) :: var_shape
@@ -120,21 +136,25 @@ subroutine coupler_init_field(self, field, direction)
     ! Apple partition: this only supports monoprocess
     part_def(1) = 1
     part_def(2) = 0
-    part_def(3) = product(field%get_shape())
+    part_def(3) = product(field_shape)
     call oasis_def_partition(partid, part_def, err)
 
-    dims(:) = field%get_shape()
+    dims(:) = field_shape
     var_shape(1) = 1       ! min index for the coupling field local dim
     var_shape(2) = dims(1) ! max index for the coupling field local dim
     var_shape(3) = 1
     var_shape(4) = dims(2)
-    call oasis_def_var(varid, field%name, partid, &
+    call oasis_def_var(varid, trim(name), partid, &
                        var_nodims, direction, var_shape, &
                        OASIS_REAL, err)
     call assert(err == OASIS_OK, "oasis_def_var() failed")
 
-    field%oasis_varid = varid
-    field%oasis_partid = partid
+    self%num_fields = self%num_fields + 1
+    call assert(self%num_fields <= MAX_COUPLING_FIELDS, &
+                'Too many coupling fields.')
+    self%fields(self%num_fields)%name = trim(name)
+    self%fields(self%num_fields)%oasis_varid = varid
+    self%fields(self%num_fields)%oasis_partid = partid
 
 endsubroutine coupler_init_field
 
@@ -150,39 +170,41 @@ subroutine coupler_init_end(self, total_runtime_in_seconds, &
                       coupling_field_timesteps=coupling_field_timesteps)
 endsubroutine coupler_init_end
 
-subroutine coupler_put(self, field, timestamp, err)
+subroutine coupler_put(self, field_name, data_array, timestamp, err)
 
     class(coupler), intent(inout) :: self
-    class(field_type), intent(inout) :: field
+    character(len=*), intent(in) :: field_name
+    real, dimension(:, :), intent(in) :: data_array
     integer, intent(in) :: timestamp
     integer, intent(out) :: err
 
     character(len=10) :: timestamp_str
 
-    call oasis_put(field%oasis_varid, timestamp, field%data_array, err)
+    call oasis_put(self%lookup_oasis_varid(field_name), timestamp, data_array, err)
     ! Only output field checksum if it is actually sent.
     if (err == OASIS_SENT .or. err == OASIS_SENTOUT .or. err == OASIS_TOREST &
            .or. err == OASIS_TORESTOUT) then
         write(timestamp_str, '(I10.10)') timestamp
-        call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
-                            field%data_array)
+        call self%write_checksum(trim(self%model_name)//'-'//trim(field_name)//'-'//trim(timestamp_str), &
+                            data_array)
     endif
 
 endsubroutine coupler_put
 
-subroutine coupler_get(self, field, timestamp, err)
+subroutine coupler_get(self, field_name, timestamp, data_array, err)
 
     class(coupler), intent(inout) :: self
-    class(field_type), intent(inout) :: field
+    character(len=*), intent(in) :: field_name
     integer, intent(in) :: timestamp
+    real, dimension(:, :), intent(inout) :: data_array
     integer, intent(out) :: err
 
     character(len=10) :: timestamp_str
 
-    call oasis_get(field%oasis_varid, timestamp, field%data_array, err)
+    call oasis_get(self%lookup_oasis_varid(field_name), timestamp, data_array, err)
     write(timestamp_str, '(I10.10)') timestamp
-    call self%write_checksum(trim(self%model_name)//'-'//trim(field%name)//'-'//trim(timestamp_str), &
-                             field%data_array)
+    call self%write_checksum(trim(self%model_name)//'-'//trim(field_name)//'-'//trim(timestamp_str), &
+                             data_array)
 
 endsubroutine coupler_get
 
@@ -211,5 +233,28 @@ subroutine write_checksum(self, name, array)
     endif
 
 endsubroutine write_checksum
+
+function lookup_oasis_varid(self, field_name)
+    class(coupler), intent(inout) :: self
+    character(len=*), intent(in) :: field_name
+    integer :: lookup_oasis_varid
+
+    integer :: i
+    logical :: found
+
+    ! Find the varid for this field
+    found = .false.
+    do i=1, self%num_fields
+        if (trim(self%fields(i)%name) == trim(field_name)) then
+            found = .true.
+            lookup_oasis_varid = self%fields(i)%oasis_varid
+        endif
+    enddo
+
+    call assert(found, 'Could not find oasis_varid for field '//trim(field_name))
+
+
+endfunction lookup_oasis_varid
+
 
 endmodule coupler_mod

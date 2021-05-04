@@ -4,7 +4,7 @@ program ice
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
     use ice_grid_mod, only  : ice_grid_type => ice_grid
-    use field_mod, only : field_type => field
+    use forcing_field_mod, only : forcing_field_type => forcing_field
     use restart_mod, only : restart_type => restart
     use mod_oasis, only : OASIS_IN, OASIS_OUT
     use accessom2_mod, only : accessom2_type => accessom2
@@ -23,7 +23,7 @@ program ice
     ! Namelist parameters
     integer :: dt, i, tmp_unit, err
     integer, dimension(2) :: resolution
-    type(field_type), dimension(:), allocatable :: from_atm_fields, &
+    type(forcing_field_type), dimension(:), allocatable :: from_atm_fields, &
         from_ocean_fields, to_ocean_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
         from_atm_field_names = '', from_ocean_field_names = '', &
@@ -91,19 +91,22 @@ program ice
 
     ! Set up coupling fields
     do i=1, size(from_atm_fields)
-        from_atm_fields(i)%name = trim(from_atm_field_names(i))
+        from_atm_fields(i)%coupling_name = trim(from_atm_field_names(i))
         allocate(from_atm_fields(i)%data_array(resolution(1), resolution(2)))
-        call coupler%init_field(from_atm_fields(i), OASIS_IN)
+        call coupler%init_field(from_atm_fields(i)%coupling_name, OASIS_IN, &
+                                from_atm_fields(i)%get_shape())
     enddo
     do i=1, size(from_ocean_fields)
-        from_ocean_fields(i)%name = trim(from_ocean_field_names(i))
+        from_ocean_fields(i)%coupling_name = trim(from_ocean_field_names(i))
         allocate(from_ocean_fields(i)%data_array(resolution(1), resolution(2)))
-        call coupler%init_field(from_ocean_fields(i), OASIS_IN)
+        call coupler%init_field(from_ocean_fields(i)%coupling_name, OASIS_IN, &
+                                from_ocean_fields(i)%get_shape())
     enddo
     do i=1, size(to_ocean_fields)
-        to_ocean_fields(i)%name = trim(to_ocean_field_names(i))
+        to_ocean_fields(i)%coupling_name = trim(to_ocean_field_names(i))
         allocate(to_ocean_fields(i)%data_array(resolution(1), resolution(2)))
-        call coupler%init_field(to_ocean_fields(i), OASIS_OUT)
+        call coupler%init_field(to_ocean_fields(i)%coupling_name, OASIS_OUT, &
+                                to_ocean_fields(i)%get_shape())
     enddo
     call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
                           accessom2%get_coupling_field_timesteps())
@@ -117,7 +120,9 @@ program ice
     ! Get from atmosphere
     cur_runtime_in_seconds = accessom2%get_cur_runtime_in_seconds()
     do i=1, size(from_atm_fields)
-        call coupler%get(from_atm_fields(i), cur_runtime_in_seconds, err)
+        call coupler%get(from_atm_fields(i)%coupling_name, &
+                         cur_runtime_in_seconds, &
+                         from_atm_fields(i)%data_array, err)
     enddo
     call accessom2%atm_ice_sync()
     ! Update atmospheric forcing halos - expensive operation.
@@ -133,7 +138,9 @@ program ice
         ! Send to ocean - non-blocking
         do i=1, size(to_ocean_fields)
             to_ocean_fields(i)%data_array(:, :) = 0.0
-            call coupler%put(to_ocean_fields(i), cur_runtime_in_seconds, err)
+            call coupler%put(to_ocean_fields(i)%coupling_name, &
+                             to_ocean_fields(i)%data_array, &
+                             cur_runtime_in_seconds, err)
         enddo
 
         ! Do work
@@ -146,7 +153,9 @@ program ice
 
         ! Get from atmos - fast because atmos should have already sent.
         do i=1, size(from_atm_fields)
-            call coupler%get(from_atm_fields(i), cur_runtime_in_seconds, err)
+            call coupler%get(from_atm_fields(i)%coupling_name, &
+                             cur_runtime_in_seconds, &
+                             from_atm_fields(i)%data_array, err)
         enddo
 
         ! atm is blocked, unblock it. This prevents the atm from sending
@@ -160,7 +169,9 @@ program ice
         ! that ocean and can receive immediately and quickly loop to send
         ! to the ocean. This will minimise the ocean wait time.
         do i=1, size(from_ocean_fields)
-            call coupler%get(from_ocean_fields(i), cur_runtime_in_seconds, err)
+            call coupler%get(from_ocean_fields(i)%coupling_name, &
+                             cur_runtime_in_seconds, &
+                             from_ocean_fields(i)%data_array, err)
         enddo
     enddo
 

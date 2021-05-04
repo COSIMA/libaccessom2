@@ -1,8 +1,8 @@
 program atm
 
     use mod_oasis, only : OASIS_IN, OASIS_OUT
-    use forcing_mod, only : forcing_type => forcing
-    use field_mod, only : field_type => field, FIELD_DOMAIN_LAND
+    use forcing_config_mod, only : forcing_config_type => forcing_config
+    use forcing_field_mod, only : forcing_field_type => forcing_field, FORCING_FIELD_DOMAIN_LAND
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
@@ -18,13 +18,13 @@ program atm
 
     type(accessom2_type) :: accessom2
     type(coupler_type) :: coupler
-    type(forcing_type) :: forcing
+    type(forcing_config_type) :: forcing_config
     type(ice_grid_type) :: ice_grid
     type(runoff_type) :: runoff
-    type(field_type), dimension(:), allocatable :: fields
+    type(forcing_field_type), dimension(:), allocatable :: forcing_fields
     integer, dimension(:), allocatable :: to_runoff_map
     ! Liquid (river) and solid (iceberg) runoff
-    type(field_type), dimension(:), allocatable :: runoff_fields
+    type(forcing_field_type), dimension(:), allocatable :: runoff_forcing_fields
     character(len=MAX_FILE_NAME_LEN) :: forcing_file, accessom2_config_dir
     character(len=9) :: calendar
     integer, dimension(2) :: ice_shape
@@ -37,7 +37,7 @@ program atm
     type(simple_timer_type) :: init_runoff_timer, remap_runoff_timer
     type(simple_timer_type) :: coupler_put_timer
     type(simple_timer_type) :: init_oasis_timer, init_model_timer
-    type(simple_timer_type) :: parse_fields_timer
+    type(simple_timer_type) :: parse_forcing_fields_timer
 
     namelist /atm_nml/ forcing_file, accessom2_config_dir
 
@@ -71,7 +71,7 @@ program atm
                                 accessom2%simple_timers_enabled())
     call init_oasis_timer%init('init_oasis', accessom2%logger, &
                                 accessom2%simple_timers_enabled())
-    call init_fields_timer%init('init_fields', accessom2%logger, &
+    call parse_forcing_fields_timer%init('parse_forcing_fields', accessom2%logger, &
                                 accessom2%simple_timers_enabled())
     call init_model_timer%start()
 
@@ -84,14 +84,16 @@ program atm
     ! config file and from netcdf files on disk, and allocating
     ! necessary memory.
     allocate(forcing_fields(num_atm_to_ice_fields))
-    call parse_fields_timer%start()
+    call parse_forcing_fields_timer%start()
     call forcing_config%parse(forcing_fields, accessom2%get_cur_forcing_date(), &
                               num_land_fields, dt, calendar)
-    call parse_fields_timer%stop()
+    call parse_forcing_fields_timer%stop()
+    print*, num_land_fields
+    print*, num_atm_to_ice_fields
 
     ! Create intermediate fields for runoff,
     ! these are a copy/variation of the forcing fields
-    allocate(runoff_fields(num_land_fields))
+    allocate(runoff_forcing_fields(num_land_fields))
 
     ! Initialise the coupler.
     call coupler%init_begin('matmxx', accessom2%logger, &
@@ -115,18 +117,12 @@ program atm
     call runoff%init(ice_grid)
     call init_runoff_timer%stop()
 
-    ! Initialise coupling fields.
-    allocate(coupling_fields(num_atm_to_ice_fields))
-    do i=1, num_atm_to_ice_fields
-        coupling_fields(i)%init()
-    enddo
-
     ! Create a little map to go from atm_to_ice field indices to
     ! runoff field indices, simplifies the code below
     allocate(to_runoff_map(num_atm_to_ice_fields))
     ri = 1
     do i=1, num_atm_to_ice_fields
-        if (fields(i)%domain == FIELD_DOMAIN_LAND) then
+        if (forcing_fields(i)%domain == FORCING_FIELD_DOMAIN_LAND) then
             to_runoff_map(i) = ri
             ri = ri + 1
         else
@@ -138,13 +134,17 @@ program atm
     do i=1, num_atm_to_ice_fields
         if (to_runoff_map(i) /= 0) then
             ri = to_runoff_map(i)
-            runoff_fields(ri)%name = fields(i)%name
-            runoff_fields(ri)%domain = fields(i)%domain
-            runoff_fields(ri)%timestamp = fields(i)%timestamp
-            allocate(runoff_fields(ri)%data_array(ice_shape(1), ice_shape(2)))
-            call coupler%init_field(runoff_fields(ri), OASIS_OUT)
+            runoff_forcing_fields(ri)%coupling_name = &
+                forcing_fields(i)%coupling_name
+            runoff_forcing_fields(ri)%domain = forcing_fields(i)%domain
+            allocate(runoff_forcing_fields(ri)%data_array(ice_shape(1), ice_shape(2)))
+            call coupler%init_field(runoff_forcing_fields(ri)%coupling_name, &
+                                    OASIS_OUT, &
+                                    runoff_forcing_fields(ri)%get_shape())
         else
-            call coupler%init_field(fields(i), OASIS_OUT)
+            call coupler%init_field(forcing_fields(i)%coupling_name, &
+                                    OASIS_OUT, &
+                                    forcing_fields(i)%get_shape())
         endif
     enddo
 
@@ -165,24 +165,28 @@ program atm
         do i=1, num_atm_to_ice_fields
             ri = to_runoff_map(i)
 
-            if (mod(cur_runtime_in_seconds, fields(i)%dt) == 0) then
+            if (mod(cur_runtime_in_seconds, forcing_fields(i)%dt) == 0) then
                 call field_read_timer%start()
-                call forcing%update_field(fields(i), &
-                                          accessom2%get_cur_forcing_date())
+                call forcing_fields(i)%update(accessom2%get_cur_forcing_date(), &
+                                              accessom2%get_cur_exp_date())
                 call field_read_timer%stop()
                 if (ri /= 0) then
                     call remap_runoff_timer%start()
-                    call runoff%remap(fields(i)%data_array, &
-                                      runoff_fields(ri)%data_array, ice_grid%mask)
+                    call runoff%remap(forcing_fields(i)%data_array, &
+                                      runoff_forcing_fields(ri)%data_array, ice_grid%mask)
                     call remap_runoff_timer%stop()
                 endif
             endif
 
             call coupler_put_timer%start()
             if (ri /= 0) then
-                call coupler%put(runoff_fields(ri), cur_runtime_in_seconds, err)
+                call coupler%put(runoff_forcing_fields(ri)%coupling_name, &
+                                 runoff_forcing_fields(ri)%data_array, &
+                                 cur_runtime_in_seconds, err)
             else
-                call coupler%put(fields(i), cur_runtime_in_seconds, err)
+                call coupler%put(forcing_fields(i)%coupling_name, &
+                                 forcing_fields(i)%data_array, &
+                                 cur_runtime_in_seconds, err)
             endif
             call coupler_put_timer%stop()
         enddo
@@ -198,7 +202,7 @@ program atm
         call accessom2%logger%write(LOG_DEBUG, 'cur_runtime_in_seconds ', &
                                     int(accessom2%get_cur_runtime_in_seconds()))
         ! Print out current model speed in h/h
-        !call accessom2%logger%write(LOG_INFO, '{ "modeltime_over_walltime_hour_per_hour" : "" ', 
+        !call accessom2%logger%write(LOG_INFO, '{ "modeltime_over_walltime_hour_per_hour" : "" ',
 
         call accessom2%progress_date(dt)
     enddo
@@ -210,12 +214,12 @@ program atm
     call coupler_put_timer%write_stats()
     call init_oasis_timer%write_stats()
     call init_model_timer%write_stats()
-    call init_fields_timer%write_stats()
+    call parse_forcing_fields_timer%write_stats()
 
     call accessom2%logger%write(LOG_INFO, 'Run complete, calling deinit')
 
     call coupler%deinit()
     call accessom2%deinit(finalize=.true.)
-    call forcing%deinit()
+    call forcing_config%deinit()
 
 end program atm

@@ -3,7 +3,7 @@ module restart_mod
 ! FIXME: rewrite using ncvar_mod
 
 use util_mod, only : ncheck, read_data
-use field_mod, only : field
+use forcing_field_mod, only : forcing_field
 use datetime_module, only : datetime
 use netcdf
 
@@ -38,7 +38,7 @@ subroutine restart_write(self, cur_date, fields)
 
     class(restart), intent(inout) :: self
     type(datetime), intent(in) :: cur_date
-    type(field), dimension(:), intent(in) :: fields
+    type(forcing_field), dimension(:), intent(in) :: fields
 
     integer :: ncid, nx, ny, i
     integer :: time_dimid, lat_dimid, lon_dimid
@@ -69,9 +69,9 @@ subroutine restart_write(self, cur_date, fields)
 
     do i=1, size(fields)
         dimids(:) = (/ lon_dimid, lat_dimid, time_dimid /)
-        call ncheck(nf90_def_var(ncid, trim(fields(i)%name), nf90_real, &
+        call ncheck(nf90_def_var(ncid, trim(fields(i)%coupling_name), nf90_real, &
                     dimids, field_varid(i)), &
-                    'Defining var '//trim(fields(i)%name)//' in '//trim(self%restart_file))
+                    'Defining var '//trim(fields(i)%coupling_name)//' in '//trim(self%restart_file))
     enddo
     call ncheck(nf90_enddef(ncid), 'nf90_enddef for '//trim(self%restart_file))
 
@@ -82,7 +82,7 @@ subroutine restart_write(self, cur_date, fields)
     ! Load field values.
     do i=1, size(fields)
         call ncheck(nf90_put_var(ncid, field_varid(i), fields(i)%data_array), &
-                    'restart_write: nf90_put_var '//trim(fields(i)%name))
+                    'restart_write: nf90_put_var '//trim(fields(i)%coupling_name))
     enddo
 
     call ncheck(nf90_close(ncid), 'restart_write: nf90_close')
@@ -92,7 +92,7 @@ endsubroutine restart_write
 !> Read in coupling field restart fields.
 subroutine restart_read(self, fields)
     class(restart), intent(inout) :: self
-    type(field), dimension(:), intent(inout) :: fields
+    type(forcing_field), dimension(:), intent(inout) :: fields
 
     integer :: ncid, varid, i
     integer :: ndims, nx, ny, time
@@ -101,9 +101,9 @@ subroutine restart_read(self, fields)
                 'Opening '//trim(self%restart_file))
 
     do i=1, size(fields)
-        call ncheck(nf90_inq_varid(ncid, trim(fields(i)%name), varid), &
-                    'Inquire: '//trim(fields(i)%name)//' in '//trim(self%restart_file))
-        call read_data(ncid, varid, trim(fields(i)%name), 1, fields(i)%data_array)
+        call ncheck(nf90_inq_varid(ncid, trim(fields(i)%coupling_name), varid), &
+                    'Inquire: '//trim(fields(i)%coupling_name)//' in '//trim(self%restart_file))
+        call read_data(ncid, varid, trim(fields(i)%coupling_name), 1, fields(i)%data_array)
     enddo
 
     call ncheck(nf90_close(ncid), 'Closing '//self%restart_file)

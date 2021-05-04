@@ -174,17 +174,17 @@ set_target_properties(forcing_test.exe PROPERTIES
 )
 
 # yatm executable
-#file(GLOB ATM_SOURCES atm/src/*.F90)
-#add_executable(yatm.exe ${ATM_SOURCES})
-#target_link_libraries(yatm.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+file(GLOB ATM_SOURCES atm/src/*.F90)
+add_executable(yatm.exe ${ATM_SOURCES})
+target_link_libraries(yatm.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ice stub executable
-#file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
-#add_executable(ice_stub.exe ${ICE_STUB_SOURCES})
-#target_link_libraries(ice_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+file(GLOB ICE_STUB_SOURCES ice_stub/src/*.F90)
+add_executable(ice_stub.exe ${ICE_STUB_SOURCES})
+target_link_libraries(ice_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 
 # ocean stub executable
-#file(GLOB OCEAN_STUB_SOURCES ocean_stub/src/*.F90)
-#add_executable(ocean_stub.exe ${OCEAN_STUB_SOURCES})
-#target_link_libraries(ocean_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
+file(GLOB OCEAN_STUB_SOURCES ocean_stub/src/*.F90)
+add_executable(ocean_stub.exe ${OCEAN_STUB_SOURCES})
+target_link_libraries(ocean_stub.exe accessom2 ${NETCDF_LIBRARIES} ${MPI_Fortran_LIBRARIES})
 

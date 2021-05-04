@@ -19,7 +19,7 @@ integer, parameter, public :: FORCING_FIELD_DOMAIN_LAND = 20
 
 type, public :: forcing_field
     character(len=64) :: name
-    character(len=64) :: cname
+    character(len=64) :: coupling_name
     character(len=1024) :: filename_template
     integer :: domain
 
@@ -36,6 +36,7 @@ contains
     procedure, pass(self), public :: update => forcing_field_update
     procedure, pass(self), private :: apply_perturbations => &
                 forcing_field_apply_perturbations
+    procedure, pass(self), public :: get_shape
 endtype forcing_field
 
 contains
@@ -55,7 +56,7 @@ subroutine forcing_field_init(self, name, filename_template, cname, domain, &
     character(len=1024) :: filename
 
     self%name = name
-    self%cname = cname
+    self%coupling_name = cname
     self%filename_template = filename_template
     if (domain == 'atmosphere') then
         self%domain = FORCING_FIELD_DOMAIN_ATMOSPHERE
@@ -162,5 +163,12 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
     self%data_array(:, :) = self%data_array(:, :) + pertub_array(:, :)
 
 endsubroutine forcing_field_apply_perturbations
+
+function get_shape(self)
+    class(forcing_field), intent(in) :: self
+    integer, dimension(2) :: get_shape
+
+    get_shape = shape(self%data_array)
+endfunction
 
 endmodule forcing_field_mod

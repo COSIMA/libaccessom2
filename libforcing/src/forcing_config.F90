@@ -26,7 +26,6 @@ type, public :: forcing_config
     type(json_file) :: json
     type(json_core) :: core
     integer :: num_inputs
-    integer :: num_land_fields
     integer :: min_dt
     character(len=9) :: calendar
 
@@ -85,7 +84,7 @@ subroutine forcing_config_parse(self, fields, start_date, &
     character(len=9) :: calendar_str
 
     type(json_value), pointer :: root, inputs
-    logical :: found
+    logical :: found, is_land_field
 
     call assert(size(fields) == self%num_inputs, &
                 "Insufficient number of fields allocated.")
@@ -96,11 +95,12 @@ subroutine forcing_config_parse(self, fields, start_date, &
 
     min_dt = HUGE(1)
     calendar = ''
+    num_land_fields = 0
     do i=1, self%num_inputs
         call self%core%get_child(inputs, i, field_jv_ptr, found)
         call assert(found, "No inputs found in forcing config.")
         call self%parse_field(field_jv_ptr, fields(i), start_date, &
-                              dt, calendar_str)
+                              dt, calendar_str, is_land_field)
         if (dt < min_dt) then
             min_dt = dt
         endif
@@ -110,13 +110,17 @@ subroutine forcing_config_parse(self, fields, start_date, &
             call assert(calendar == calendar_str, &
                         "Inconsistent calendar between forcing fields.")
         endif
+        if (is_land_field) then
+            num_land_fields = num_land_fields + 1
+        endif
     enddo
 
 endsubroutine forcing_config_parse
 
 
 subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
-                                      start_date, dt, forcing_calendar)
+                                      start_date, dt, forcing_calendar, &
+                                      is_land_field)
 
     class(forcing_config), intent(inout) :: self
     type(json_value), pointer :: field_jv_ptr
@@ -124,6 +128,7 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
     type(datetime), intent(in) :: start_date
     integer, intent(out) :: dt
     character(len=9), intent(out) :: forcing_calendar
+    logical, intent(out) :: is_land_field
 
     character(kind=CK, len=:), allocatable :: cname, fieldname, domain_str
     character(kind=CK, len=:), allocatable :: filename, perturbation_filename
@@ -154,8 +159,9 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
         domain_str = "atmosphere"
     endif
 
+    is_land_field = .false.
     if (domain_str == "land") then
-        self%num_land_fields = self%num_land_fields + 1
+        is_land_field = .true.
     endif
 
     call field_ptr%init(fieldname, filename, cname, domain_str, start_date, &

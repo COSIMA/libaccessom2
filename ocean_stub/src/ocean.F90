@@ -3,7 +3,7 @@ program ocean
 
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
-    use field_mod, only : field_type => field
+    use forcing_field_mod, only : forcing_field_type => forcing_field
     use restart_mod, only : restart_type => restart
     use accessom2_mod, only : accessom2_type => accessom2
     use mod_oasis, only : OASIS_IN, OASIS_OUT
@@ -21,7 +21,7 @@ program ocean
     ! Namelist parameters
     integer :: dt, i, idx, tmp_unit, err
     integer, dimension(2) :: resolution
-    type(field_type), dimension(:), allocatable :: in_fields, out_fields
+    type(forcing_field_type), dimension(:), allocatable :: in_fields, out_fields
     character(len=MAX_FIELD_NAME_LEN), dimension(MAX_FIELDS) :: &
         from_ice_field_names = '', to_ice_field_names = ''
     integer :: num_from_ice_fields, num_to_ice_fields
@@ -66,14 +66,16 @@ program ocean
     allocate(out_fields(num_to_ice_fields))
 
     do i=1, num_from_ice_fields
-        in_fields(i)%name = trim(from_ice_field_names(i))
+        in_fields(i)%coupling_name = trim(from_ice_field_names(i))
         allocate(in_fields(i)%data_array(resolution(1), resolution(2)))
-        call coupler%init_field(in_fields(i), OASIS_IN)
+        call coupler%init_field(in_fields(i)%coupling_name, OASIS_IN, &
+                                in_fields(i)%get_shape())
     enddo
     do i=1, num_to_ice_fields
-        out_fields(i)%name = trim(to_ice_field_names(i))
+        out_fields(i)%coupling_name = trim(to_ice_field_names(i))
         allocate(out_fields(i)%data_array(resolution(1), resolution(2)))
-        call coupler%init_field(out_fields(i), OASIS_OUT)
+        call coupler%init_field(out_fields(i)%coupling_name, OASIS_OUT, &
+                                out_fields(i)%get_shape())
     enddo
     call coupler%init_end(accessom2%get_total_runtime_in_seconds(), &
                           accessom2%get_coupling_field_timesteps())
@@ -82,7 +84,9 @@ program ocean
     do
         ! Get fields from ice
         do i=1, size(in_fields)
-            call coupler%get(in_fields(i), cur_runtime_in_seconds, err)
+            call coupler%get(in_fields(i)%coupling_name, &
+                             cur_runtime_in_seconds, &
+                             in_fields(i)%data_array, err)
         enddo
 
         ! Do work, i.e. use the in_fields and populate the out_fields
@@ -96,7 +100,9 @@ program ocean
         ! Send fields to ice
         do i=1, size(out_fields)
             out_fields(i)%data_array(:, :) = 0.0
-            call coupler%put(out_fields(i), cur_runtime_in_seconds, err)
+            call coupler%put(out_fields(i)%coupling_name, &
+                             out_fields(i)%data_array, &
+                             cur_runtime_in_seconds, err)
         enddo
     enddo
 
