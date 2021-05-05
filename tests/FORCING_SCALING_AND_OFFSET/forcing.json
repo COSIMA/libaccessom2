@@ -11,6 +11,12 @@
           "dimension": "spatiotemporal",
           "value": "../test_data/scaling.RYF.rsds.1990_1991.nc",
           "calendar": "forcing"
+        },
+        {
+          "type": "offset",
+          "dimension": "constant",
+          "value": 5,
+          "calendar": "forcing"
         }
       ]
     },

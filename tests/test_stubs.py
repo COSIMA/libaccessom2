@@ -6,6 +6,7 @@ import ast
 import pytest
 import datetime
 import netCDF4 as nc
+import numpy as np
 import dateutil.parser
 import shutil
 from collections import OrderedDict
@@ -152,42 +153,37 @@ class TestStubs:
         assert run_checksums == stored_checksums
 
 
-    def test_field_scaling(self, helper):
+    def test_forcing_perturbations(self, helper):
         """
-        Test forcing field scaling feature of libaccessom2.
-
-        This feature allows a 'scaling' file to be specified for each forcing
-        field. This file has the same structure as a forcing file for each
-        location and time point it contains a multiplier that will be applied
-        to the forcing field before being used.
+        Test forcing field pertubation feature of libaccessom2.
         """
 
-        def setup_scaling_file():
-            scaling_file = 'test_data/scaling.RYF.rsds.1990_1991.nc'
-            shutil.copy('/g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc',
-                        scaling_file)
-
-            with nc.Dataset(scaling_file, 'r+') as f:
-                f.variables['rsds'][:] = 1.0
-                for i in range(4):
-                    f.variables['rsds'][i] = i
-
-        setup_scaling_file()
-
-        ret, output, log, matm_log = helper.run_exp('FORCING_SCALING')
-        assert ret == 0
-
-        run_checksums = helper.filter_checksums(log)
-        stored_checksums = helper.checksums('FORCING_SCALING')
+        forcing_field = None
+        scaling_file = 'test_data/scaling.RYF.rsds.1990_1991.nc'
+        forcing_file = '/g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc'
+        shutil.copy(forcing_file, scaling_file)
 
         keys = ['checksum-matmxx-swfld_ai-0000000000',
                 'checksum-matmxx-swfld_ai-0000010800',
                 'checksum-matmxx-swfld_ai-0000021600',
                 'checksum-matmxx-swfld_ai-0000032400']
 
+        with nc.Dataset(scaling_file, 'r+') as f:
+            f.variables['rsds'][:] = 1.0
+            for i in range(len(keys)):
+                f.variables['rsds'][i] = i
+
+        with nc.Dataset(forcing_file) as f:
+            forcing_field = f.variables['rsds'][:len(keys), :]
+
+        ret, output, log, matm_log = helper.run_exp('FORCING_SCALING_AND_OFFSET')
+        assert ret == 0
+        run_checksums = helper.filter_checksums(log)
+
         # Scaling multiplied by 0, 1, 2, 3
         for mult, k in enumerate(keys):
-            assert abs(run_checksums[k] - mult*stored_checksums[k]) < 0.1
+            expected_val = np.sum(forcing_field[mult, :]*mult + 5)
+            assert abs(run_checksums[k] - (expected_val)) < (expected_val * 1e-7)
 
 
     @pytest.mark.slow
