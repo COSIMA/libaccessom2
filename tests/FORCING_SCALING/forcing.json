@@ -3,9 +3,16 @@
   "inputs": [
     {
       "filename": "/g/data/ua8/JRA55-do/RYF/v1-3/RYF.rsds.1990_1991.nc",
-      "scaling_filename": "../test_data/scaling.RYF.rsds.1990_1991.nc",
       "fieldname": "rsds",
-      "cname": "swfld_ai"
+      "cname": "swfld_ai",
+      "perturbations": [
+        {
+          "type": "scaling",
+          "dimension": "spatiotemporal",
+          "value": "../test_data/scaling.RYF.rsds.1990_1991.nc",
+          "calendar": "forcing"
+        }
+      ]
     },
     {
       "filename": "/g/data/ua8/JRA55-do/RYF/v1-3/RYF.rlds.1990_1991.nc",

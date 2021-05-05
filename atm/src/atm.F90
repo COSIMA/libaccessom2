@@ -88,8 +88,6 @@ program atm
     call forcing_config%parse(forcing_fields, accessom2%get_cur_forcing_date(), &
                               num_land_fields, dt, calendar)
     call parse_forcing_fields_timer%stop()
-    print*, num_land_fields
-    print*, num_atm_to_ice_fields
 
     ! Create intermediate fields for runoff,
     ! these are a copy/variation of the forcing fields
