@@ -105,13 +105,14 @@ class TestForcingPerturbations:
 
 
     @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
-    def test_constant(self, perturb_type):
+    @pytest.mark.parametrize("calendar", ['forcing', 'experiment'])
+    def test_constant(self, perturb_type, calendar):
         """
         Test constant scaling and offset
         """
 
         perturb_value = random.randint(0, 100)
-        self.run_simple_test(perturb_type, 'constant', perturb_value, 'forcing')
+        self.run_simple_test(perturb_type, 'constant', perturb_value, calendar)
 
 
     @pytest.mark.parametrize("perturb_type", ['scaling', 'offset'])
