@@ -48,15 +48,18 @@ end subroutine forcing_perturbation_init
 
 
 subroutine forcing_perturbation_load(self, forcing_date, experiment_date, &
-                                    data_array)
+                                    data_array, found)
 
     class(forcing_perturbation), intent(inout) :: self
     type(datetime), intent(in) :: forcing_date, experiment_date
     real, dimension(:, :), intent(inout) :: data_array
+    logical, intent(out) :: found
 
     type(datetime) :: date
     integer :: constant_value, indx
     character(len=1024) :: filename
+
+    found = .true.
 
     if (self%dimension_type == FORCING_PERTURBATION_DIMENSION_CONSTANT) then
         data_array(:, :) = self%constant_value
@@ -101,9 +104,10 @@ subroutine forcing_perturbation_load(self, forcing_date, experiment_date, &
         ! Search from the beginning before failing
         indx = self%ncvar%get_index_for_datetime(date, .true.)
     endif
-    call assert(indx /= -1, &
-                "No perturbation date "//date%isoformat()//" in "// &
-                trim(filename))
+    if (indx == -1) then
+        found = .false.
+        return
+    endif
 
     call assert((self%dimension_type == &
                  FORCING_PERTURBATION_DIMENSION_TEMPORAL) .or. &
