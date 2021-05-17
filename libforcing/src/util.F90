@@ -108,9 +108,12 @@ subroutine get_time_varid_and_dimid(ncid, dimid, varid, found)
     enddo
 
     if (status == nf90_noerr) then
-        found = .true.
-        call ncheck(nf90_inq_varid(ncid, trim(names(i)), varid), &
-                    "get_time_varid_and_dimid: Can't find time var")
+        status = nf90_inq_varid(ncid, trim(names(i)), varid)
+        if (status == nf90_noerr) then
+            found = .true.
+        else:
+            found = .false.
+        endif
     else
         found = .false.
     endif
