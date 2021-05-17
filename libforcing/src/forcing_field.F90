@@ -124,10 +124,8 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
     integer :: i
     character(len=10) :: int_str
     real, dimension(:, :), allocatable :: pertub_array, tmp
-
-    write(int_str, '(I10)') size(self%perturbations)
-    call self%logger%write(LOG_DEBUG, '{ "forcing_field_apply_perturbations-count" : "'// &
-                                      trim(int_str)//'" }')
+    integer :: num_scaling_perturbations, num_offset_perturbations
+    logical :: found
 
     if (size(self%perturbations) == 0) then
         return
@@ -138,29 +136,64 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
     pertub_array(:, :) = 1.0
 
     ! First iterate over all of the scaling fields
+    found = .false.
+    num_scaling_perturbations = 0
     do i=1, size(self%perturbations)
         if (self%perturbations(i)%perturbation_type == &
             FORCING_PERTURBATION_TYPE_SCALING) then
-            call self%perturbations(i)%load(forcing_date, experiment_date, tmp)
-            pertub_array = pertub_array * tmp
+            call self%perturbations(i)%load(forcing_date, experiment_date, tmp, &
+                                            found)
+            if (found) then
+                pertub_array = pertub_array * tmp
+                num_scaling_perturbations = num_scaling_perturbations + 1
+            endif
         endif
     enddo
 
     ! Scale data
-    self%data_array(:, :) = self%data_array(:, :) * pertub_array(:, :)
+    if (found) then
+        self%data_array(:, :) = self%data_array(:, :) * pertub_array(:, :)
+    endif
 
-     pertub_array(:, :) = 0.0
+    found = .false.
+    num_offset_perturbations = 0
+    pertub_array(:, :) = 0.0
     ! Iterate over offset fields
     do i=1, size(self%perturbations)
         if (self%perturbations(i)%perturbation_type == &
             FORCING_PERTURBATION_TYPE_OFFSET) then
-            call self%perturbations(i)%load(forcing_date, experiment_date, tmp)
-            pertub_array = pertub_array + tmp
+            call self%perturbations(i)%load(forcing_date, experiment_date, tmp, &
+                                            found)
+            if (found) then
+                pertub_array = pertub_array + tmp
+                num_offset_perturbations = num_offset_perturbations + 1
+            endif
         endif
     enddo
 
     ! Offset data
-    self%data_array(:, :) = self%data_array(:, :) + pertub_array(:, :)
+    if (found) then
+        self%data_array(:, :) = self%data_array(:, :) + pertub_array(:, :)
+    endif
+
+    if (num_offset_perturbations > 0 .or. &
+            num_scaling_perturbations > 0) then
+        write(int_str, '(I10)') num_scaling_perturbations
+        call self%logger%write(LOG_DEBUG, &
+               '{ "forcing_field_apply_perturbations-scaling_count" : "'// &
+                           trim(int_str)//'" }')
+        write(int_str, '(I10)') num_offset_perturbations
+        call self%logger%write(LOG_DEBUG, &
+               '{ "forcing_field_apply_perturbations-offset_count" : "'// &
+                           trim(int_str)//'" }')
+        call self%logger%write(LOG_DEBUG, &
+               '{ "forcing_field_apply_perturbations-forcing_date" : "'// &
+                           trim(forcing_date%isoformat())//'" }')
+        call self%logger%write(LOG_DEBUG, &
+               '{ "forcing_field_apply_perturbations-experiment_date" : "'// &
+                           trim(experiment_date%isoformat())//'" }')
+    endif
+
 
 endsubroutine forcing_field_apply_perturbations
 
