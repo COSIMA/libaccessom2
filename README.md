@@ -15,6 +15,23 @@ libaccessom2 functionality includes:
 
 Further information about ACCESS-OM2 can be found in the [ACCESS-OM2 wiki](https://github.com/COSIMA/access-om2/wiki)
 
+## Downloading
+
+This respository contains submodules, so you will need to clone it with the `--recursive` flag:
+```
+git clone --recursive https://github.com/COSIMA/libaccessom2.git
+```
+
+To update a previous clone of this repository to the latest version, you will need to do 
+```
+git pull
+```
+followed by
+```
+git submodule update --init --recursive
+```
+to update all the submodules.
+
 ## Configuration
 
 libaccessom2 has a single configuration file called `accessom2.nml` which is usually found in the top-level of the model configuration directory (also known as the `control` directory). This configuration contains model-wide configuration. Presently the options most important and worthy of explanation are:
