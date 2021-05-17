@@ -111,7 +111,7 @@ subroutine get_time_varid_and_dimid(ncid, dimid, varid, found)
         status = nf90_inq_varid(ncid, trim(names(i)), varid)
         if (status == nf90_noerr) then
             found = .true.
-        else:
+        else
             found = .false.
         endif
     else
