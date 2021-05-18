@@ -32,10 +32,10 @@ program forcing_test
 
     forcing_config_file = 'forcing.json'
 
-    call getarg(1, datetime_str, rc)
+    call get_command_argument(1, value=datetime_str, status=rc)
     if (rc /= 19) then
         print*, 'Provide a date in format 1900-06-06T00:00:00 as an argument'
-        call exit(1)
+        stop 1
     endif
 
     rc = c_strptime(datetime_str//c_null_char, &
@@ -70,8 +70,6 @@ program forcing_test
     call check(nf90_enddef(ncid))
     call check(nf90_put_var(ncid, varid, forcing_fields(1)%data_array))
     call check(nf90_close(ncid))
-
-    call exit(0)
 
 contains
     subroutine check(status)
