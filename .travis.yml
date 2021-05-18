@@ -8,6 +8,10 @@ git:
   depth: 3
   quiet: true
 
+
+before_install:
+  - sudo apt-get update
+
 addons:
   apt:
     update: true
