@@ -5,7 +5,8 @@ use logger_mod, only : logger_type => logger, LOG_DEBUG
 use datetime_module, only : datetime
 use forcing_perturbation_mod, only : forcing_perturbation_type => forcing_perturbation
 use forcing_perturbation_mod, only : FORCING_PERTURBATION_TYPE_SCALING, &
-                                     FORCING_PERTURBATION_TYPE_OFFSET
+                                     FORCING_PERTURBATION_TYPE_OFFSET, &
+                                     FORCING_PERTURBATION_TYPE_SEPARABLE
 use ncvar_mod, only : ncvar_type => ncvar
 use util_mod, only : filename_for_year
 
@@ -29,6 +30,8 @@ type, public :: forcing_field
     type(ncvar_type) :: ncvar
     real, dimension(:, :), allocatable :: data_array
     type(forcing_perturbation_type), dimension(:), allocatable :: perturbations
+    type(forcing_perturbation_type), dimension(:), allocatable :: &
+            separated_perturbations
 
     type(logger_type), pointer :: logger
 contains
@@ -123,8 +126,9 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
 
     integer :: i
     character(len=10) :: int_str
-    real, dimension(:, :), allocatable :: pertub_array, tmp
+    real, dimension(:, :), allocatable :: pertub_array, tmp, another_tmp
     integer :: num_scaling_perturbations, num_offset_perturbations
+    integer :: num_separable_perturbations
     logical :: found
 
     if (size(self%perturbations) == 0) then
@@ -176,6 +180,39 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
         self%data_array(:, :) = self%data_array(:, :) + pertub_array(:, :)
     endif
 
+    ! Do separable perturbations
+    found = .false.
+    num_separable_perturbations = 0
+    pertub_array(:, :) = 0.0
+    ! Iterate over offset fields
+    do i=1, size(self%perturbations)
+        if (self%perturbations(i)%perturbation_type == &
+            FORCING_PERTURBATION_TYPE_SEPARABLE) then
+            call self%perturbations(i)%load(forcing_date, experiment_date, tmp, &
+                                            found)
+            if (found) then
+                call assert(self%separated_perturbations(i)%valid, &
+                       'forcing_field_apply_perturbations: invalid perturbation')
+                call self%separated_perturbations(i)%load(forcing_date, &
+                                                experiment_date, &
+                                                another_tmp, found)
+                call assert(found, &
+                        'forcing_field_apply_perturbations: '// &
+                          'seprable permutation not found')
+                print*, shape(another_tmp)
+                print*, shape(tmp)
+                print*, 'FIXME, we need to get the array dims right'
+                pertub_array = pertub_array + (tmp(:)*another_tmp(:, :))
+                num_separable_perturbations = num_separable_perturbations + 1
+            endif
+        endif
+    enddo
+
+    ! Separable data
+    if (found) then
+        self%data_array(:, :) = self%data_array(:, :) + pertub_array(:, :)
+    endif
+
     if (num_offset_perturbations > 0 .or. &
             num_scaling_perturbations > 0) then
         write(int_str, '(I10)') num_scaling_perturbations
@@ -185,6 +222,10 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
         write(int_str, '(I10)') num_offset_perturbations
         call self%logger%write(LOG_DEBUG, &
                '{ "forcing_field_apply_perturbations-offset_count" : "'// &
+                           trim(int_str)//'" }')
+        write(int_str, '(I10)') num_separable_perturbations
+        call self%logger%write(LOG_DEBUG, &
+               '{ "forcing_field_apply_perturbations-separable_count" : "'// &
                            trim(int_str)//'" }')
         call self%logger%write(LOG_DEBUG, &
                '{ "forcing_field_apply_perturbations-forcing_date" : "'// &

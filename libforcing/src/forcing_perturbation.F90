@@ -8,27 +8,30 @@ use util_mod, only : filename_for_year
 implicit none
 private
 
-integer, parameter, public :: FORCING_PERTURBATION_TYPE_SCALING = 0
+integer, parameter, public :: FORCING_PERTURBATION_TYPE_SCALING = 1
 integer, parameter, public :: FORCING_PERTURBATION_TYPE_OFFSET = 10
+integer, parameter, public :: FORCING_PERTURBATION_TYPE_SEPARABLE = 20
 
-integer, parameter, public :: FORCING_PERTURBATION_DIMENSION_SPATIAL = 0
-integer, parameter, public :: FORCING_PERTURBATION_DIMENSION_TEMPORAL = 10
-integer, parameter, public :: FORCING_PERTURBATION_DIMENSION_SPATIOTEMPORAL = 20
-integer, parameter, public :: FORCING_PERTURBATION_DIMENSION_CONSTANT = 30
+integer, parameter, public :: FORCING_PERTURBATION_DIMENSION_SPATIAL = 30
+integer, parameter, public :: FORCING_PERTURBATION_DIMENSION_TEMPORAL = 40
+integer, parameter, public :: FORCING_PERTURBATION_DIMENSION_SPATIOTEMPORAL = 50
+integer, parameter, public :: FORCING_PERTURBATION_DIMENSION_CONSTANT = 60
 
-integer, parameter, public :: FORCING_PERTURBATION_CALENDAR_EXPERIMENT = 0
-integer, parameter, public :: FORCING_PERTURBATION_CALENDAR_FORCING = 10
+integer, parameter, public :: FORCING_PERTURBATION_CALENDAR_EXPERIMENT = 70
+integer, parameter, public :: FORCING_PERTURBATION_CALENDAR_FORCING = 80
 
 type, public :: forcing_perturbation
-    integer :: perturbation_type ! Can be 'scaling' or 'offset'
+    integer :: perturbation_type ! Can be 'scaling', 'offset' or 'seperable'
     integer :: dimension_type   ! Can be 'spatial', 'temporal',
                                 ! 'spatiotemporal' or 'constant'
     integer :: calendar         ! Can be 'experiment' or 'forcing'
+    integer :: serperable_id
     character(len=64) :: name
     character(len=1024) :: filename_template
     integer :: constant_value
     type(ncvar_type) :: ncvar
     logical :: initialised
+    logical :: valid
 contains
     procedure, pass(self), public :: init => forcing_perturbation_init
     procedure, pass(self), public :: load => forcing_perturbation_load

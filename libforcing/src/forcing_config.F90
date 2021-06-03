@@ -10,6 +10,7 @@ use logger_mod, only : logger_type => logger, LOG_DEBUG
 
 use forcing_perturbation_mod, only : FORCING_PERTURBATION_TYPE_SCALING, &
                               FORCING_PERTURBATION_TYPE_OFFSET, &
+                              FORCING_PERTURBATION_TYPE_SEPARABLE, &
                               FORCING_PERTURBATION_DIMENSION_SPATIAL, &
                               FORCING_PERTURBATION_DIMENSION_TEMPORAL, &
                               FORCING_PERTURBATION_DIMENSION_SPATIOTEMPORAL, &
@@ -135,12 +136,16 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
     character(kind=CK, len=:), allocatable :: perturbation_type
     character(kind=CK, len=:), allocatable :: dimension_type
     character(kind=CK, len=:), allocatable :: perturbation_calendar
+
     integer :: perturbation_constant_value
     logical :: found, domain_found
-    integer :: i, num_perturbations
+    integer :: num_perturbations
+    integer :: i, j
 
     type(json_value), pointer :: perturbation_jv_ptr
-    type(json_value), pointer :: perturbation_list
+    type(json_value), pointer :: dimension_jv_ptr, value_jv_ptr
+    type(json_value), pointer :: perturbation_list, dimension_list
+    type(json_value), pointer :: value_list
 
     call self%core%get(field_jv_ptr, "fieldname", fieldname, found)
     call assert(found, "Entry 'fieldname' not found in forcing config.")
@@ -174,61 +179,127 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
 
     num_perturbations = self%core%count(perturbation_list)
     allocate(field_ptr%perturbations(num_perturbations))
+    allocate(field_ptr%separated_perturbations(num_perturbations))
 
     do i=1, num_perturbations
-        call self%core%get_child(perturbation_list, i, perturbation_jv_ptr, found)
+        call self%core%get_child(perturbation_list, i, &
+                                 perturbation_jv_ptr, found)
         call assert(found, "Expected to find perturbation entry.")
 
         field_ptr%perturbations(i)%name = fieldname
+        field_ptr%perturbations(i)%valid = .true.
+        ! These are only valid for the separable permutation type
+        field_ptr%separated_perturbations(i)%valid = .false.
 
         call self%core%get(perturbation_jv_ptr, "type", perturbation_type, found)
         call assert(found, "No type in perturbation entry.")
         call assert(trim(perturbation_type) == 'scaling' .or. &
-                    trim(perturbation_type) == 'offset', &
+                    trim(perturbation_type) == 'offset' .or. &
+                    trim(perturbation_type) == 'separable', &
                     "forcing_parse_field: invalid perturbation type")
         if (trim(perturbation_type) == 'scaling') then
             field_ptr%perturbations(i)%perturbation_type = &
                 FORCING_PERTURBATION_TYPE_SCALING
-        else
+        elseif (trim(perturbation_type) == 'offset') then
             field_ptr%perturbations(i)%perturbation_type = &
                 FORCING_PERTURBATION_TYPE_OFFSET
+        else
+            field_ptr%perturbations(i)%perturbation_type = &
+                FORCING_PERTURBATION_TYPE_SEPARABLE
+
+            field_ptr%separated_perturbations(i)%perturbation_type = &
+                FORCING_PERTURBATION_TYPE_SEPARABLE
+            field_ptr%separated_perturbations(i)%name = fieldname
+            field_ptr%separated_perturbations(i)%valid = .true.
         endif
 
-        call self%core%get(perturbation_jv_ptr, "dimension", dimension_type, found)
-        call assert(found, "No dimension in perturbation entry.")
-        call assert(trim(dimension_type) == 'spatial' .or. &
-                    trim(dimension_type) == 'temporal' .or. &
-                    trim(dimension_type) == 'spatiotemporal' .or. &
-                    trim(dimension_type) == 'constant', &
-                    "forcing_parse_field: invalid perturbation dimension type")
-        if (trim(dimension_type) == 'spatial') then
-            field_ptr%perturbations(i)%dimension_type = &
-                FORCING_PERTURBATION_DIMENSION_SPATIAL
-        elseif (trim(dimension_type) == 'temporal') then
-            field_ptr%perturbations(i)%dimension_type = &
-                FORCING_PERTURBATION_DIMENSION_TEMPORAL
-        elseif (trim(dimension_type) == 'spatiotemporal') then
-            field_ptr%perturbations(i)%dimension_type = &
-                FORCING_PERTURBATION_DIMENSION_SPATIOTEMPORAL
+        if (field_ptr%perturbations(i)%perturbation_type == &
+                FORCING_PERTURBATION_TYPE_SEPARABLE) then
+            call self%core%get_child(perturbation_jv_ptr, "dimension", &
+                                     dimension_list, found)
+            call assert(self%core%count(dimension_list) == 2, &
+                   'forcing_parse_field: invalid no of serparable dimensions')
+            do j=1, 2
+                call self%core%get_child(dimension_list, j, dimension_jv_ptr, found)
+                call assert(found, "Missing dimension list in perturbation entry.")
+                call self%core%serialize(dimension_jv_ptr, dimension_type)
+                dimension_type = replace_text(dimension_type, '"', '')
+                dimension_type = replace_text(dimension_type, NEW_LINE('A'), '')
+                if (j == 1) then
+                    call assert(trim(dimension_type) == 'temporal', &
+                               'forcing_parse_field: invalid separable dimension')
+                    field_ptr%perturbations(i)%dimension_type = &
+                        FORCING_PERTURBATION_DIMENSION_TEMPORAL
+                else
+                    call assert(trim(dimension_type) == 'spatial', &
+                                'forcing_parse_field: invalid separable dimension')
+                    field_ptr%separated_perturbations(i)%dimension_type = &
+                        FORCING_PERTURBATION_DIMENSION_SPATIAL
+                endif
+            enddo
         else
-            call assert(trim(dimension_type) == 'constant', &
-                        "forcing_parse_field: bad dimension type")
-            field_ptr%perturbations(i)%dimension_type = &
-                FORCING_PERTURBATION_DIMENSION_CONSTANT
+            call self%core%get(perturbation_jv_ptr, "dimension", &
+                                dimension_type, found)
+            call assert(found, "No dimension in perturbation entry.")
+            call assert(trim(dimension_type) == 'spatial' .or. &
+                        trim(dimension_type) == 'temporal' .or. &
+                        trim(dimension_type) == 'spatiotemporal' .or. &
+                        trim(dimension_type) == 'constant', &
+                        "forcing_parse_field: invalid perturbation dimension type")
+            if (trim(dimension_type) == 'spatial') then
+                field_ptr%perturbations(i)%dimension_type = &
+                    FORCING_PERTURBATION_DIMENSION_SPATIAL
+            elseif (trim(dimension_type) == 'temporal') then
+                field_ptr%perturbations(i)%dimension_type = &
+                    FORCING_PERTURBATION_DIMENSION_TEMPORAL
+            elseif (trim(dimension_type) == 'spatiotemporal') then
+                field_ptr%perturbations(i)%dimension_type = &
+                    FORCING_PERTURBATION_DIMENSION_SPATIOTEMPORAL
+            else
+                call assert(trim(dimension_type) == 'constant', &
+                            "forcing_parse_field: bad dimension type")
+                field_ptr%perturbations(i)%dimension_type = &
+                    FORCING_PERTURBATION_DIMENSION_CONSTANT
+            endif
         endif
 
-        if (field_ptr%perturbations(i)%dimension_type == &
-                FORCING_PERTURBATION_DIMENSION_CONSTANT) then
-            call self%core%get(perturbation_jv_ptr, "value", &
-                               perturbation_constant_value, found)
-            call assert(found, "No value in perturbation entry.")
-            field_ptr%perturbations(i)%constant_value = &
-                perturbation_constant_value
+        if (field_ptr%perturbations(i)%perturbation_type == &
+                FORCING_PERTURBATION_TYPE_SEPARABLE) then
+
+            call self%core%get_child(perturbation_jv_ptr, "value", value_list, found)
+            call assert(self%core%count(value_list) == 2, &
+                        "forcing_parse_field: invalid number of dimensions &
+                            for perturbation type serperable")
+            do j=1, 2
+                call self%core%get_child(value_list, j, value_jv_ptr, found)
+                call assert(found, "Missing value list in perturbation entry.")
+                call self%core%serialize(value_jv_ptr, perturbation_filename)
+                perturbation_filename = replace_text(perturbation_filename, &
+                                                     '"', '')
+                perturbation_filename = replace_text(perturbation_filename, &
+                                                NEW_LINE('A'), '')
+                if (j == 1) then
+                    field_ptr%perturbations(i)%filename_template =  &
+                        trim(perturbation_filename)
+                else
+                    field_ptr%separated_perturbations(i)%filename_template =  &
+                        trim(perturbation_filename)
+                endif
+            enddo
         else
-            call self%core%get(perturbation_jv_ptr, "value", &
-                               perturbation_filename, found)
-            call assert(found, "No filename in perturbation entry.")
-            field_ptr%perturbations(i)%filename_template = perturbation_filename
+            if (field_ptr%perturbations(i)%dimension_type == &
+                    FORCING_PERTURBATION_DIMENSION_CONSTANT) then
+                call self%core%get(perturbation_jv_ptr, "value", &
+                                   perturbation_constant_value, found)
+                call assert(found, "No value in perturbation entry.")
+                field_ptr%perturbations(i)%constant_value = &
+                    perturbation_constant_value
+            else
+                call self%core%get(perturbation_jv_ptr, "value", &
+                                   perturbation_filename, found)
+                call assert(found, "No filename in perturbation entry.")
+                field_ptr%perturbations(i)%filename_template = perturbation_filename
+            endif
         endif
 
         call self%core%get(perturbation_jv_ptr, "calendar", &
@@ -251,6 +322,9 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
         endif
 
         call field_ptr%perturbations(i)%init()
+        if (field_ptr%separated_perturbations(i)%valid) then
+            call field_ptr%separated_perturbations(i)%init()
+        endif
     enddo
 
 end subroutine forcing_config_parse_field

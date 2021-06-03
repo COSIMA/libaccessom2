@@ -17,7 +17,7 @@ program forcing_test
     type(forcing_field_type), dimension(:), allocatable :: forcing_fields
     character(len=MAX_FILE_NAME_LEN) :: forcing_config_file
     character(len=19) :: datetime_str
-    integer :: dt, fp, rc, i
+    integer :: dt, fp, rc, i, length
     type(datetime) :: start_date, forcing_date, experiment_date
     type(tm_struct) :: ctime
 
@@ -32,8 +32,8 @@ program forcing_test
 
     forcing_config_file = 'forcing.json'
 
-    call get_command_argument(1, value=datetime_str, status=rc)
-    if (rc /= 19) then
+    call get_command_argument(1, value=datetime_str, length=length, status=rc)
+    if (rc /= 0 .or. length /= 19) then
         print*, 'Provide a date in format 1900-06-06T00:00:00 as an argument'
         stop 1
     endif
