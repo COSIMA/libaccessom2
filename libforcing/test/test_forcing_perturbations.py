@@ -106,9 +106,9 @@ class TestForcingPerturbations:
             assert Path(str(pvalue[1])).exists()
 
             with nc.Dataset(pvalue[0]) as f:
-                spatial_perturb_array = f.variables[FORCING_FIELDNAME][:]
-            with nc.Dataset(pvalue[1]) as f:
                 temporal_perturb_array = f.variables[FORCING_FIELDNAME][tidx]
+            with nc.Dataset(pvalue[1]) as f:
+                spatial_perturb_array = f.variables[FORCING_FIELDNAME][:]
 
             perturb_array = spatial_perturb_array*temporal_perturb_array
         else:

@@ -137,6 +137,7 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
 
     allocate(pertub_array(self%ncvar%nx, self%ncvar%ny))
     allocate(tmp(self%ncvar%nx, self%ncvar%ny))
+    allocate(another_tmp(self%ncvar%nx, self%ncvar%ny))
     pertub_array(:, :) = 1.0
 
     ! First iterate over all of the scaling fields
@@ -199,10 +200,7 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
                 call assert(found, &
                         'forcing_field_apply_perturbations: '// &
                           'seprable permutation not found')
-                print*, shape(another_tmp)
-                print*, shape(tmp)
-                print*, 'FIXME, we need to get the array dims right'
-                pertub_array = pertub_array + (tmp(:)*another_tmp(:, :))
+                pertub_array = pertub_array + (tmp(:, :)*another_tmp(:, :))
                 num_separable_perturbations = num_separable_perturbations + 1
             endif
         endif
