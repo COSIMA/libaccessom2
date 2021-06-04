@@ -133,13 +133,14 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
 
     character(kind=CK, len=:), allocatable :: cname, fieldname, domain_str
     character(kind=CK, len=:), allocatable :: filename, perturbation_filename
+    character(kind=CK, len=:), allocatable :: comment
     character(kind=CK, len=:), allocatable :: perturbation_type
     character(kind=CK, len=:), allocatable :: dimension_type
     character(kind=CK, len=:), allocatable :: perturbation_calendar
 
     integer :: perturbation_constant_value
     logical :: found, domain_found
-    integer :: num_perturbations
+    integer :: num_perturbations, num_fields
     integer :: i, j
 
     type(json_value), pointer :: perturbation_jv_ptr
@@ -302,16 +303,22 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
             endif
         endif
 
+        num_fields = self%core%count(perturbation_jv_ptr)
         call self%core%get(perturbation_jv_ptr, "calendar", &
                            perturbation_calendar, found)
+        ! Calendar is optional for dimension 'constant'
         if (.not. found) then
             call assert(field_ptr%perturbations(i)%dimension_type == &
                         FORCING_PERTURBATION_DIMENSION_CONSTANT, &
                         "forcing_parse_field: missing calendar type")
+            call assert(num_fields == 4, 'forcing_parse_field: wrong number of fields'// &
+                        ' in perturbation definition, should be 4.')
         else
             call assert(trim(perturbation_calendar) == 'forcing' .or. &
                         trim(perturbation_calendar) == 'experiment', &
                         "forcing_parse_field: invalid perturbation calendar type")
+            call assert(num_fields == 5, 'forcing_parse_field: wrong number of fields'// &
+                        ' in perturbation definition, should be 5.')
             if (trim(perturbation_calendar) == 'forcing') then
                 field_ptr%perturbations(i)%calendar = &
                     FORCING_PERTURBATION_CALENDAR_FORCING
@@ -320,6 +327,10 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
                     FORCING_PERTURBATION_CALENDAR_EXPERIMENT
             endif
         endif
+
+        call self%core%get(perturbation_jv_ptr, "comment", &
+                           comment, found)
+        call assert(found, 'forcing_parse_field: perturbation missing "comment" field')
 
         call field_ptr%perturbations(i)%init()
         if (field_ptr%separated_perturbations(i)%valid) then

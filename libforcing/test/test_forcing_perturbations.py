@@ -34,7 +34,8 @@ perturb_tmpl = Template("""
     "type": "{{type}}",
     "dimension": "{{dimension}}",
     "value": "{{value}}",
-    "calendar": "{{calendar}}"
+    "calendar": "{{calendar}}",
+    "comment": "",
 }""")
 
 
@@ -43,7 +44,8 @@ separable_perturb_tmpl = Template("""
     "type": "{{type}}",
     "dimension": ["{{dimension1}}", "{{dimension2}}"],
     "value": ["{{value1}}", "{{value2}}"],
-    "calendar": "{{calendar}}"
+    "calendar": "{{calendar}}",
+    "comment": ""
 }""")
 
 
