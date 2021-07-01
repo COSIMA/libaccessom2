@@ -38,10 +38,14 @@ jobs:
           submodules: 'recursive'
       
       - name: Determing OS version
-        run: | 
-          echo $(lsb_release -a)
-          echo "os_version=$(lsb_release -a)" >> $GITHUB_ENV
+        uses: kenchan0130/actions-system-info@master
+        id: system-info
 
+      - name: Set OS version
+        run: | 
+          echo "Release: ${{ steps.system-info.outputs.release }}"
+          echo "os_version=${{ steps.system-info.outputs.release }}" >> $GITHUB_ENV
+      
       - name: Install dependencies
         run: sudo apt-get install -y csh openmpi-bin libopenmpi-dev netcdf-bin libnetcdf-dev libnetcdff-dev
 
