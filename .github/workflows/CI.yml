@@ -65,3 +65,10 @@ jobs:
         with:
           name: binary_release_${{ env.os_version}}
           path: binary_release_${{ env.os_version}}.tar
+
+      - name: Create release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "binary_release-*.tar.gz"
+          token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true
