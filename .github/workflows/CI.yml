@@ -17,8 +17,11 @@ on:
 jobs:
   # This workflow contains a single job called "build"
   build:
+    strategy:
+      matrix:
+        os: [ubuntu-18.04, ubuntu-latest]
     # The type of runner that the job will run on
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     
     env:
       FC: gfortran
@@ -34,6 +37,15 @@ jobs:
         with:
           submodules: 'recursive'
       
+      - name: Determing OS version
+        uses: kenchan0130/actions-system-info@master
+        id: system-info
+
+      - name: Set OS version
+        run: | 
+          echo "Release: ${{ steps.system-info.outputs.release }}"
+          echo "os_version=${{ steps.system-info.outputs.release }}" >> $GITHUB_ENV
+      
       - name: Install dependencies
         run: sudo apt-get install -y csh openmpi-bin libopenmpi-dev netcdf-bin libnetcdf-dev libnetcdff-dev
 
@@ -46,10 +58,10 @@ jobs:
       
       - name: Prepare release
         run: |
-          tar --transform 's,build,libaccessom2,' -cvf binary_release.tar build/lib/ build/include/
+          tar --transform 's,build,libaccessom2,' -cvf binary_release_${{ env.os_version}}.tar build/lib/ build/include/
 
       - name: 'Upload Artifact'
         uses: actions/upload-artifact@v2
         with:
-          name: binary_release
-          path: binary_release.tar
+          name: binary_release_${{ env.os_version}}
+          path: binary_release_${{ env.os_version}}.tar
