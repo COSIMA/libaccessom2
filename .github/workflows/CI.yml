@@ -66,12 +66,12 @@ jobs:
       - name: Prepare release
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          tar --transform 's,build,libaccessom2,' -cvf binary_release_${{ env.os_version}}.tar build/lib/ build/include/
+          tar --transform 's,build,libaccessom2,' -zcvf binary_release_${{ env.os_version}}.tar.gz build/lib/ build/include/
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: "binary_release-*.tar.gz"
+          files: "binary_release_*.tar.gz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
