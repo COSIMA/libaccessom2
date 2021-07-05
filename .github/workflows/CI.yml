@@ -9,6 +9,8 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  # Trigger when a tag is created
+  create:
 
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
@@ -22,6 +24,9 @@ jobs:
         os: [ubuntu-18.04, ubuntu-latest]
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
+    
+    # Only run with create event if new tag, not new branch
+    if: github.event_name != 'create' || (github.event_name == 'create' && startsWith(github.ref, 'refs/tags'))
     
     env:
       FC: gfortran
@@ -61,12 +66,12 @@ jobs:
       - name: Prepare release
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          tar --transform 's,build,libaccessom2,' -cvf binary_release_${{ env.os_version}}.tar build/lib/ build/include/
+          tar --transform 's,build,libaccessom2,' -zcvf binary_release_${{ env.os_version}}.tar.gz build/lib/ build/include/
 
       - name: Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: "binary_release-*.tar.gz"
+          files: "binary_release_*.tar.gz"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
