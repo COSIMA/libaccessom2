@@ -590,6 +590,7 @@ subroutine accessom2_progress_date(self, timestep)
 
         write(stderr, '(A)') 'forcing date: '//trim(self%forcing_cur_date%isoformat())
         write(stderr, '(A)') 'experiment date: '//trim(self%exp_cur_date%isoformat())
+        flush(stderr)
 
         if (.not. self%allow_forcing_and_exp_date_mismatch) then
             call MPI_Abort(MPI_COMM_WORLD, 1, err)
@@ -808,6 +809,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             write(stderr, '(A)') 'atm end date: '//trim(tmp_date%isoformat())
             tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ice end date: '//trim(tmp_date%isoformat())
+            flush(stderr)
 
             call MPI_Abort(MPI_COMM_WORLD, 1, err)
         endif
@@ -821,6 +823,7 @@ subroutine accessom2_deinit(self, cur_date_array, cur_date, finalize)
             write(stderr, '(A)') 'atm end date: '//trim(tmp_date%isoformat())
             tmp_date = num2date(real(buf(1), real64))
             write(stderr, '(A)') 'ocean end date: '//trim(tmp_date%isoformat())
+            flush(stderr)
 
             call MPI_Abort(MPI_COMM_WORLD, 1, err)
         endif

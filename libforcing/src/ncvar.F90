@@ -209,12 +209,12 @@ function get_index_for_datetime(self, target_date, from_beginning)
         do i=self%idx_guess, size(self%time_bnds, 2)
             ! Must convert to days _and_ seconds rather than just days to avoid
             ! integer overflow.
-            days = int(self%time_bnds(1, i))
-            seconds = int((self%time_bnds(1, i) - days)*86400)
+            days = floor(self%time_bnds(1, i))
+            seconds = nint((self%time_bnds(1, i) - days)*86400)
             td_before = timedelta(days=days, seconds=seconds)
 
-            days = int(self%time_bnds(2, i))
-            seconds = int((self%time_bnds(2, i) - days)*86400)
+            days = floor(self%time_bnds(2, i))
+            seconds = nint((self%time_bnds(2, i) - days)*86400)
             td_after = timedelta(days=days, seconds=seconds)
 
             if (target_date >= (self%start_date + td_before) .and. &
@@ -226,9 +226,10 @@ function get_index_for_datetime(self, target_date, from_beginning)
         enddo
     else
         do i=self%idx_guess, size(self%times)
-            days = int(self%times(i))
-            seconds = int((self%times(i) - days)*86400)
+            days = floor(self%times(i))
+            seconds = nint((self%times(i) - days)*86400)
             td = timedelta(days=days, seconds=seconds)
+
             if (target_date == (self%start_date + td)) then
                 get_index_for_datetime = i
                 self%idx_guess = i
