@@ -79,6 +79,7 @@ program atm
     ! tells us how man atm-to-ice fields there are.
     call forcing_config%init(forcing_file, accessom2%logger, &
                              num_atm_to_ice_fields)
+    print*, 'atm, num_atm_to_ice_fields: ', num_atm_to_ice_fields
 
     ! Initialise forcing fields, involves reading details of each from
     ! config file and from netcdf files on disk, and allocating
@@ -163,6 +164,7 @@ program atm
         do i=1, num_atm_to_ice_fields
             ri = to_runoff_map(i)
 
+            print*, 'forcing_fields(i)%dt: ', forcing_fields(i)%dt
             if (mod(cur_runtime_in_seconds, forcing_fields(i)%dt) == 0) then
                 call field_read_timer%start()
                 call forcing_fields(i)%update(accessom2%get_cur_forcing_date(), &

@@ -189,15 +189,20 @@ subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
 endsubroutine get_start_date_and_calendar
 
 !> Return the time index of a particular date.
-function get_index_for_datetime(self, target_date, from_beginning)
+function get_index_for_datetime(self, target_date, from_beginning, guess)
     class(ncvar), intent(inout) :: self
     type(datetime), intent(in) :: target_date
     logical, optional, intent(in) :: from_beginning
+    integer, optional, intent(in) :: guess
 
     integer :: i, get_index_for_datetime
     integer :: days, seconds
 
     type(timedelta) :: td, td_before, td_after
+
+    if (present(guess)) then
+        self%idx_guess = guess
+    endif
 
     if (present(from_beginning)) then
         if (from_beginning) then

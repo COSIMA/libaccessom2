@@ -1,55 +1,56 @@
 {
   "description": "JRA55-do IAF forcing",
+  "forcing_product_name": "JRA55-do",
   "inputs": [
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/rsds.{{year}}.nc",
-      "fieldname": "rsds",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/rsds.{{year}}.nc"],
+      "fieldnames": ["rsds"],
       "cname": "swfld_ai"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/rlds.{{year}}.nc",
-      "fieldname": "rlds",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/rlds.{{year}}.nc"],
+      "fieldnames": ["rlds"],
       "cname": "lwfld_ai"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/rain.{{year}}.nc",
-      "fieldname": "prrn",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/rain.{{year}}.nc"],
+      "fieldnames": ["prrn"],
       "cname": "rain_ai"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/snow.{{year}}.nc",
-      "fieldname": "prsn",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/snow.{{year}}.nc"],
+      "fieldnames": ["prsn"],
       "cname": "snow_ai"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/slp.{{year}}.nc",
-      "fieldname": "psl",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/slp.{{year}}.nc"],
+      "fieldnames": ["psl"],
       "cname": "press_ai"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/runoff_all.{{year}}.nc",
-      "fieldname": "friver",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/runoff_all.{{year}}.nc"],
+      "fieldnames": ["friver"],
       "cname": "runof_ai",
       "domain": "land"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/t_10.{{year}}.nc",
-      "fieldname": "tas_10m",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/t_10.{{year}}.nc"],
+      "fieldnames":["tas_10m"],
       "cname": "tair_ai"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/q_10.{{year}}.nc",
-      "fieldname": "huss_10m",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/q_10.{{year}}.nc"],
+      "fieldnames": ["huss_10m"],
       "cname": "qair_ai"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/u_10.{{year}}.nc",
-      "fieldname": "uas_10m",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/u_10.{{year}}.nc"],
+      "fieldnames": ["uas_10m"],
       "cname": "uwnd_ai"
     },
     {
-      "filename": "/g/data/ua8/JRA55-do/latest/v_10.{{year}}.nc",
-      "fieldname": "vas_10m",
+      "filenames": ["/g/data/ua8/JRA55-do/latest/v_10.{{year}}.nc"],
+      "fieldnames": ["vas_10m"],
       "cname": "vwnd_ai"
     }
   ]

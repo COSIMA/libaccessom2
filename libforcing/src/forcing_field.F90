@@ -19,15 +19,16 @@ integer, parameter, public :: FORCING_FIELD_DOMAIN_ATMOSPHERE = 10
 integer, parameter, public :: FORCING_FIELD_DOMAIN_LAND = 20
 
 type, public :: forcing_field
-    character(len=64) :: name
+    character(len=64), dimension(:), allocatable :: names
     character(len=64) :: coupling_name
-    character(len=1024) :: filename_template
+    character(len=1024), dimension(:), allocatable :: filename_templates
     integer :: domain
 
     integer :: dt
     character(len=9) :: calendar
+    character(len=64) :: product_name
 
-    type(ncvar_type) :: ncvar
+    type(ncvar_type), dimension(:), allocatable :: ncvars
     real, dimension(:, :), allocatable :: data_array
     type(forcing_perturbation_type), dimension(:), allocatable :: perturbations
     type(forcing_perturbation_type), dimension(:), allocatable :: &
@@ -37,6 +38,7 @@ type, public :: forcing_field
 contains
     procedure, pass(self), public :: init => forcing_field_init
     procedure, pass(self), public :: update => forcing_field_update
+    procedure, pass(self), private :: calculate => forcing_field_calculate
     procedure, pass(self), private :: apply_perturbations => &
                 forcing_field_apply_perturbations
     procedure, pass(self), public :: get_shape
@@ -44,23 +46,32 @@ endtype forcing_field
 
 contains
 
-subroutine forcing_field_init(self, name, filename_template, cname, domain, &
-                              start_date, loggerin, dt, calendar)
+subroutine forcing_field_init(self, name_list, filename_template_list, cname, domain, &
+                              start_date, product_name, loggerin, dt, calendar)
     class(forcing_field), intent(inout) :: self
-    character(len=*), intent(in) :: name
+    character(len=*), dimension(:), intent(in) :: name_list
+    character(len=*), dimension(:), intent(in) :: filename_template_list
     character(len=*), intent(in) :: cname
-    character(len=*), intent(in) :: filename_template
     character(len=*), intent(in) :: domain
     type(datetime), intent(in) :: start_date
+    character(len=*), intent(in) :: product_name
     type(logger_type), target, intent(in) :: loggerin
     integer, intent(out) :: dt
     character(len=9), intent(out) :: calendar
 
     character(len=1024) :: filename
+    integer :: num_file_inputs, i
 
-    self%name = name
+    num_file_inputs = size(name_list)
+    print*, 'num_file_inputs: ', num_file_inputs
+
+    allocate(self%names(num_file_inputs))
+    allocate(self%filename_templates(num_file_inputs))
+    allocate(self%ncvars(num_file_inputs))
+
+    self%names(:) = name_list(:)
+    self%filename_templates(:) = filename_template_list(:)
     self%coupling_name = cname
-    self%filename_template = filename_template
     if (domain == 'atmosphere') then
         self%domain = FORCING_FIELD_DOMAIN_ATMOSPHERE
     else
@@ -69,18 +80,40 @@ subroutine forcing_field_init(self, name, filename_template, cname, domain, &
         self%domain = FORCING_FIELD_DOMAIN_LAND
     endif
 
+    self%product_name = trim(product_name)
     self%logger => loggerin
 
-    filename = filename_for_year(self%filename_template, start_date%getYear())
-    call self%ncvar%init(self%name, filename)
-    allocate(self%data_array(self%ncvar%nx, self%ncvar%ny))
+    do i=1, num_file_inputs
+        filename = filename_for_year(self%filename_templates(i), start_date%getYear())
+        call self%ncvars(i)%init(self%names(i), filename)
+    enddo
+
+    ! Check that the metadata is the same on all input filenames
+    if (num_file_inputs > 1) then
+        do i=2,num_file_inputs
+            call assert(self%ncvars(i)%dt == self%ncvars(1)%dt, &
+             'File metadata (dt) for multi-field forcing does not match.')
+            call assert(self%ncvars(i)%calendar == self%ncvars(1)%calendar, &
+             'File metadata (calendar) for multi-field forcing does not match.')
+            call assert(self%ncvars(i)%nx == self%ncvars(1)%nx, &
+             'File metadata (nx) for multi-field forcing does not match.')
+            call assert(self%ncvars(i)%ny == self%ncvars(1)%ny, &
+             'File metadata (ny) for multi-field forcing does not match.')
+        enddo
+    endif
+
+    allocate(self%data_array(self%ncvars(1)%nx, self%ncvars(1)%ny))
     self%data_array(:, :) = HUGE(1.0)
-    self%dt = self%ncvar%dt
+
+    self%dt = self%ncvars(1)%dt
+    self%calendar = self%ncvars(1)%calendar
     dt = self%dt
-    self%calendar = self%ncvar%calendar
     calendar = self%calendar
 
+    print*, 'dt, calendar, nx, ny:', dt, calendar, self%ncvars(1)%nx, self%ncvars(1)%ny
+
 endsubroutine forcing_field_init
+
 
 subroutine forcing_field_update(self, forcing_date, experiment_date)
     class(forcing_field), intent(inout) :: self
@@ -88,18 +121,23 @@ subroutine forcing_field_update(self, forcing_date, experiment_date)
 
     character(len=1024) :: filename
     character(len=10) :: int_str
-    integer :: indx
+    integer :: indx, test_indx
+    integer :: num_file_inputs, i
 
-    filename = filename_for_year(self%filename_template, forcing_date%getYear())
-    call assert(trim(filename) /= '', "File not found: "//filename)
-    if (trim(filename) /= trim(self%ncvar%filename)) then
-        call self%ncvar%refresh(filename)
-    endif
+    num_file_inputs = size(self%ncvars)
 
-    indx = self%ncvar%get_index_for_datetime(forcing_date)
+    do i=1, num_file_inputs
+        filename = filename_for_year(self%filename_templates(i), forcing_date%getYear())
+        call assert(trim(filename) /= '', "File not found: "//filename)
+        if (trim(filename) /= trim(self%ncvars(i)%filename)) then
+            call self%ncvars(i)%refresh(filename)
+        endif
+    enddo
+
+    indx = self%ncvars(1)%get_index_for_datetime(forcing_date)
     if (indx == -1) then
         ! Search from the beginning before failing
-        indx = self%ncvar%get_index_for_datetime(forcing_date, .true.)
+        indx = self%ncvars(1)%get_index_for_datetime(forcing_date, .true.)
         call self%logger%write(LOG_DEBUG, &
                  'forcing_field_update: long forcing index search')
     endif
@@ -112,11 +150,49 @@ subroutine forcing_field_update(self, forcing_date, experiment_date)
     call self%logger%write(LOG_DEBUG, '{ "forcing_field_update-index" : '// &
                                        trim(int_str)//' }')
 
-    call self%ncvar%read_data(indx, self%data_array)
+    ! If there are other ncvars then we need to check that they have
+    ! give us the same index. This should be fast in the no-error case.
+    if (num_file_inputs > 1) then
+        do i=2,num_file_inputs
+            test_indx = self%ncvars(i)%get_index_for_datetime(forcing_date, &
+                                                             guess=indx)
+            call assert(test_indx == indx, &
+                    'Time indices on multi-file forcing do not match.')
+        enddo
+    endif
 
+    call self%calculate(indx, self%data_array)
     call self%apply_perturbations(forcing_date, experiment_date)
 
 end subroutine forcing_field_update
+
+
+subroutine forcing_field_calculate(self, file_index, result_array)
+
+    class(forcing_field), intent(inout) :: self
+    integer, intent(in) :: file_index
+    real, dimension(:, :), intent(inout) :: result_array
+
+    if (trim(self%product_name) == 'ERA5') then
+        if (trim(self%coupling_name) == 'rain_ai') then
+            ! Rain is calculated as total precipitation - snow
+            ! FIXME: do calculation with field name checks
+            call self%ncvars(1)%read_data(file_index, result_array)
+        elseif (trim(self%coupling_name) == 'qair_ai') then
+            ! Humidity is calculated using surface temperature and dew point
+            ! FIXME: do calculation with field name checks
+            call self%ncvars(1)%read_data(file_index, result_array)
+        else
+            call self%ncvars(1)%read_data(file_index, result_array)
+        endif
+    elseif (trim(self%product_name) == 'JRA55-do') then
+        call self%ncvars(1)%read_data(file_index, result_array)
+    else
+        call assert(.false., &
+            'Unsupported forcing_product_name. Valid names are: "ERA5", "JRA55-do"')
+    endif
+
+endsubroutine forcing_field_calculate
 
 
 ! Iterate through perturbations and apply to base field in self%data
@@ -135,9 +211,9 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
         return
     endif
 
-    allocate(pertub_array(self%ncvar%nx, self%ncvar%ny))
-    allocate(tmp(self%ncvar%nx, self%ncvar%ny))
-    allocate(another_tmp(self%ncvar%nx, self%ncvar%ny))
+    allocate(pertub_array(self%ncvars(1)%nx, self%ncvars(1)%ny))
+    allocate(tmp(self%ncvars(1)%nx, self%ncvars(1)%ny))
+    allocate(another_tmp(self%ncvars(1)%nx, self%ncvars(1)%ny))
     pertub_array(:, :) = 1.0
 
     ! First iterate over all of the scaling fields
@@ -239,6 +315,9 @@ endsubroutine forcing_field_apply_perturbations
 function get_shape(self)
     class(forcing_field), intent(in) :: self
     integer, dimension(2) :: get_shape
+
+    print*, 'cname: ', self%coupling_name
+    print*, 'shape: ', shape(self%data_array)
 
     get_shape = shape(self%data_array)
 endfunction
