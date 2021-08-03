@@ -164,7 +164,6 @@ program atm
         do i=1, num_atm_to_ice_fields
             ri = to_runoff_map(i)
 
-            print*, 'forcing_fields(i)%dt: ', forcing_fields(i)%dt
             if (mod(cur_runtime_in_seconds, forcing_fields(i)%dt) == 0) then
                 call field_read_timer%start()
                 call forcing_fields(i)%update(accessom2%get_cur_forcing_date(), &

@@ -66,7 +66,6 @@ subroutine forcing_config_init(self, config, loggerin, num_fields)
 
     self%num_inputs = self%core%count(inputs)
     num_fields = self%num_inputs
-    print*, 'forcing_config_init num_fields: ', num_fields
     self%logger => loggerin
 
 endsubroutine forcing_config_init

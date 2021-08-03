@@ -63,7 +63,6 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, do
     integer :: num_file_inputs, i
 
     num_file_inputs = size(name_list)
-    print*, 'num_file_inputs: ', num_file_inputs
 
     allocate(self%names(num_file_inputs))
     allocate(self%filename_templates(num_file_inputs))
@@ -109,8 +108,6 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, do
     self%calendar = self%ncvars(1)%calendar
     dt = self%dt
     calendar = self%calendar
-
-    print*, 'dt, calendar, nx, ny:', dt, calendar, self%ncvars(1)%nx, self%ncvars(1)%ny
 
 endsubroutine forcing_field_init
 
@@ -315,9 +312,6 @@ endsubroutine forcing_field_apply_perturbations
 function get_shape(self)
     class(forcing_field), intent(in) :: self
     integer, dimension(2) :: get_shape
-
-    print*, 'cname: ', self%coupling_name
-    print*, 'shape: ', shape(self%data_array)
 
     get_shape = shape(self%data_array)
 endfunction
