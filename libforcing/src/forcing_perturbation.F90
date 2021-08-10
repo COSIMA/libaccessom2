@@ -28,7 +28,7 @@ type, public :: forcing_perturbation
     integer :: serperable_id
     character(len=64) :: name
     character(len=1024) :: filename_template
-    integer :: constant_value
+    real :: constant_value
     type(ncvar_type) :: ncvar
     logical :: initialised
     logical :: valid
