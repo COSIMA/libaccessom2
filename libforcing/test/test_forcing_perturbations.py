@@ -125,7 +125,7 @@ class TestForcingPerturbations:
                         perturb_array = f.variables[FORCING_FIELDNAME][tidx, :]
             else:
                 assert pdimension == 'constant'
-                perturb_array = int(pvalue)
+                perturb_array = float(pvalue)
 
         # Do the perturbation in Python code and check that it is as expected
         if ptype == 'scaling':
@@ -141,7 +141,7 @@ class TestForcingPerturbations:
         Test constant scaling and offset
         """
 
-        perturb_value = random.randint(0, 100)
+        perturb_value = random.random()
         self.run_simple_test(perturb_type, 'constant', perturb_value, calendar)
 
 

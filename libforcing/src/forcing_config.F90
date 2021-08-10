@@ -138,7 +138,7 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
     character(kind=CK, len=:), allocatable :: dimension_type
     character(kind=CK, len=:), allocatable :: perturbation_calendar
 
-    integer :: perturbation_constant_value
+    real :: perturbation_constant_value
     logical :: found, domain_found
     integer :: num_perturbations, num_fields
     integer :: i, j
