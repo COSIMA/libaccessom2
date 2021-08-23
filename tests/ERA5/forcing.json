@@ -1,0 +1,81 @@
+{
+  "description": "ERA5 forcing",
+  "forcing_product_name": "ERA5",
+  "inputs": [
+    {
+        "coupling_field_name": "swfld_ai",
+        "realm": "atmosphere",
+        "input_fields": [
+            {
+                "filename": "u10n_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "rsds",
+                "perturbations": [{
+                        "type": "offset",
+                        "dimension": "spatiotemporal",
+                        "value": "./test_input.nc",
+                        "calendar": "forcing",
+                        "comment": ""
+                }]
+            },
+            {
+                "filename": "u10n_era5_oper_sfc_{{year}}{{month}}??-{{year}}{{month}}??.nc",
+                "fieldname": "rsds"
+            }
+        ]
+    },
+
+    {
+      "filenames": ["u10n_era5_oper_sfc_{{year}}{{month}}??-{{year}}{{month}}??.nc"],
+
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["rsds"],
+      "cname": "swfld_ai"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["rlds"],
+      "cname": "lwfld_ai"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["prrn"],
+      "cname": "rain_ai"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["prsn"],
+      "cname": "snow_ai"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["psl"],
+      "cname": "press_ai"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["friver"],
+      "cname": "runof_ai",
+      "domain": "land"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames":["tas_10m"],
+      "cname": "tair_ai"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["huss_10m"],
+      "cname": "qair_ai"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["uas_10m"],
+      "cname": "uwnd_ai"
+    },
+    {
+      "filenames": ["era5_{{year}}_07.nc"],
+      "fieldnames": ["vas_10m"],
+      "cname": "vwnd_ai"
+    }
+  ]
+}

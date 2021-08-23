@@ -80,7 +80,7 @@ subroutine forcing_config_parse(self, fields, start_date, &
     integer, intent(out) :: min_dt, num_land_fields
     character(len=9), intent(out) :: calendar
 
-    type(json_value), pointer :: field_jv_ptr
+    type(json_value), pointer :: input_jv_ptr
     integer :: i, dt
     character(len=9) :: calendar_str
     character(kind=CK, len=:), allocatable :: product_name
@@ -102,9 +102,9 @@ subroutine forcing_config_parse(self, fields, start_date, &
     calendar = ''
     num_land_fields = 0
     do i=1, self%num_inputs
-        call self%core%get_child(inputs, i, field_jv_ptr, found)
+        call self%core%get_child(inputs, i, input_jv_ptr, found)
         call assert(found, "No inputs found in forcing config.")
-        call self%parse_field(field_jv_ptr, fields(i), start_date, &
+        call self%parse_input(input_jv_ptr, fields(i), start_date, &
                               product_name, dt, calendar_str, is_land_field)
         if (dt < min_dt) then
             min_dt = dt
@@ -123,12 +123,12 @@ subroutine forcing_config_parse(self, fields, start_date, &
 endsubroutine forcing_config_parse
 
 
-subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
+subroutine forcing_config_parse_input(self, input_jv_ptr, field_ptr, &
                                       start_date, product_name, dt, forcing_calendar, &
                                       is_land_field)
 
     class(forcing_config), intent(inout) :: self
-    type(json_value), pointer :: field_jv_ptr
+    type(json_value), pointer :: input_jv_ptr
     type(forcing_field) :: field_ptr
     type(datetime), intent(in) :: start_date
     character(len=*), intent(in) :: product_name
@@ -151,6 +151,7 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
     integer :: num_perturbations, num_fields
     integer :: i, j
 
+    type(json_value), pointer :: input_field_jv_list,
     type(json_value), pointer :: fieldname_jv_list, filename_jv_list
     type(json_value), pointer :: fieldname_jv_ptr, filename_jv_ptr
     type(json_value), pointer :: perturbation_jv_ptr
@@ -158,52 +159,52 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
     type(json_value), pointer :: perturbation_list, dimension_list
     type(json_value), pointer :: value_list
 
-    ! Allow there to be multiple 
-    call self%core%get_child(field_jv_ptr, "fieldnames", fieldname_jv_list, found)
-    call assert(found, "Entry 'fieldnames' not found in forcing config.")
-    num_fieldnames = self%core%count(fieldname_jv_list)
+    call self%core%get(input_jv_ptr, "coupling_field_name", cname, found)
+    call assert(found, "Entry 'coupling_field_name' not found in forcing config.")
 
-    call self%core%get_child(field_jv_ptr, "filenames", filename_jv_list, found)
-    call assert(found, "Entry 'filenames' not found in forcing config.")
-    num_filenames = self%core%count(filename_jv_list)
-
-    call assert(num_fieldnames == num_filenames, &
-                'Number of fieldnames does not match number of filenames')
-    allocate(fieldname_list(num_fieldnames))
-    allocate(filename_list(num_filenames))
-
-    do i=1, num_filenames
-        call self%core%get_child(fieldname_jv_list, i, &
-                                 fieldname_jv_ptr, found)
-        call assert(found, "Expected to find fieldname entry.")
-        call self%core%get(fieldname_jv_ptr, value=fieldname)
-        fieldname_list(i) = trim(fieldname)
-
-        call self%core%get_child(filename_jv_list, i, &
-                                 filename_jv_ptr, found)
-        call assert(found, "Expected to find filename entry.")
-        call self%core%get(filename_jv_ptr, value=filename)
-        filename_list(i) = trim(filename)
-    enddo
-
-    call self%core%get(field_jv_ptr, "cname", cname, found)
-    call assert(found, "Entry 'cname' not found in forcing config.")
-
-    call self%core%get(field_jv_ptr, "domain", domain_str, domain_found)
-    if (domain_found) then
-        call assert(domain_str == "land" .or. domain_str == "atmosphere", &
+    call self%core%get(input_jv_ptr, "realm", realm_str, realm_found)
+    if (realm_found) then
+        call assert(realm_str == "land" .or. realm_str == "atmosphere", &
                     "forcing_parse_field: invalid domain value.")
     else
-        domain_str = "atmosphere"
+        realm_str = "atmosphere"
     endif
 
     is_land_field = .false.
-    if (domain_str == "land") then
+    if (realm_str == "land") then
         is_land_field = .true.
     endif
 
-    call field_ptr%init(fieldname_list, filename_list, cname, domain_str, start_date, &
+    ! Each coupling field can have multiple input fields associated with it.
+    call self%core%get_child(input_jv_ptr, "input_fields", &
+                             input_field_jv_list, found)
+    num_input_fields = self%core%count(input_field_jv_list)
+    do i=1, num_input_fields
+        call self%core%get_child(input_field_jv_list, i, &
+                                 input_field_jv_ptr, found)
+
+        call self%core%get(input_field_jv_ptr, "filename", filename, found)
+        call assert(found, "Expected to find filename entry.")
+        filedame_list(i) = trim(filename)
+
+        call self%core%get(input_field_jv_ptr, "fieldname", fieldname, found)
+        call assert(found, "Expected to find fieldname entry.")
+        fieldname_list(i) = trim(fieldname)
+
+        self%parse_permutations()
+
+    enddo
+
+    call field_ptr%init(fieldname_list, filename_list, cname, realm_str, start_date, &
                         product_name, self%logger, dt, forcing_calendar)
+
+
+
+end subroutine forcing_config_parse_field
+
+
+subroutine forcing_config_parse_permutations(self)
+
 
     call self%core%get_child(field_jv_ptr, "perturbations", perturbation_list, found)
     if (.not. found) then
@@ -370,7 +371,8 @@ subroutine forcing_config_parse_field(self, field_jv_ptr, field_ptr, &
         endif
     enddo
 
-end subroutine forcing_config_parse_field
+
+end subroutine forcing_config_parse_permutations(self)
 
 
 subroutine forcing_config_deinit(self)
