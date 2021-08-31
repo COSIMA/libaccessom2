@@ -35,7 +35,9 @@ contains
     procedure, pass(self), public :: init => forcing_config_init
     procedure, pass(self), public :: deinit => forcing_config_deinit
     procedure, pass(self), public :: parse => forcing_config_parse
-    procedure, pass(self), private :: parse_field => forcing_config_parse_field
+    procedure, pass(self), private :: parse_input => forcing_config_parse_input
+    procedure, pass(self), private :: parse_permutations => &
+                                        forcing_config_parse_permutations
 endtype forcing_config
 
 contains
@@ -71,11 +73,11 @@ subroutine forcing_config_init(self, config, loggerin, num_fields)
 endsubroutine forcing_config_init
 
 
-!> Parse forcing file into a dictionary.
-subroutine forcing_config_parse(self, fields, start_date, &
+!> Parse forcing file
+subroutine forcing_config_parse(self, forcing_fields, start_date, &
                                 num_land_fields, min_dt, calendar)
     class(forcing_config), intent(inout) :: self
-    type(forcing_field), dimension(:), intent(inout) :: fields
+    type(forcing_field), dimension(:), intent(inout) :: forcing_fields
     type(datetime), intent(in) :: start_date
     integer, intent(out) :: min_dt, num_land_fields
     character(len=9), intent(out) :: calendar
@@ -88,8 +90,8 @@ subroutine forcing_config_parse(self, fields, start_date, &
     type(json_value), pointer :: root, inputs
     logical :: found, is_land_field
 
-    call assert(size(fields) == self%num_inputs, &
-                "Insufficient number of fields allocated.")
+    call assert(size(forcing_fields) == self%num_inputs, &
+                "Insufficient number of forcing_fields allocated.")
 
     call self%json%get(root)
     call self%core%get_child(root, "inputs", inputs, found)
@@ -104,7 +106,7 @@ subroutine forcing_config_parse(self, fields, start_date, &
     do i=1, self%num_inputs
         call self%core%get_child(inputs, i, input_jv_ptr, found)
         call assert(found, "No inputs found in forcing config.")
-        call self%parse_input(input_jv_ptr, fields(i), start_date, &
+        call self%parse_input(input_jv_ptr, forcing_fields(i), start_date, &
                               product_name, dt, calendar_str, is_land_field)
         if (dt < min_dt) then
             min_dt = dt
@@ -122,7 +124,7 @@ subroutine forcing_config_parse(self, fields, start_date, &
 
 endsubroutine forcing_config_parse
 
-
+!> Parse a single forcing input. This corresponds to a single coupling field.
 subroutine forcing_config_parse_input(self, input_jv_ptr, field_ptr, &
                                       start_date, product_name, dt, forcing_calendar, &
                                       is_land_field)
@@ -136,34 +138,20 @@ subroutine forcing_config_parse_input(self, input_jv_ptr, field_ptr, &
     character(len=9), intent(out) :: forcing_calendar
     logical, intent(out) :: is_land_field
 
-    character(kind=CK, len=:), allocatable :: cname, fieldname, domain_str
-    character(kind=CK, len=:), allocatable :: filename, perturbation_filename
-    character(kind=CK, len=:), allocatable :: comment
-    character(kind=CK, len=:), allocatable :: perturbation_type
-    character(kind=CK, len=:), allocatable :: dimension_type
-    character(kind=CK, len=:), allocatable :: perturbation_calendar
-
+    character(kind=CK, len=:), allocatable :: cname, realm_str
+    character(kind=CK, len=:), allocatable :: filename, fieldname
     character(len=256), dimension(:), allocatable :: fieldname_list, filename_list
-
-    integer :: num_fieldnames, num_filenames
-    integer :: perturbation_constant_value
-    logical :: found, domain_found
-    integer :: num_perturbations, num_fields
+    integer :: num_input_fields
+    logical :: found
     integer :: i, j
 
-    type(json_value), pointer :: input_field_jv_list,
-    type(json_value), pointer :: fieldname_jv_list, filename_jv_list
-    type(json_value), pointer :: fieldname_jv_ptr, filename_jv_ptr
-    type(json_value), pointer :: perturbation_jv_ptr
-    type(json_value), pointer :: dimension_jv_ptr, value_jv_ptr
-    type(json_value), pointer :: perturbation_list, dimension_list
-    type(json_value), pointer :: value_list
+    type(json_value), pointer :: input_field_jv_list, input_field_jv_ptr
 
     call self%core%get(input_jv_ptr, "coupling_field_name", cname, found)
     call assert(found, "Entry 'coupling_field_name' not found in forcing config.")
 
-    call self%core%get(input_jv_ptr, "realm", realm_str, realm_found)
-    if (realm_found) then
+    call self%core%get(input_jv_ptr, "realm", realm_str, found)
+    if (found) then
         call assert(realm_str == "land" .or. realm_str == "atmosphere", &
                     "forcing_parse_field: invalid domain value.")
     else
@@ -176,6 +164,7 @@ subroutine forcing_config_parse_input(self, input_jv_ptr, field_ptr, &
     endif
 
     ! Each coupling field can have multiple input fields associated with it.
+    ! The YATM code can combine these as it sees fit.
     call self%core%get_child(input_jv_ptr, "input_fields", &
                              input_field_jv_list, found)
     num_input_fields = self%core%count(input_field_jv_list)
@@ -185,26 +174,44 @@ subroutine forcing_config_parse_input(self, input_jv_ptr, field_ptr, &
 
         call self%core%get(input_field_jv_ptr, "filename", filename, found)
         call assert(found, "Expected to find filename entry.")
-        filedame_list(i) = trim(filename)
+        filename_list(i) = trim(filename)
 
         call self%core%get(input_field_jv_ptr, "fieldname", fieldname, found)
         call assert(found, "Expected to find fieldname entry.")
         fieldname_list(i) = trim(fieldname)
 
-        self%parse_permutations()
-
+        ! Each input field can have a number of permutations.
+        call self%parse_permutations(input_field_jv_ptr, field_ptr, fieldname)
     enddo
 
     call field_ptr%init(fieldname_list, filename_list, cname, realm_str, start_date, &
                         product_name, self%logger, dt, forcing_calendar)
 
+end subroutine forcing_config_parse_input
 
 
-end subroutine forcing_config_parse_field
+subroutine forcing_config_parse_permutations(self, field_jv_ptr, field_ptr, fieldname)
 
+    class(forcing_config), intent(inout) :: self
+    type(json_value), pointer :: field_jv_ptr
+    type(forcing_field) :: field_ptr
+    character(len=*) :: fieldname
 
-subroutine forcing_config_parse_permutations(self)
+    integer :: perturbation_constant_value
+    logical :: found
+    integer :: num_perturbations, num_fields
+    integer :: i, j
 
+    type(json_value), pointer :: perturbation_jv_ptr
+    type(json_value), pointer :: dimension_jv_ptr, value_jv_ptr
+    type(json_value), pointer :: perturbation_list, dimension_list
+    type(json_value), pointer :: value_list
+
+    character(kind=CK, len=:), allocatable :: filename, perturbation_filename
+    character(kind=CK, len=:), allocatable :: comment
+    character(kind=CK, len=:), allocatable :: perturbation_type
+    character(kind=CK, len=:), allocatable :: dimension_type
+    character(kind=CK, len=:), allocatable :: perturbation_calendar
 
     call self%core%get_child(field_jv_ptr, "perturbations", perturbation_list, found)
     if (.not. found) then
@@ -371,8 +378,7 @@ subroutine forcing_config_parse_permutations(self)
         endif
     enddo
 
-
-end subroutine forcing_config_parse_permutations(self)
+end subroutine forcing_config_parse_permutations
 
 
 subroutine forcing_config_deinit(self)

@@ -6,6 +6,8 @@ use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
 implicit none
 
+integer, parameter, private :: DAYS_IN_MONTH = (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /) 
+
 contains
 
 subroutine ncheck(status, error_str)
@@ -165,12 +167,18 @@ subroutine get_var_dims(ncid, varid, ndims, nx, ny, time)
 
 endsubroutine get_var_dims
 
+!> Search for a filename that contains year, month, start_day and end_day
+! substrings. This is very specifically designed to handle the kinds
+! of filenames used for JRA55 and ERA5 atmospheric forcings.
 
-function filename_for_year(filename, year)
-    character(len=*), intent(in) :: filename
-    integer, intent(in) :: year
-    character(len=1024) :: filename_for_year
+function find_filename_for_year_month(filename_template, year, month)
+    character(len=*), intent(in) :: filename_template
+    integer, intent(in) :: year, month
+
+    integer :: start_day, end_day
+    character(len=1024) :: filename_for_date
     character(len=4) :: year_str, yearp1_str
+    character(len=2) :: month_str, start_day_str, end_day_str
 
     write(year_str, "(I4)") year
     write(yearp1_str, "(I4)") year+1
@@ -179,7 +187,8 @@ function filename_for_year(filename, year)
     filename_for_year = replace_text(filename_for_year, "{{year}}", year_str)
     filename_for_year = replace_text(filename_for_year, "{{ year+1 }}", yearp1_str)
     filename_for_year = replace_text(filename_for_year, "{{year+1}}", yearp1_str)
-endfunction filename_for_year
+
+endfunction find_filename_for_year_month
 
 
 end module util_mod
