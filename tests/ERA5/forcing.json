@@ -7,75 +7,108 @@
         "realm": "atmosphere",
         "input_fields": [
             {
-                "filename": "u10n_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
-                "fieldname": "rsds",
-                "perturbations": [{
-                        "type": "offset",
-                        "dimension": "spatiotemporal",
-                        "value": "./test_input.nc",
-                        "calendar": "forcing",
-                        "comment": ""
-                }]
-            },
-            {
-                "filename": "u10n_era5_oper_sfc_{{year}}{{month}}??-{{year}}{{month}}??.nc",
-                "fieldname": "rsds"
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/msdrswrf/{{year}}/msdrswrf_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "msdrswrf"
             }
         ]
     },
-
     {
-      "filenames": ["u10n_era5_oper_sfc_{{year}}{{month}}??-{{year}}{{month}}??.nc"],
-
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["rsds"],
-      "cname": "swfld_ai"
+        "coupling_field_name": "lwfld_ai",
+        "realm": "atmosphere",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/msdwlwrf/{{year}}/msdwlwrf_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "msdwlwrf"
+            }
+        ]
     },
     {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["rlds"],
-      "cname": "lwfld_ai"
+        "coupling_field_name": "rain_ai",
+        "realm": "atmosphere",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/mcpr/{{year}}/mcpr_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "mcpr"
+            },
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/mlspr/{{year}}/mlspr_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "mlspr"
+            }
+        ]
     },
     {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["prrn"],
-      "cname": "rain_ai"
+        "coupling_field_name": "snow_ai",
+        "realm": "atmosphere",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/mlssr/{{year}}/mlssr_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "mlssr"
+            }
+        ]
     },
     {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["prsn"],
-      "cname": "snow_ai"
+        "coupling_field_name": "press_ai",
+        "realm": "atmosphere",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/msl/{{year}}/msl_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "msl"
+            }
+        ]
     },
     {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["psl"],
-      "cname": "press_ai"
+        "coupling_field_name": "runof_ai",
+        "realm": "land",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/msror/{{year}}/msror_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "msror"
+            },
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/mssror/{{year}}/mssror_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "mssror"
+            }
+        ]
     },
     {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["friver"],
-      "cname": "runof_ai",
-      "domain": "land"
+        "coupling_field_name": "tair_ai",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/t2m/{{year}}/t2m_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "t2m"
+            }
+        ]
     },
     {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames":["tas_10m"],
-      "cname": "tair_ai"
+        "coupling_field_name": "qair_ai",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/t2m/{{year}}/t2m_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "t2m"
+            },
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/d2m/{{year}}/d2m_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "d2m"
+            }
+        ]
     },
     {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["huss_10m"],
-      "cname": "qair_ai"
+        "coupling_field_name": "uwnd_ai",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/u10/{{year}}/u10_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "u10"
+            }
+        ]
     },
     {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["uas_10m"],
-      "cname": "uwnd_ai"
-    },
-    {
-      "filenames": ["era5_{{year}}_07.nc"],
-      "fieldnames": ["vas_10m"],
-      "cname": "vwnd_ai"
+        "coupling_field_name": "vwnd_ai",
+        "input_fields": [
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/v10/{{year}}/v10_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "v10"
+            }
+        ]
     }
   ]
 }
