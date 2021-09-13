@@ -3,7 +3,7 @@ module forcing_perturbation_mod
 use error_handler, only : assert
 use ncvar_mod, only : ncvar_type => ncvar
 use datetime_module, only : datetime
-use util_mod, only : filename_for_year
+use util_mod, only : filename_for_date
 
 implicit none
 private
@@ -75,8 +75,8 @@ subroutine forcing_perturbation_load(self, forcing_date, experiment_date, &
         date = forcing_date
     endif
 
+    filename = filename_for_date(self%filename_template, date)
     if (.not. self%initialised) then
-        filename = filename_for_year(self%filename_template, date%getYear())
 
         if (self%dimension_type == FORCING_PERTURBATION_DIMENSION_SPATIAL) then
             call self%ncvar%init(self%name, filename, &
@@ -96,7 +96,6 @@ subroutine forcing_perturbation_load(self, forcing_date, experiment_date, &
         return
     endif
 
-    filename = filename_for_year(self%filename_template, date%getYear())
     call assert(trim(filename) /= '', "File not found: "//filename)
     if (trim(filename) /= trim(self%ncvar%filename)) then
         call self%ncvar%refresh(filename)

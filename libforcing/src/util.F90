@@ -1,12 +1,13 @@
 module util_mod
 
 use netcdf
+use datetime_module, only : datetime
 use error_handler, only : assert
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
 implicit none
 
-integer, parameter, private :: DAYS_IN_MONTH = (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /) 
+integer, dimension(12), parameter, private :: DAYS_IN_MONTH = (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /)
 
 contains
 
@@ -171,24 +172,52 @@ endsubroutine get_var_dims
 ! substrings. This is very specifically designed to handle the kinds
 ! of filenames used for JRA55 and ERA5 atmospheric forcings.
 
-function find_filename_for_year_month(filename_template, year, month)
+function filename_for_date(filename_template, date)
     character(len=*), intent(in) :: filename_template
-    integer, intent(in) :: year, month
+    type(datetime), intent(in) :: date
 
-    integer :: start_day, end_day
+    integer :: year, month, start_day, end_day
     character(len=1024) :: filename_for_date
     character(len=4) :: year_str, yearp1_str
     character(len=2) :: month_str, start_day_str, end_day_str
 
+    year = date%getYear()
+    month = date%getMonth()
+
     write(year_str, "(I4)") year
     write(yearp1_str, "(I4)") year+1
+    write(month_str, "(I2)") month
 
-    filename_for_year = replace_text(filename, "{{ year }}", year_str)
-    filename_for_year = replace_text(filename_for_year, "{{year}}", year_str)
-    filename_for_year = replace_text(filename_for_year, "{{ year+1 }}", yearp1_str)
-    filename_for_year = replace_text(filename_for_year, "{{year+1}}", yearp1_str)
+    start_day = 1
+    end_day = DAYS_IN_MONTH(month)
+    write(start_day_str, "(I2)") start_day
+    write(end_day_str, "(I2)") end_day
 
-endfunction find_filename_for_year_month
+    filename_for_date = replace_text(filename_template, &
+                                            "{{ year }}", year_str)
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{year}}", year_str)
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{ year+1 }}", yearp1_str)
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{year+1}}", yearp1_str)
+
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{ month }}", month_str)
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{month}}", month_str)
+
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{ start_day }}", start_day_str)
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{start_day}}", start_day_str)
+
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{ end_day }}", end_day_str)
+    filename_for_date = replace_text(filename_for_date, &
+                                            "{{end_day}}", end_day_str)
+
+endfunction filename_for_date
 
 
 end module util_mod

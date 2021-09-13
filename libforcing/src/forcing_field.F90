@@ -17,7 +17,6 @@ private
 integer, parameter, public :: FORCING_FIELD_DOMAIN_NONE = 0
 integer, parameter, public :: FORCING_FIELD_DOMAIN_ATMOSPHERE = 10
 integer, parameter, public :: FORCING_FIELD_DOMAIN_LAND = 20
-integer, parameter, private :: DAYS_IN_MONTH = (/ 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 /) 
 
 type, public :: forcing_field
     character(len=64), dimension(:), allocatable :: names
@@ -61,7 +60,7 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, do
     character(len=9), intent(out) :: calendar
 
     character(len=1024) :: filename
-    integer :: num_file_inputs, i, end_day
+    integer :: num_file_inputs, i
 
     num_file_inputs = size(name_list)
 
@@ -83,10 +82,8 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, do
     self%product_name = trim(product_name)
     self%logger => loggerin
 
-    end_day = DAYS_IN_MONTH(start_date%getMonth)
-
     do i=1, num_file_inputs
-        filename = find_filename_for_date(self%filename_templates(i),
+        filename = filename_for_date(self%filename_templates(i), &
                                           start_date)
         call self%ncvars(i)%init(self%names(i), filename)
     enddo
@@ -128,10 +125,8 @@ subroutine forcing_field_update(self, forcing_date, experiment_date)
     num_file_inputs = size(self%ncvars)
 
     do i=1, num_file_inputs
-        filename = filename_for_date(self%filename_templates(i),
-                                     forcing_date%getYear(),
-                                     forcing_date%getMonth(),
-                                     start_day, end_day)
+        filename = filename_for_date(self%filename_templates(i), &
+                                     forcing_date)
         call assert(trim(filename) /= '', "File not found: "//filename)
         if (trim(filename) /= trim(self%ncvars(i)%filename)) then
             call self%ncvars(i)%refresh(filename)
