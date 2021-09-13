@@ -31,7 +31,7 @@
 # This gives you the total simulated time for this run in seconds
 # This is not used but needs to be >= to the timestep to satisfy error checking.
 # See https://github.com/COSIMA/oasis3-mct/issues/3
- 10800
+ 3600
  $END
 ###########################################################################
  $NLOGPRT
@@ -51,62 +51,62 @@
 ##########
 # Field 01 : swflx down
 ##########
-swfld_ai swfld_i 367 10800 3 a2i.nc EXPORTED
+swfld_ai swfld_i 367 3600 3 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_1st_conserve.nc dst
+../test_data/ERA5_MOM1_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 #########
 # Field 02 : lwflx down
 ##########
-lwfld_ai lwfld_i 366 10800 3 a2i.nc EXPORTED
+lwfld_ai lwfld_i 366 3600 3 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_1st_conserve.nc dst
+../test_data/ERA5_MOM1_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 03 : rainfall
 ##########
-rain_ai rain_i 26 10800 3 a2i.nc EXPORTED
+rain_ai rain_i 26 3600 3 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_1st_conserve.nc dst
+../test_data/ERA5_MOM1_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 04 : snowfall
 ##########
-snow_ai snow_i 26 10800 3 a2i.nc EXPORTED
+snow_ai snow_i 26 3600 3 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_1st_conserve.nc dst
+../test_data/ERA5_MOM1_conserve.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 05 : surface pressure
 ##########
-press_ai press_i 33 10800 3 a2i.nc EXPORTED
+press_ai press_i 33 3600 3 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_patch.nc dst
+../test_data/ERA5_MOM1_patch.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.
 ##########
-runof_ai runof_i 297 10800 1 a2i.nc EXPORTED
+runof_ai runof_i 297 3600 1 a2i.nc EXPORTED
 cict cict LAG=0 SEQ=+1
 P  0  P  0
 #
@@ -115,44 +115,44 @@ INSTANT
 ##########
 # Field 07 : near surface (2m) air temp
 ##########
-tair_ai tair_i 110 10800 3 a2i.nc EXPORTED
+tair_ai tair_i 110 3600 3 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_patch.nc dst
+../test_data/ERA5_MOM1_patch.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 08 : 2m air humidity
 ##########
-qair_ai qair_i 339 10800 3 a2i.nc EXPORTED
+qair_ai qair_i 339 3600 3 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 LOCTRANS MAPPING SCRIPR
 INSTANT
-../test_data/rmp_jra55_cice_patch.nc dst
+../test_data/ERA5_MOM1_patch.nc dst
 CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 09 : 10m wind (u)
 ##########
-uwnd_ai uwnd_i 56 10800 2 a2i.nc EXPORTED
+uwnd_ai uwnd_i 56 3600 2 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 MAPPING SCRIPR
-../test_data/rmp_jra55_cice_patch.nc dst
+../test_data/ERA5_MOM1_patch.nc dst
 DISTWGT LR VECTOR LATLON 10 4 vwnd_ai
 ##########
 # Field 10 : 10m wind (v)
 ##########
-vwnd_ai vwnd_i 56 10800 2 a2i.nc EXPORTED
+vwnd_ai vwnd_i 56 3600 2 a2i.nc EXPORTED
 jrat cict LAG=0 SEQ=+1
 P  0  P  0
 #
 MAPPING SCRIPR
-../test_data/rmp_jra55_cice_patch.nc dst
+../test_data/ERA5_MOM1_patch.nc dst
 DISTWGT LR VECTOR LATLON 10 4 uwnd_ai
 ############################################################################
 #

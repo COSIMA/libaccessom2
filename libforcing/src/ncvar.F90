@@ -120,7 +120,7 @@ subroutine ncvar_refresh(self, filename, &
     call ncheck(nf90_get_var(self%ncid, time_varid, self%times), &
                 'ncvar get_var time in: '//trim(self%filename))
 
-    self%dt = int((self%times(2) - self%times(1))*86400)
+    self%dt = int((self%times(2) - self%times(1))*3600)
     ! Initialise start date and calendar
     call self%get_start_date_and_calendar(time_varid, self%start_date, self%calendar)
 
@@ -170,12 +170,15 @@ subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
     call ncheck(nf90_get_att(self%ncid, time_varid, "units", time_str), &
                 'get_start_date_and_calendar: nf90_get_att: '//time_str)
 
-
     ! See whether it has the expected format
     idx = index(trim(time_str), "days since")
+    time_str = replace_text(time_str, "days since ", "")
+    if (idx <= 0) then
+        idx = index(trim(time_str), "hours since")
+        time_str = replace_text(time_str, "hours since ", "")
+    endif
     call assert(idx > 0, "ncvar invalid time format")
 
-    time_str = replace_text(time_str, "days since ", "")
     ! See whether we have hours
     idx = index(time_str, ":")
     if (idx > 0) then
@@ -196,7 +199,7 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
     integer, optional, intent(in) :: guess
 
     integer :: i, get_index_for_datetime
-    integer :: days, seconds
+    integer :: days, hours, seconds
 
     type(timedelta) :: td, td_before, td_after
 
@@ -214,13 +217,13 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
         do i=self%idx_guess, size(self%time_bnds, 2)
             ! Must convert to days _and_ seconds rather than just days to avoid
             ! integer overflow.
-            days = floor(self%time_bnds(1, i))
-            seconds = nint((self%time_bnds(1, i) - days)*86400)
-            td_before = timedelta(days=days, seconds=seconds)
+            hours = floor(self%time_bnds(1, i))
+            seconds = nint((self%time_bnds(1, i) - hours)*3600)
+            td_before = timedelta(hours=hours, seconds=seconds)
 
-            days = floor(self%time_bnds(2, i))
-            seconds = nint((self%time_bnds(2, i) - days)*86400)
-            td_after = timedelta(days=days, seconds=seconds)
+            hours = floor(self%time_bnds(2, i))
+            seconds = nint((self%time_bnds(2, i) - hours)*3600)
+            td_after = timedelta(hours=hours, seconds=seconds)
 
             if (target_date >= (self%start_date + td_before) .and. &
                 target_date < (self%start_date + td_after)) then
@@ -231,9 +234,9 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
         enddo
     else
         do i=self%idx_guess, size(self%times)
-            days = floor(self%times(i))
-            seconds = nint((self%times(i) - days)*86400)
-            td = timedelta(days=days, seconds=seconds)
+            hours = floor(self%times(i))
+            seconds = nint((self%times(i) - hours)*3600)
+            td = timedelta(hours=hours, seconds=seconds)
 
             if (target_date == (self%start_date + td)) then
                 get_index_for_datetime = i

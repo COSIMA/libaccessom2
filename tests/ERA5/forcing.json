@@ -74,7 +74,7 @@
         "coupling_field_name": "tair_ai",
         "input_fields": [
             {
-                "filename": "/g/data/rt52/era5/single-levels/reanalysis/t2m/{{year}}/t2m_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/2t/{{year}}/2t_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
                 "fieldname": "t2m"
             }
         ]
@@ -83,11 +83,11 @@
         "coupling_field_name": "qair_ai",
         "input_fields": [
             {
-                "filename": "/g/data/rt52/era5/single-levels/reanalysis/t2m/{{year}}/t2m_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/2t/{{year}}/2t_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
                 "fieldname": "t2m"
             },
             {
-                "filename": "/g/data/rt52/era5/single-levels/reanalysis/d2m/{{year}}/d2m_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/2d/{{year}}/2d_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
                 "fieldname": "d2m"
             }
         ]
@@ -96,7 +96,7 @@
         "coupling_field_name": "uwnd_ai",
         "input_fields": [
             {
-                "filename": "/g/data/rt52/era5/single-levels/reanalysis/u10/{{year}}/u10_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/10u/{{year}}/10u_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
                 "fieldname": "u10"
             }
         ]
@@ -105,7 +105,7 @@
         "coupling_field_name": "vwnd_ai",
         "input_fields": [
             {
-                "filename": "/g/data/rt52/era5/single-levels/reanalysis/v10/{{year}}/v10_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/10v/{{year}}/10v_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
                 "fieldname": "v10"
             }
         ]

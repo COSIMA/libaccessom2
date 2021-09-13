@@ -190,8 +190,8 @@ function filename_for_date(filename_template, date)
 
     start_day = 1
     end_day = DAYS_IN_MONTH(month)
-    write(start_day_str, "(I2)") start_day
-    write(end_day_str, "(I2)") end_day
+    write(start_day_str, "(I2.2)") start_day
+    write(end_day_str, "(I2.2)") end_day
 
     filename_for_date = replace_text(filename_template, &
                                             "{{ year }}", year_str)

@@ -168,6 +168,8 @@ subroutine forcing_config_parse_input(self, input_jv_ptr, field_ptr, &
     call self%core%get_child(input_jv_ptr, "input_fields", &
                              input_field_jv_list, found)
     num_input_fields = self%core%count(input_field_jv_list)
+    allocate(filename_list(num_input_fields), fieldname_list(num_input_fields))
+
     do i=1, num_input_fields
         call self%core%get_child(input_field_jv_list, i, &
                                  input_field_jv_ptr, found)
