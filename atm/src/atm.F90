@@ -2,7 +2,7 @@ program atm
 
     use mod_oasis, only : OASIS_IN, OASIS_OUT
     use forcing_config_mod, only : forcing_config_type => forcing_config
-    use forcing_field_mod, only : forcing_field_type => forcing_field, FORCING_FIELD_DOMAIN_LAND
+    use forcing_field_mod, only : forcing_field_type => forcing_field, FORCING_FIELD_REALM_LAND
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
@@ -121,7 +121,7 @@ program atm
     allocate(to_runoff_map(num_atm_to_ice_fields))
     ri = 1
     do i=1, num_atm_to_ice_fields
-        if (forcing_fields(i)%domain == FORCING_FIELD_DOMAIN_LAND) then
+        if (forcing_fields(i)%realm == FORCING_FIELD_REALM_LAND) then
             to_runoff_map(i) = ri
             ri = ri + 1
         else
@@ -135,7 +135,7 @@ program atm
             ri = to_runoff_map(i)
             runoff_forcing_fields(ri)%coupling_name = &
                 forcing_fields(i)%coupling_name
-            runoff_forcing_fields(ri)%domain = forcing_fields(i)%domain
+            runoff_forcing_fields(ri)%realm = forcing_fields(i)%realm
             allocate(runoff_forcing_fields(ri)%data_array(ice_shape(1), ice_shape(2)))
             call coupler%init_field(runoff_forcing_fields(ri)%coupling_name, &
                                     OASIS_OUT, &

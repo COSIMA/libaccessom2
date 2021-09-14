@@ -13,16 +13,16 @@ use util_mod, only : filename_for_date
 implicit none
 private
 
-! Forcing fields can have a domain
-integer, parameter, public :: FORCING_FIELD_DOMAIN_NONE = 0
-integer, parameter, public :: FORCING_FIELD_DOMAIN_ATMOSPHERE = 10
-integer, parameter, public :: FORCING_FIELD_DOMAIN_LAND = 20
+! Forcing fields can have a realm
+integer, parameter, public :: FORCING_FIELD_REALM_NONE = 0
+integer, parameter, public :: FORCING_FIELD_REALM_ATMOSPHERE = 10
+integer, parameter, public :: FORCING_FIELD_REALM_LAND = 20
 
 type, public :: forcing_field
     character(len=64), dimension(:), allocatable :: names
     character(len=64) :: coupling_name
     character(len=1024), dimension(:), allocatable :: filename_templates
-    integer :: domain
+    integer :: realm
 
     integer :: dt
     character(len=9) :: calendar
@@ -46,13 +46,13 @@ endtype forcing_field
 
 contains
 
-subroutine forcing_field_init(self, name_list, filename_template_list, cname, domain, &
+subroutine forcing_field_init(self, name_list, filename_template_list, cname, realm, &
                               start_date, product_name, loggerin, dt, calendar)
     class(forcing_field), intent(inout) :: self
     character(len=*), dimension(:), intent(in) :: name_list
     character(len=*), dimension(:), intent(in) :: filename_template_list
     character(len=*), intent(in) :: cname
-    character(len=*), intent(in) :: domain
+    character(len=*), intent(in) :: realm
     type(datetime), intent(in) :: start_date
     character(len=*), intent(in) :: product_name
     type(logger_type), target, intent(in) :: loggerin
@@ -71,12 +71,12 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, do
     self%names(:) = name_list(:)
     self%filename_templates(:) = filename_template_list(:)
     self%coupling_name = cname
-    if (domain == 'atmosphere') then
-        self%domain = FORCING_FIELD_DOMAIN_ATMOSPHERE
+    if (realm == 'atmosphere') then
+        self%realm = FORCING_FIELD_REALM_ATMOSPHERE
     else
-        call assert(trim(domain) == 'land', &
-                    "Invalid domain value.")
-        self%domain = FORCING_FIELD_DOMAIN_LAND
+        call assert(trim(realm) == 'land', &
+                    "Invalid realm value.")
+        self%realm = FORCING_FIELD_REALM_LAND
     endif
 
     self%product_name = trim(product_name)

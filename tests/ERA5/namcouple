@@ -106,12 +106,14 @@ CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 06 : runoff. Runoff is passed on the destination grid.
 ##########
-runof_ai runof_i 297 3600 1 a2i.nc EXPORTED
+runof_ai runof_i 297 3600 3 a2i.nc EXPORTED
 cict cict LAG=0 SEQ=+1
 P  0  P  0
 #
-LOCTRANS
+LOCTRANS MAPPING SCRIPR
 INSTANT
+../test_data/ERA5_MOM1_conserve.nc dst
+CONSERV LR SCALAR LATLON 10 FRACNNEI FIRST
 ##########
 # Field 07 : near surface (2m) air temp
 ##########

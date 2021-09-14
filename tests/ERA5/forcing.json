@@ -64,7 +64,7 @@
     },
     {
         "coupling_field_name": "runof_ai",
-        "realm": "land",
+        "realm": "atmosphere",
         "input_fields": [
             {
                 "filename": "/g/data/rt52/era5/single-levels/reanalysis/mror/{{year}}/mror_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
