@@ -198,15 +198,6 @@ subroutine forcing_field_calculate(self, file_index, result_array)
             call self%ncvars(2)%read_data(file_index, tmp2)
             result_array(:, :) = tmp1(:, :) + tmp2(:, :)
 
-        elseif (trim(self%coupling_name) == 'runof_ai') then
-            ! Runoff is calculated as msror
-            ! (mean surface runoff rate [kg m**-2 s**-1]) plus
-            ! mssror (mean sub-surface runoff rate [kg m**-2 s**-1])
-
-            call self%ncvars(1)%read_data(file_index, tmp1)
-            call self%ncvars(2)%read_data(file_index, tmp2)
-            result_array(:, :) = tmp1(:, :) + tmp2(:, :)
-
         elseif (trim(self%coupling_name) == 'qair_ai') then
             ! Specific humidity at 2m
 
