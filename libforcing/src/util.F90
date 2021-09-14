@@ -184,9 +184,9 @@ function filename_for_date(filename_template, date)
     year = date%getYear()
     month = date%getMonth()
 
-    write(year_str, "(I4)") year
-    write(yearp1_str, "(I4)") year+1
-    write(month_str, "(I2)") month
+    write(year_str, "(I4.4)") year
+    write(yearp1_str, "(I4.4)") year+1
+    write(month_str, "(I2.2)") month
 
     start_day = 1
     end_day = DAYS_IN_MONTH(month)

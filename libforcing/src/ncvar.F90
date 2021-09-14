@@ -20,6 +20,7 @@ type, public :: ncvar
     type(datetime) :: start_date
     integer :: nx, ny
     integer :: dt
+    integer :: units_as_seconds
     character(len=9) :: calendar
 
     integer :: idx_guess
@@ -32,7 +33,7 @@ contains
     procedure, pass(self), public :: refresh => ncvar_refresh
     procedure, pass(self), public :: read_data => ncvar_read_data
     procedure, pass(self) :: get_index_for_datetime
-    procedure, pass(self) :: get_start_date_and_calendar
+    procedure, pass(self) :: get_time_metadata
 endtype ncvar
 
 contains
@@ -120,9 +121,10 @@ subroutine ncvar_refresh(self, filename, &
     call ncheck(nf90_get_var(self%ncid, time_varid, self%times), &
                 'ncvar get_var time in: '//trim(self%filename))
 
-    self%dt = int((self%times(2) - self%times(1))*3600)
     ! Initialise start date and calendar
-    call self%get_start_date_and_calendar(time_varid, self%start_date, self%calendar)
+    call self%get_time_metadata(time_varid, self%start_date, self%calendar, &
+                                self%units_as_seconds)
+    self%dt = int((self%times(2) - self%times(1))*self%units_as_seconds)
 
     status = nf90_get_att(self%ncid, time_varid, "bounds", time_bnds_name)
     if (status == nf90_noerr) then
@@ -147,11 +149,13 @@ subroutine ncvar_refresh(self, filename, &
 
 endsubroutine
 
-subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
+!> Return the start_date, calendar and time dimenstion units
+subroutine get_time_metadata(self, time_varid, start_date, calendar, units_as_seconds)
     class(ncvar), intent(in) :: self
     integer, intent(in) :: time_varid
     type(datetime), intent(out) :: start_date
     character(len=9), intent(out) :: calendar
+    integer, intent(out) :: units_as_seconds
 
     character(len=256) :: time_str
     type(tm_struct) :: ctime
@@ -159,23 +163,25 @@ subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
 
     ! Getcalendar
     call ncheck(nf90_get_att(self%ncid, time_varid, "calendar", calendar), &
-                'get_start_date_and_calendar: nf90_get_att: '//calendar)
+                'get_time_metadata: nf90_get_att: '//calendar)
     if (trim(calendar) == 'NOLEAP') then
         calendar = 'noleap'
     endif
     call assert(trim(calendar) == 'noleap' .or. trim(calendar) == 'gregorian', &
-                'get_start_date_and_calendar: unrecognized calendar type')
+                'get_time_metadata: unrecognized calendar type')
 
     ! Get start date
     call ncheck(nf90_get_att(self%ncid, time_varid, "units", time_str), &
-                'get_start_date_and_calendar: nf90_get_att: '//time_str)
+                'get_time_metadata: nf90_get_att: '//time_str)
 
     ! See whether it has the expected format
     idx = index(trim(time_str), "days since")
     time_str = replace_text(time_str, "days since ", "")
+    units_as_seconds = 86400
     if (idx <= 0) then
         idx = index(trim(time_str), "hours since")
         time_str = replace_text(time_str, "hours since ", "")
+        units_as_seconds = 3600
     endif
     call assert(idx > 0, "ncvar invalid time format")
 
@@ -189,7 +195,7 @@ subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
     call assert(rc /= 0, 'strptime in get_start_date_and_calendar failed on '//time_str)
     start_date = tm2date(ctime)
 
-endsubroutine get_start_date_and_calendar
+endsubroutine get_time_metadata
 
 !> Return the time index of a particular date.
 function get_index_for_datetime(self, target_date, from_beginning, guess)
@@ -218,11 +224,11 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
             ! Must convert to days _and_ seconds rather than just days to avoid
             ! integer overflow.
             hours = floor(self%time_bnds(1, i))
-            seconds = nint((self%time_bnds(1, i) - hours)*3600)
+            seconds = nint((self%time_bnds(1, i) - hours)*self%units_as_seconds)
             td_before = timedelta(hours=hours, seconds=seconds)
 
             hours = floor(self%time_bnds(2, i))
-            seconds = nint((self%time_bnds(2, i) - hours)*3600)
+            seconds = nint((self%time_bnds(2, i) - hours)*self%units_as_seconds)
             td_after = timedelta(hours=hours, seconds=seconds)
 
             if (target_date >= (self%start_date + td_before) .and. &
@@ -235,7 +241,7 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
     else
         do i=self%idx_guess, size(self%times)
             hours = floor(self%times(i))
-            seconds = nint((self%times(i) - hours)*3600)
+            seconds = nint((self%times(i) - hours)*self%units_as_seconds)
             td = timedelta(hours=hours, seconds=seconds)
 
             if (target_date == (self%start_date + td)) then
