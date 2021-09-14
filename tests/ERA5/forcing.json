@@ -83,12 +83,12 @@
         "coupling_field_name": "qair_ai",
         "input_fields": [
             {
-                "filename": "/g/data/rt52/era5/single-levels/reanalysis/2t/{{year}}/2t_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
-                "fieldname": "t2m"
-            },
-            {
                 "filename": "/g/data/rt52/era5/single-levels/reanalysis/2d/{{year}}/2d_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
                 "fieldname": "d2m"
+            },
+            {
+                "filename": "/g/data/rt52/era5/single-levels/reanalysis/sp/{{year}}/sp_era5_oper_sfc_{{year}}{{month}}{{start_day}}-{{year}}{{month}}{{end_day}}.nc",
+                "fieldname": "sp"
             }
         ]
     },

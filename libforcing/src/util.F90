@@ -51,7 +51,8 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
 
     integer, dimension(:), allocatable :: count, start
     real, dimension(1) :: scalar_dataout
-    integer :: ndims, nx, ny, time
+    integer :: ndims, nx, ny, time, status
+    real :: scale_factor, offset
 
     call get_var_dims(ncid, varid, ndims, nx, ny, time)
     call assert(ndims == 1 .or. ndims == 2 .or. ndims == 3 .or. ndims == 4, &
@@ -83,6 +84,15 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
         end if
         call ncheck(nf90_get_var(ncid, varid, dataout, start=start, count=count), &
                     'Get var '//trim(varname))
+    endif
+
+    status = nf90_get_att(ncid, varid, "scale_factor", scale_factor)
+    if (status == nf90_noerr) then
+        dataout(:, :) = dataout(:, :) * scale_factor
+    endif
+    status = nf90_get_att(ncid, varid, "add_offset", offset)
+    if (status == nf90_noerr) then
+        dataout(:, :) = dataout(:, :) + offset
     endif
 
     deallocate(count, start)

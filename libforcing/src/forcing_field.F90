@@ -172,18 +172,66 @@ subroutine forcing_field_calculate(self, file_index, result_array)
     integer, intent(in) :: file_index
     real, dimension(:, :), intent(inout) :: result_array
 
+    real, dimension(:, :), allocatable, target :: tmp1, tmp2
+    real, dimension(:, :), allocatable :: E
+    real, dimension(:, :), pointer :: Td, sp
+
+    integer :: nx, ny
+    real, parameter :: RDRY = 287.0597
+    real, parameter :: RVAP = 461.5250
+    real, parameter :: A1 = 611.21
+    real, parameter :: A3 = 17.502
+    real, parameter :: A4 = 32.19
+    real, parameter :: T0 = 273.16
+
     if (trim(self%product_name) == 'ERA5') then
+
+        nx = self%ncvars(1)%nx
+        ny = self%ncvars(1)%ny
+        allocate(tmp1(nx, ny), tmp2(nx, ny))
+
         if (trim(self%coupling_name) == 'rain_ai') then
-            ! Rain is calculated as total precipitation - snow
-            ! FIXME: do calculation with field name checks
-            call self%ncvars(1)%read_data(file_index, result_array)
+            ! Rain is calculated as mcpr
+            ! (mean convective precipitation rate [kg m**-2 s**-1]) plus
+            ! mlspr (mean large-scale precipitation rate [kg m**-2 s**-1])
+            call self%ncvars(1)%read_data(file_index, tmp1)
+            call self%ncvars(2)%read_data(file_index, tmp2)
+            result_array(:, :) = tmp1(:, :) + tmp2(:, :)
+
+        elseif (trim(self%coupling_name) == 'runof_ai') then
+            ! Runoff is calculated as msror
+            ! (mean surface runoff rate [kg m**-2 s**-1]) plus
+            ! mssror (mean sub-surface runoff rate [kg m**-2 s**-1])
+
+            call self%ncvars(1)%read_data(file_index, tmp1)
+            call self%ncvars(2)%read_data(file_index, tmp2)
+            result_array(:, :) = tmp1(:, :) + tmp2(:, :)
+
         elseif (trim(self%coupling_name) == 'qair_ai') then
-            ! Humidity is calculated using surface temperature and dew point
-            ! FIXME: do calculation with field name checks
-            call self%ncvars(1)%read_data(file_index, result_array)
+            ! Specific humidity at 2m
+
+            call assert(self%ncvars(1)%name == 'd2m', &
+                        'Unexpected name for in huss calculation')
+            call assert(self%ncvars(2)%name == 'sp', &
+                        'Unexpected name for surface pressure')
+
+            call self%ncvars(1)%read_data(file_index, tmp1)
+            call self%ncvars(2)%read_data(file_index, tmp2)
+            Td => tmp1
+            sp => tmp2
+
+            ! Saturation water vapour from Teten's formula
+            allocate(E(nx, ny))
+            E = A1*exp(A3*(Td-T0)/(Td-A4))
+
+            ! Saturation specific humidity at 2m
+            result_array(:, :) = (RDRY/RVAP)*E / (sp-((1-RDRY/RVAP)*E))
+            deallocate(E)
         else
             call self%ncvars(1)%read_data(file_index, result_array)
         endif
+
+        deallocate(tmp1, tmp2)
     elseif (trim(self%product_name) == 'JRA55-do') then
         call self%ncvars(1)%read_data(file_index, result_array)
     else
