@@ -7,5 +7,5 @@
 &date_manager_nml
     forcing_start_date = '1981-01-01T00:00:00'
     forcing_end_date = '1981-02-01T00:00:00'
-    restart_period = 0, 1, 0
+    restart_period = 0, 0, 86400
 /

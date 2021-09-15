@@ -9,6 +9,7 @@ use forcing_perturbation_mod, only : FORCING_PERTURBATION_TYPE_SCALING, &
                                      FORCING_PERTURBATION_TYPE_SEPARABLE
 use ncvar_mod, only : ncvar_type => ncvar
 use util_mod, only : filename_for_date
+use simple_timer_mod, only : simple_timer_type => simple_timer
 
 implicit none
 private
@@ -35,6 +36,11 @@ type, public :: forcing_field
             separated_perturbations
 
     type(logger_type), pointer :: logger
+
+    type(simple_timer_type) :: get_time_index_timer
+    type(simple_timer_type) :: apply_perturbations_timer
+    type(simple_timer_type) :: calculate_field_timer
+
 contains
     procedure, pass(self), public :: init => forcing_field_init
     procedure, pass(self), public :: update => forcing_field_update
@@ -42,12 +48,14 @@ contains
     procedure, pass(self), private :: apply_perturbations => &
                 forcing_field_apply_perturbations
     procedure, pass(self), public :: get_shape
+    procedure, pass(self), public :: deinit => forcing_field_deinit
 endtype forcing_field
 
 contains
 
-subroutine forcing_field_init(self, name_list, filename_template_list, cname, realm, &
-                              start_date, product_name, loggerin, dt, calendar)
+subroutine forcing_field_init(self, name_list, filename_template_list, cname, &
+                              realm, start_date, product_name, loggerin, &
+                              dt, calendar)
     class(forcing_field), intent(inout) :: self
     character(len=*), dimension(:), intent(in) :: name_list
     character(len=*), dimension(:), intent(in) :: filename_template_list
@@ -61,6 +69,14 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, re
 
     character(len=1024) :: filename
     integer :: num_file_inputs, i
+
+    self%logger => loggerin
+    call self%get_time_index_timer%init('get_time_index_timer', &
+                                        loggerin, .true.)
+    call self%apply_perturbations_timer%init('apply_perturbations_timer', &
+                                             loggerin,.true.)
+    call self%calculate_field_timer%init('calculate_field_timer', &
+                                        loggerin,.true.)
 
     num_file_inputs = size(name_list)
 
@@ -80,7 +96,6 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, re
     endif
 
     self%product_name = trim(product_name)
-    self%logger => loggerin
 
     do i=1, num_file_inputs
         filename = filename_for_date(self%filename_templates(i), &
@@ -122,6 +137,8 @@ subroutine forcing_field_update(self, forcing_date, experiment_date)
     integer :: indx, test_indx
     integer :: num_file_inputs, i
 
+    call self%get_time_index_timer%start()
+
     num_file_inputs = size(self%ncvars)
 
     do i=1, num_file_inputs
@@ -160,8 +177,12 @@ subroutine forcing_field_update(self, forcing_date, experiment_date)
         enddo
     endif
 
+    call self%get_time_index_timer%stop()
+
     call self%calculate(indx, self%data_array)
+    call self%apply_perturbations_timer%start()
     call self%apply_perturbations(forcing_date, experiment_date)
+    call self%apply_perturbations_timer%stop()
 
 end subroutine forcing_field_update
 
@@ -194,8 +215,10 @@ subroutine forcing_field_calculate(self, file_index, result_array)
             ! Rain is calculated as mcpr
             ! (mean convective precipitation rate [kg m**-2 s**-1]) plus
             ! mlspr (mean large-scale precipitation rate [kg m**-2 s**-1])
+            call self%calculate_field_timer%start()
             call self%ncvars(1)%read_data(file_index, tmp1)
             call self%ncvars(2)%read_data(file_index, tmp2)
+            call self%calculate_field_timer%stop()
             result_array(:, :) = tmp1(:, :) + tmp2(:, :)
 
         elseif (trim(self%coupling_name) == 'qair_ai') then
@@ -206,8 +229,10 @@ subroutine forcing_field_calculate(self, file_index, result_array)
             call assert(self%ncvars(2)%name == 'sp', &
                         'Unexpected name for surface pressure')
 
+            call self%calculate_field_timer%start()
             call self%ncvars(1)%read_data(file_index, tmp1)
             call self%ncvars(2)%read_data(file_index, tmp2)
+            call self%calculate_field_timer%stop()
             Td => tmp1
             sp => tmp2
 
@@ -219,7 +244,9 @@ subroutine forcing_field_calculate(self, file_index, result_array)
             result_array(:, :) = (RDRY/RVAP)*E / (sp-((1-RDRY/RVAP)*E))
             deallocate(E)
         else
+            call self%calculate_field_timer%start()
             call self%ncvars(1)%read_data(file_index, result_array)
+            call self%calculate_field_timer%stop()
         endif
 
         deallocate(tmp1, tmp2)
@@ -350,11 +377,21 @@ subroutine forcing_field_apply_perturbations(self, forcing_date, experiment_date
 
 endsubroutine forcing_field_apply_perturbations
 
+subroutine forcing_field_deinit(self)
+    class(forcing_field), intent(inout) :: self
+
+    call self%get_time_index_timer%write_stats()
+    call self%apply_perturbations_timer%write_stats()
+    call self%calculate_field_timer%write_stats()
+
+endsubroutine forcing_field_deinit
+
 function get_shape(self)
     class(forcing_field), intent(in) :: self
     integer, dimension(2) :: get_shape
 
     get_shape = shape(self%data_array)
 endfunction
+
 
 endmodule forcing_field_mod

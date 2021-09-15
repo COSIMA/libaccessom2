@@ -38,6 +38,8 @@ program atm
     type(simple_timer_type) :: coupler_put_timer
     type(simple_timer_type) :: init_oasis_timer, init_model_timer
     type(simple_timer_type) :: parse_forcing_fields_timer
+    type(simple_timer_type) :: main_loop_timer
+    type(simple_timer_type) :: extras_timer
 
     namelist /atm_nml/ forcing_file, accessom2_config_dir
 
@@ -72,6 +74,10 @@ program atm
     call init_oasis_timer%init('init_oasis', accessom2%logger, &
                                 accessom2%simple_timers_enabled())
     call parse_forcing_fields_timer%init('parse_forcing_fields', accessom2%logger, &
+                                accessom2%simple_timers_enabled())
+    call main_loop_timer%init('main_loop_timer', accessom2%logger, &
+                                accessom2%simple_timers_enabled())
+    call extras_timer%init('extras_timer', accessom2%logger, &
                                 accessom2%simple_timers_enabled())
     call init_model_timer%start()
 
@@ -158,9 +164,12 @@ program atm
 
     do while (.not. accessom2%run_finished())
 
+        call extras_timer%start()
         cur_runtime_in_seconds = int(accessom2%get_cur_runtime_in_seconds())
+        call extras_timer%stop()
 
         ! Send each forcing field
+        call main_loop_timer%start()
         do i=1, num_atm_to_ice_fields
             ri = to_runoff_map(i)
 
@@ -189,6 +198,9 @@ program atm
             endif
             call coupler_put_timer%stop()
         enddo
+        call main_loop_timer%stop()
+
+        call extras_timer%start()
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
         ! after receiving the above fields. This prevents the atm from sending continuously.
@@ -204,6 +216,8 @@ program atm
         !call accessom2%logger%write(LOG_INFO, '{ "modeltime_over_walltime_hour_per_hour" : "" ',
 
         call accessom2%progress_date(dt)
+
+        call extras_timer%stop()
     enddo
 
     call field_read_timer%write_stats()
@@ -214,8 +228,14 @@ program atm
     call init_oasis_timer%write_stats()
     call init_model_timer%write_stats()
     call parse_forcing_fields_timer%write_stats()
+    call main_loop_timer%write_stats()
+    call extras_timer%write_stats()
 
     call accessom2%logger%write(LOG_INFO, 'Run complete, calling deinit')
+
+    do i=1, num_atm_to_ice_fields
+        call forcing_fields(i)%deinit()
+    enddo
 
     call coupler%deinit()
     call accessom2%deinit(finalize=.true.)
