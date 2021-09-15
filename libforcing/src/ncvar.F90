@@ -205,7 +205,8 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
     integer, optional, intent(in) :: guess
 
     integer :: i, get_index_for_datetime
-    integer :: days, hours, seconds
+    integer :: hod, hod_before, hod_after
+    integer :: seconds, seconds_before, seconds_after
 
     type(timedelta) :: td, td_before, td_after
 
@@ -221,15 +222,25 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
 
     if (allocated(self%time_bnds)) then
         do i=self%idx_guess, size(self%time_bnds, 2)
-            ! Must convert to days _and_ seconds rather than just days to avoid
-            ! integer overflow.
-            hours = floor(self%time_bnds(1, i))
-            seconds = nint((self%time_bnds(1, i) - hours)*self%units_as_seconds)
-            td_before = timedelta(hours=hours, seconds=seconds)
+            ! Must convert to hours (or days) _and_ seconds rather than just
+            ! days to avoid integer overflow.
 
-            hours = floor(self%time_bnds(2, i))
-            seconds = nint((self%time_bnds(2, i) - hours)*self%units_as_seconds)
-            td_after = timedelta(hours=hours, seconds=seconds)
+            ! hod: hours or days
+            hod_before = floor(self%time_bnds(1, i))
+            hod_after = floor(self%time_bnds(2, i))
+
+            seconds_before = nint((self%time_bnds(1, i) - hod_before)*self%units_as_seconds)
+            seconds_after = nint((self%time_bnds(2, i) - hod_after)*self%units_as_seconds)
+
+            if (self%units_as_seconds == 3600) then
+                td_before = timedelta(hours=hod_before, seconds=seconds_before)
+                td_after = timedelta(hours=hod_after, seconds=seconds_before)
+            else
+                call assert(self%units_as_seconds == 86400, &
+                                'Unexpected period for time_bnds')
+                td_before = timedelta(days=hod_before, seconds=seconds_before)
+                td_after = timedelta(days=hod_after, seconds=seconds_before)
+            endif
 
             if (target_date >= (self%start_date + td_before) .and. &
                 target_date < (self%start_date + td_after)) then
@@ -240,9 +251,17 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
         enddo
     else
         do i=self%idx_guess, size(self%times)
-            hours = floor(self%times(i))
-            seconds = nint((self%times(i) - hours)*self%units_as_seconds)
-            td = timedelta(hours=hours, seconds=seconds)
+
+            hod = floor(self%times(i))
+            seconds = nint((self%times(i) - hod)*self%units_as_seconds)
+
+            if (self%units_as_seconds == 3600) then
+                td = timedelta(hours=hod, seconds=seconds)
+            else
+                call assert(self%units_as_seconds == 86400, &
+                                'Unexpected period for time_bnds')
+                td = timedelta(days=hod, seconds=seconds)
+            endif
 
             if (target_date == (self%start_date + td)) then
                 get_index_for_datetime = i
