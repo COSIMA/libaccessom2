@@ -195,9 +195,9 @@ subroutine forcing_config_parse_input(self, input_jv_ptr, field_ptr, &
         call self%parse_permutations(input_field_jv_ptr, field_ptr, fieldname)
     enddo
 
-    call field_ptr%init(fieldname_list, filename_list, cname, realm_str,
-                        start_date, product_name, self%logger, dt, &
-                        forcing_calendar, self%time_cache_size)
+    call field_ptr%init(fieldname_list, filename_list, cname, realm_str, &
+                        start_date, product_name, self%logger, &
+                        self%time_cache_size, dt, forcing_calendar) 
 
 end subroutine forcing_config_parse_input
 

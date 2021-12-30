@@ -52,7 +52,7 @@ subroutine ncvar_init(self, name, filename, &
     character(len=*), intent(in) :: name, filename
     logical, intent(in), optional :: expect_temporal_only
     logical, intent(in), optional :: expect_spatial_only
-    logical, intent(in), optional :: time_cache_size
+    integer, intent(in), optional :: time_cache_size
 
     logical :: temporal_only, spatial_only
 
@@ -73,7 +73,7 @@ subroutine ncvar_init(self, name, filename, &
         else
             self%total_time_cache_size = time_cache_size
         endif
-    else:
+    else
         self%total_time_cache_size = DEFAULT_TIME_CACHE_SIZE
     endif
 
@@ -81,7 +81,7 @@ subroutine ncvar_init(self, name, filename, &
     self%ncid = -1
     call self%refresh(filename, temporal_only, spatial_only)
 
-    self%data_cache_size = 0
+    self%cur_time_cache_size = 0
     self%cached_indices(:) = -1
 
 end subroutine
@@ -312,9 +312,9 @@ subroutine ncvar_read_data(self, indx, dataout)
 
     if (.not. allocated(self%data_cache)) then
         allocate(self%data_cache(size(dataout, 1), size(dataout, 2), &
-                                 MAX_DATA_CACHE_SIZE))
+                                 self%total_time_cache_size))
     else
-        do i=1, self%data_cache_size
+        do i=1, self%cur_time_cache_size
             if (self%cached_indices(i) == indx) then
                 dataout(:, :) = self%data_cache(:, :, i)
                 return
@@ -326,15 +326,15 @@ subroutine ncvar_read_data(self, indx, dataout)
     ! need to read more in.
     left_to_read = size(self%times) - indx
     if (left_to_read > self%total_time_cache_size) then
-        self%data_cache_size = self%total_time_cache_size
+        self%cur_time_cache_size = self%total_time_cache_size
     else
-        self%data_cache_size = left_to_read
+        self%cur_time_cache_size = left_to_read
     endif
 
     call read_data(self%ncid, self%varid, self%name, indx, &
-                   self%data_cache_size, self%data_cache)
+                   self%cur_time_cache_size, self%data_cache)
 
-    do i=1, self%data_cache_size
+    do i=1, self%cur_time_cache_size
         self%cached_indices(i) = indx + i
     enddo
 
