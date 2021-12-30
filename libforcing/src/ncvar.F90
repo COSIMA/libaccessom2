@@ -13,6 +13,9 @@ implicit none
 
 private
 
+integer, parameter :: MAX_TIME_CACHE_SIZE = 372
+integer, parameter :: DEFAULT_TIME_CACHE_SIZE = 1
+
 type, public :: ncvar
     character(len=nf90_max_name) :: name
     character(len=1024) :: filename
@@ -24,9 +27,13 @@ type, public :: ncvar
     character(len=9) :: calendar
 
     integer :: idx_guess
+    integer :: cur_time_cache_size
+    integer :: total_time_cache_size
+    integer, dimension(MAX_TIME_CACHE_SIZE) :: cached_indices
 
     real, dimension(:,:), allocatable :: time_bnds
     real, dimension(:), allocatable :: times
+    real, dimension(:,:,:), allocatable :: data_cache
 contains
     procedure, pass(self), public :: init => ncvar_init
     procedure, pass(self), public :: deinit => ncvar_deinit
@@ -39,13 +46,16 @@ endtype ncvar
 contains
 
 subroutine ncvar_init(self, name, filename, &
-                      expect_temporal_only, expect_spatial_only)
+                      expect_temporal_only, expect_spatial_only, &
+                      time_cache_size)
     class(ncvar), intent(inout) :: self
     character(len=*), intent(in) :: name, filename
     logical, intent(in), optional :: expect_temporal_only
     logical, intent(in), optional :: expect_spatial_only
+    logical, intent(in), optional :: time_cache_size
 
     logical :: temporal_only, spatial_only
+
 
     temporal_only = .false.
     spatial_only = .false.
@@ -55,10 +65,24 @@ subroutine ncvar_init(self, name, filename, &
     if (present(expect_spatial_only)) then
         spatial_only = expect_spatial_only
     endif
+    if (present(time_cache_size)) then
+        call assert(time_cache_size <= MAX_TIME_CACHE_SIZE, &
+                'time_cache_size exceeds maximum allowed')
+        if (time_cache_size <= 0) then
+            self%total_time_cache_size = DEFAULT_TIME_CACHE_SIZE
+        else
+            self%total_time_cache_size = time_cache_size
+        endif
+    else:
+        self%total_time_cache_size = DEFAULT_TIME_CACHE_SIZE
+    endif
 
     self%name = name
     self%ncid = -1
     call self%refresh(filename, temporal_only, spatial_only)
+
+    self%data_cache_size = 0
+    self%cached_indices(:) = -1
 
 end subroutine
 
@@ -281,7 +305,40 @@ subroutine ncvar_read_data(self, indx, dataout)
     integer, intent(in) :: indx
     real, dimension(:, :), intent(inout) :: dataout
 
-    call read_data(self%ncid, self%varid, self%name, indx, dataout)
+    integer :: i, left_to_read
+
+    call assert(indx <= size(self%times), &
+                'Requested index exceeds time dimension')
+
+    if (.not. allocated(self%data_cache)) then
+        allocate(self%data_cache(size(dataout, 1), size(dataout, 2), &
+                                 MAX_DATA_CACHE_SIZE))
+    else
+        do i=1, self%data_cache_size
+            if (self%cached_indices(i) == indx) then
+                dataout(:, :) = self%data_cache(:, :, i)
+                return
+            endif
+        enddo
+    endif
+
+    ! If we made it to here then the cache has been exhausted and we
+    ! need to read more in.
+    left_to_read = size(self%times) - indx
+    if (left_to_read > self%total_time_cache_size) then
+        self%data_cache_size = self%total_time_cache_size
+    else
+        self%data_cache_size = left_to_read
+    endif
+
+    call read_data(self%ncid, self%varid, self%name, indx, &
+                   self%data_cache_size, self%data_cache)
+
+    do i=1, self%data_cache_size
+        self%cached_indices(i) = indx + i
+    enddo
+
+    dataout(:, :) = self%data_cache(:, :, 1)
 
 end subroutine ncvar_read_data
 
@@ -294,9 +351,14 @@ subroutine ncvar_deinit(self)
     if (allocated(self%times)) then
         deallocate(self%times)
     endif
+    if (allocated(self%data_cache)) then
+        deallocate(self%data_cache)
+    endif
+
     if (self%ncid /= -1) then
         call ncheck(nf90_close(self%ncid), 'ncvar closing '//trim(self%filename))
     endif
+
 
 endsubroutine ncvar_deinit
 

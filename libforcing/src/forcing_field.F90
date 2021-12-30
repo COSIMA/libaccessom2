@@ -55,7 +55,7 @@ contains
 
 subroutine forcing_field_init(self, name_list, filename_template_list, cname, &
                               realm, start_date, product_name, loggerin, &
-                              dt, calendar)
+                              time_cache_size, dt, calendar)
     class(forcing_field), intent(inout) :: self
     character(len=*), dimension(:), intent(in) :: name_list
     character(len=*), dimension(:), intent(in) :: filename_template_list
@@ -64,6 +64,7 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, &
     type(datetime), intent(in) :: start_date
     character(len=*), intent(in) :: product_name
     type(logger_type), target, intent(in) :: loggerin
+    integer, intent(in) :: time_cache_size
     integer, intent(out) :: dt
     character(len=9), intent(out) :: calendar
 
@@ -100,7 +101,8 @@ subroutine forcing_field_init(self, name_list, filename_template_list, cname, &
     do i=1, num_file_inputs
         filename = filename_for_date(self%filename_templates(i), &
                                           start_date)
-        call self%ncvars(i)%init(self%names(i), filename)
+        call self%ncvars(i)%init(self%names(i), filename, &
+                                 time_cache_size=time_cache_size)
     enddo
 
     ! Check that the metadata is the same on all input filenames
@@ -166,7 +168,7 @@ subroutine forcing_field_update(self, forcing_date, experiment_date)
     call self%logger%write(LOG_DEBUG, '{ "forcing_field_update-index" : '// &
                                        trim(int_str)//' }')
 
-    ! If there are other ncvars then we need to check that they have
+    ! If there are other ncvars then we need to check that they
     ! give us the same index. This should be fast in the no-error case.
     if (num_file_inputs > 1) then
         do i=2,num_file_inputs

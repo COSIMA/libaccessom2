@@ -30,6 +30,7 @@ type, public :: forcing_config
     integer :: min_dt
     character(len=9) :: calendar
 
+    integer :: time_cache_size
     type(logger_type), pointer :: logger
 contains
     procedure, pass(self), public :: init => forcing_config_init
@@ -43,15 +44,23 @@ endtype forcing_config
 contains
 
 !> Open forcing file and find fields
-subroutine forcing_config_init(self, config, loggerin, num_fields)
+subroutine forcing_config_init(self, config, loggerin, num_fields, &
+                               time_cache_size)
 
     class(forcing_config), intent(inout) :: self
     character(len=*), intent(in) :: config
     type(logger_type), target, intent(in) :: loggerin
     integer, intent(out) :: num_fields
+    integer, intent(in), optional :: time_cache_size
 
     type(json_value), pointer :: root, inputs
     logical :: found
+
+    if (present(time_cache_size)) then
+        self%time_cache_size = time_cache_size
+    else
+        self%time_cache_size = -1
+    endif
 
     call self%json%initialize()
     call self%json%load_file(filename=trim(config))
@@ -186,8 +195,9 @@ subroutine forcing_config_parse_input(self, input_jv_ptr, field_ptr, &
         call self%parse_permutations(input_field_jv_ptr, field_ptr, fieldname)
     enddo
 
-    call field_ptr%init(fieldname_list, filename_list, cname, realm_str, start_date, &
-                        product_name, self%logger, dt, forcing_calendar)
+    call field_ptr%init(fieldname_list, filename_list, cname, realm_str,
+                        start_date, product_name, self%logger, dt, &
+                        forcing_calendar, self%time_cache_size)
 
 end subroutine forcing_config_parse_input
 

@@ -96,14 +96,19 @@ subroutine restart_read(self, fields)
 
     integer :: ncid, varid, i
     integer :: ndims, nx, ny, time
+    real, dimension(:, :, :), allocatable :: tmp
 
     call ncheck(nf90_open(trim(self%restart_file), NF90_NOWRITE, ncid), &
                 'Opening '//trim(self%restart_file))
 
+    allocate(tmp(size(fields(1)%data_array, 1), &
+                 size(fields(1)%data_array, 2), 1))
+
     do i=1, size(fields)
         call ncheck(nf90_inq_varid(ncid, trim(fields(i)%coupling_name), varid), &
                     'Inquire: '//trim(fields(i)%coupling_name)//' in '//trim(self%restart_file))
-        call read_data(ncid, varid, trim(fields(i)%coupling_name), 1, fields(i)%data_array)
+        call read_data(ncid, varid, trim(fields(i)%coupling_name), 1, 1, tmp)
+        fields(i)%data_array(:, :) = tmp(:, :, 1)
     enddo
 
     call ncheck(nf90_close(ncid), 'Closing '//self%restart_file)

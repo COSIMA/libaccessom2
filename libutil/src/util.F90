@@ -43,15 +43,15 @@ function replace_text(string, pattern, replace)  result(outs)
 end function replace_text
 
 
-subroutine read_data(ncid, varid, varname, indx, dataout)
+subroutine read_data(ncid, varid, varname, indx, num_time_points, dataout)
 
-    integer, intent(in) :: ncid, varid, indx
+    integer, intent(in) :: ncid, varid, indx, num_time_points
     character(len=*), intent(in) :: varname
-    real, dimension(:, :), intent(out) :: dataout
+    real, dimension(:, :, :), intent(out) :: dataout
 
     integer, dimension(:), allocatable :: count, start
     real, dimension(1) :: scalar_dataout
-    integer :: ndims, nx, ny, time, status
+    integer :: ndims, nx, ny, nt, time, status
     real :: scale_factor, offset
 
     call get_var_dims(ncid, varid, ndims, nx, ny, time)
@@ -62,25 +62,32 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
     nx = size(dataout, 1)
     ny = size(dataout, 2)
 
+    if (num_time_points > 1) then
+        call assert(num_time_points <= size(dataout, 3), &
+                    'Output array shape does not match requested data')
+    endif
+
     ! Get data, we select a specfic time-point of data to read
     if (ndims == 1) then
         start = (/ indx /)
-        count = (/ 1 /)
+        count = (/ num_time_points /)
 
         call ncheck(nf90_get_var(ncid, varid, scalar_dataout, start=start, &
                                  count=count), &
                     'Get var '//trim(varname))
-        dataout(:, :) = scalar_dataout(1)
+        dataout(:, :, :) = scalar_dataout(1)
+    elseif (ndims == 2) then
+        start = (/ 1, 1 /)
+        count = (/ nx, ny /)
+        call ncheck(nf90_get_var(ncid, varid, dataout, &
+                    start=start, count=count), 'Get var '//trim(varname))
     else
-        if (ndims == 2) then
-            start = (/ 1, 1 /)
-            count = (/ nx, ny /)
-        elseif (ndims == 3) then
+        if (ndims == 3) then
             start = (/ 1, 1, indx /)
-            count = (/ nx, ny, 1 /)
+            count = (/ nx, ny, num_time_points /)
         else
             start = (/ 1, 1, 1, indx /)
-            count = (/ nx, ny, 1, 1 /)
+            count = (/ nx, ny, 1, num_time_points /)
         end if
         call ncheck(nf90_get_var(ncid, varid, dataout, start=start, count=count), &
                     'Get var '//trim(varname))
@@ -88,11 +95,11 @@ subroutine read_data(ncid, varid, varname, indx, dataout)
 
     status = nf90_get_att(ncid, varid, "scale_factor", scale_factor)
     if (status == nf90_noerr) then
-        dataout(:, :) = dataout(:, :) * scale_factor
+        dataout = dataout * scale_factor
     endif
     status = nf90_get_att(ncid, varid, "add_offset", offset)
     if (status == nf90_noerr) then
-        dataout(:, :) = dataout(:, :) + offset
+        dataout = dataout + offset
     endif
 
     deallocate(count, start)

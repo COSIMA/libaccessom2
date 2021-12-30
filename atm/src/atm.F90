@@ -26,6 +26,7 @@ program atm
     ! Liquid (river) and solid (iceberg) runoff
     type(forcing_field_type), dimension(:), allocatable :: runoff_forcing_fields
     character(len=MAX_FILE_NAME_LEN) :: forcing_file, accessom2_config_dir
+    integer :: forcing_field_time_cache_size
     character(len=9) :: calendar
     integer, dimension(2) :: ice_shape
     integer :: i, ri, err, tmp_unit
@@ -41,13 +42,15 @@ program atm
     type(simple_timer_type) :: main_loop_timer
     type(simple_timer_type) :: extras_timer
 
-    namelist /atm_nml/ forcing_file, accessom2_config_dir
+    namelist /atm_nml/ forcing_file, accessom2_config_dir, &
+                    forcing_field_time_cache_size
 
     print *, YATM_COMMIT_HASH
 
     ! Read input namelist
     forcing_file = 'forcing.json'
     accessom2_config_dir = '../'
+    forcing_field_time_cache_size = -1
     inquire(file='atm.nml', exist=file_exists)
     call assert(file_exists, 'Input atm.nml does not exist.')
     open(newunit=tmp_unit, file='atm.nml')
@@ -84,7 +87,8 @@ program atm
     ! Initialise forcing object, this reads config and
     ! tells us how man atm-to-ice fields there are.
     call forcing_config%init(forcing_file, accessom2%logger, &
-                             num_atm_to_ice_fields)
+                             num_atm_to_ice_fields, &
+                             forcing_field_time_cache_size)
     print*, 'atm, num_atm_to_ice_fields: ', num_atm_to_ice_fields
 
     ! Initialise forcing fields, involves reading details of each from
