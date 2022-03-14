@@ -64,7 +64,7 @@ program forcing_test
 
     dimids =  (/ y_dimid, x_dimid /)
 
-    call check(nf90_def_var(ncid, forcing_fields(1)%name, &
+    call check(nf90_def_var(ncid, forcing_fields(1)%names(1), &
                NF90_REAL, dimids, varid))
 
     call check(nf90_enddef(ncid))

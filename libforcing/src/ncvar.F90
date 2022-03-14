@@ -13,6 +13,9 @@ implicit none
 
 private
 
+integer, parameter :: MAX_TIME_CACHE_SIZE = 372
+integer, parameter :: DEFAULT_TIME_CACHE_SIZE = 1
+
 type, public :: ncvar
     character(len=nf90_max_name) :: name
     character(len=1024) :: filename
@@ -20,31 +23,39 @@ type, public :: ncvar
     type(datetime) :: start_date
     integer :: nx, ny
     integer :: dt
+    integer :: units_as_seconds
     character(len=9) :: calendar
 
     integer :: idx_guess
+    integer :: cur_time_cache_size
+    integer :: total_time_cache_size
+    integer, dimension(MAX_TIME_CACHE_SIZE) :: cached_indices
 
     real, dimension(:,:), allocatable :: time_bnds
     real, dimension(:), allocatable :: times
+    real, dimension(:,:,:), allocatable :: data_cache
 contains
     procedure, pass(self), public :: init => ncvar_init
     procedure, pass(self), public :: deinit => ncvar_deinit
     procedure, pass(self), public :: refresh => ncvar_refresh
     procedure, pass(self), public :: read_data => ncvar_read_data
     procedure, pass(self) :: get_index_for_datetime
-    procedure, pass(self) :: get_start_date_and_calendar
+    procedure, pass(self) :: get_time_metadata
 endtype ncvar
 
 contains
 
 subroutine ncvar_init(self, name, filename, &
-                      expect_temporal_only, expect_spatial_only)
+                      expect_temporal_only, expect_spatial_only, &
+                      time_cache_size)
     class(ncvar), intent(inout) :: self
     character(len=*), intent(in) :: name, filename
     logical, intent(in), optional :: expect_temporal_only
     logical, intent(in), optional :: expect_spatial_only
+    integer, intent(in), optional :: time_cache_size
 
     logical :: temporal_only, spatial_only
+
 
     temporal_only = .false.
     spatial_only = .false.
@@ -54,10 +65,24 @@ subroutine ncvar_init(self, name, filename, &
     if (present(expect_spatial_only)) then
         spatial_only = expect_spatial_only
     endif
+    if (present(time_cache_size)) then
+        call assert(time_cache_size <= MAX_TIME_CACHE_SIZE, &
+                'time_cache_size exceeds maximum allowed')
+        if (time_cache_size <= 0) then
+            self%total_time_cache_size = DEFAULT_TIME_CACHE_SIZE
+        else
+            self%total_time_cache_size = time_cache_size
+        endif
+    else
+        self%total_time_cache_size = DEFAULT_TIME_CACHE_SIZE
+    endif
 
     self%name = name
     self%ncid = -1
     call self%refresh(filename, temporal_only, spatial_only)
+
+    self%cur_time_cache_size = 0
+    self%cached_indices(:) = -1
 
 end subroutine
 
@@ -120,9 +145,10 @@ subroutine ncvar_refresh(self, filename, &
     call ncheck(nf90_get_var(self%ncid, time_varid, self%times), &
                 'ncvar get_var time in: '//trim(self%filename))
 
-    self%dt = int((self%times(2) - self%times(1))*86400)
     ! Initialise start date and calendar
-    call self%get_start_date_and_calendar(time_varid, self%start_date, self%calendar)
+    call self%get_time_metadata(time_varid, self%start_date, self%calendar, &
+                                self%units_as_seconds)
+    self%dt = int((self%times(2) - self%times(1))*self%units_as_seconds)
 
     status = nf90_get_att(self%ncid, time_varid, "bounds", time_bnds_name)
     if (status == nf90_noerr) then
@@ -147,11 +173,13 @@ subroutine ncvar_refresh(self, filename, &
 
 endsubroutine
 
-subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
+!> Return the start_date, calendar and time dimenstion units
+subroutine get_time_metadata(self, time_varid, start_date, calendar, units_as_seconds)
     class(ncvar), intent(in) :: self
     integer, intent(in) :: time_varid
     type(datetime), intent(out) :: start_date
     character(len=9), intent(out) :: calendar
+    integer, intent(out) :: units_as_seconds
 
     character(len=256) :: time_str
     type(tm_struct) :: ctime
@@ -159,23 +187,28 @@ subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
 
     ! Getcalendar
     call ncheck(nf90_get_att(self%ncid, time_varid, "calendar", calendar), &
-                'get_start_date_and_calendar: nf90_get_att: '//calendar)
+                'get_time_metadata: nf90_get_att: '//calendar)
     if (trim(calendar) == 'NOLEAP') then
         calendar = 'noleap'
     endif
     call assert(trim(calendar) == 'noleap' .or. trim(calendar) == 'gregorian', &
-                'get_start_date_and_calendar: unrecognized calendar type')
+                'get_time_metadata: unrecognized calendar type')
 
     ! Get start date
     call ncheck(nf90_get_att(self%ncid, time_varid, "units", time_str), &
-                'get_start_date_and_calendar: nf90_get_att: '//time_str)
-
+                'get_time_metadata: nf90_get_att: '//time_str)
 
     ! See whether it has the expected format
     idx = index(trim(time_str), "days since")
+    time_str = replace_text(time_str, "days since ", "")
+    units_as_seconds = 86400
+    if (idx <= 0) then
+        idx = index(trim(time_str), "hours since")
+        time_str = replace_text(time_str, "hours since ", "")
+        units_as_seconds = 3600
+    endif
     call assert(idx > 0, "ncvar invalid time format")
 
-    time_str = replace_text(time_str, "days since ", "")
     ! See whether we have hours
     idx = index(time_str, ":")
     if (idx > 0) then
@@ -186,18 +219,24 @@ subroutine get_start_date_and_calendar(self, time_varid, start_date, calendar)
     call assert(rc /= 0, 'strptime in get_start_date_and_calendar failed on '//time_str)
     start_date = tm2date(ctime)
 
-endsubroutine get_start_date_and_calendar
+endsubroutine get_time_metadata
 
 !> Return the time index of a particular date.
-function get_index_for_datetime(self, target_date, from_beginning)
+function get_index_for_datetime(self, target_date, from_beginning, guess)
     class(ncvar), intent(inout) :: self
     type(datetime), intent(in) :: target_date
     logical, optional, intent(in) :: from_beginning
+    integer, optional, intent(in) :: guess
 
     integer :: i, get_index_for_datetime
-    integer :: days, seconds
+    integer :: hod, hod_before, hod_after
+    integer :: seconds, seconds_before, seconds_after
 
     type(timedelta) :: td, td_before, td_after
+
+    if (present(guess)) then
+        self%idx_guess = guess
+    endif
 
     if (present(from_beginning)) then
         if (from_beginning) then
@@ -207,15 +246,25 @@ function get_index_for_datetime(self, target_date, from_beginning)
 
     if (allocated(self%time_bnds)) then
         do i=self%idx_guess, size(self%time_bnds, 2)
-            ! Must convert to days _and_ seconds rather than just days to avoid
-            ! integer overflow.
-            days = floor(self%time_bnds(1, i))
-            seconds = nint((self%time_bnds(1, i) - days)*86400)
-            td_before = timedelta(days=days, seconds=seconds)
+            ! Must convert to hours (or days) _and_ seconds rather than just
+            ! days to avoid integer overflow.
 
-            days = floor(self%time_bnds(2, i))
-            seconds = nint((self%time_bnds(2, i) - days)*86400)
-            td_after = timedelta(days=days, seconds=seconds)
+            ! hod: hours or days
+            hod_before = floor(self%time_bnds(1, i))
+            hod_after = floor(self%time_bnds(2, i))
+
+            seconds_before = nint((self%time_bnds(1, i) - hod_before)*self%units_as_seconds)
+            seconds_after = nint((self%time_bnds(2, i) - hod_after)*self%units_as_seconds)
+
+            if (self%units_as_seconds == 3600) then
+                td_before = timedelta(hours=hod_before, seconds=seconds_before)
+                td_after = timedelta(hours=hod_after, seconds=seconds_before)
+            else
+                call assert(self%units_as_seconds == 86400, &
+                                'Unexpected period for time_bnds')
+                td_before = timedelta(days=hod_before, seconds=seconds_before)
+                td_after = timedelta(days=hod_after, seconds=seconds_before)
+            endif
 
             if (target_date >= (self%start_date + td_before) .and. &
                 target_date < (self%start_date + td_after)) then
@@ -226,9 +275,17 @@ function get_index_for_datetime(self, target_date, from_beginning)
         enddo
     else
         do i=self%idx_guess, size(self%times)
-            days = floor(self%times(i))
-            seconds = nint((self%times(i) - days)*86400)
-            td = timedelta(days=days, seconds=seconds)
+
+            hod = floor(self%times(i))
+            seconds = nint((self%times(i) - hod)*self%units_as_seconds)
+
+            if (self%units_as_seconds == 3600) then
+                td = timedelta(hours=hod, seconds=seconds)
+            else
+                call assert(self%units_as_seconds == 86400, &
+                                'Unexpected period for time_bnds')
+                td = timedelta(days=hod, seconds=seconds)
+            endif
 
             if (target_date == (self%start_date + td)) then
                 get_index_for_datetime = i
@@ -248,7 +305,40 @@ subroutine ncvar_read_data(self, indx, dataout)
     integer, intent(in) :: indx
     real, dimension(:, :), intent(inout) :: dataout
 
-    call read_data(self%ncid, self%varid, self%name, indx, dataout)
+    integer :: i, left_to_read
+
+    call assert(indx <= size(self%times), &
+                'Requested index exceeds time dimension')
+
+    if (.not. allocated(self%data_cache)) then
+        allocate(self%data_cache(size(dataout, 1), size(dataout, 2), &
+                                 self%total_time_cache_size))
+    else
+        do i=1, self%cur_time_cache_size
+            if (self%cached_indices(i) == indx) then
+                dataout(:, :) = self%data_cache(:, :, i)
+                return
+            endif
+        enddo
+    endif
+
+    ! If we made it to here then the cache has been exhausted and we
+    ! need to read more in.
+    left_to_read = size(self%times) - indx
+    if (left_to_read > self%total_time_cache_size) then
+        self%cur_time_cache_size = self%total_time_cache_size
+    else
+        self%cur_time_cache_size = left_to_read
+    endif
+
+    call read_data(self%ncid, self%varid, self%name, indx, &
+                   self%cur_time_cache_size, self%data_cache)
+
+    do i=1, self%cur_time_cache_size
+        self%cached_indices(i) = indx + i
+    enddo
+
+    dataout(:, :) = self%data_cache(:, :, 1)
 
 end subroutine ncvar_read_data
 
@@ -261,9 +351,14 @@ subroutine ncvar_deinit(self)
     if (allocated(self%times)) then
         deallocate(self%times)
     endif
+    if (allocated(self%data_cache)) then
+        deallocate(self%data_cache)
+    endif
+
     if (self%ncid /= -1) then
         call ncheck(nf90_close(self%ncid), 'ncvar closing '//trim(self%filename))
     endif
+
 
 endsubroutine ncvar_deinit
 

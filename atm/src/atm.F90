@@ -2,7 +2,7 @@ program atm
 
     use mod_oasis, only : OASIS_IN, OASIS_OUT
     use forcing_config_mod, only : forcing_config_type => forcing_config
-    use forcing_field_mod, only : forcing_field_type => forcing_field, FORCING_FIELD_DOMAIN_LAND
+    use forcing_field_mod, only : forcing_field_type => forcing_field, FORCING_FIELD_REALM_LAND
     use coupler_mod, only : coupler_type => coupler
     use error_handler, only : assert
     use ice_grid_proxy_mod, only : ice_grid_type => ice_grid_proxy
@@ -26,6 +26,7 @@ program atm
     ! Liquid (river) and solid (iceberg) runoff
     type(forcing_field_type), dimension(:), allocatable :: runoff_forcing_fields
     character(len=MAX_FILE_NAME_LEN) :: forcing_file, accessom2_config_dir
+    integer :: forcing_field_time_cache_size
     character(len=9) :: calendar
     integer, dimension(2) :: ice_shape
     integer :: i, ri, err, tmp_unit
@@ -38,14 +39,18 @@ program atm
     type(simple_timer_type) :: coupler_put_timer
     type(simple_timer_type) :: init_oasis_timer, init_model_timer
     type(simple_timer_type) :: parse_forcing_fields_timer
+    type(simple_timer_type) :: main_loop_timer
+    type(simple_timer_type) :: extras_timer
 
-    namelist /atm_nml/ forcing_file, accessom2_config_dir
+    namelist /atm_nml/ forcing_file, accessom2_config_dir, &
+                    forcing_field_time_cache_size
 
     print *, YATM_COMMIT_HASH
 
     ! Read input namelist
     forcing_file = 'forcing.json'
     accessom2_config_dir = '../'
+    forcing_field_time_cache_size = -1
     inquire(file='atm.nml', exist=file_exists)
     call assert(file_exists, 'Input atm.nml does not exist.')
     open(newunit=tmp_unit, file='atm.nml')
@@ -73,12 +78,18 @@ program atm
                                 accessom2%simple_timers_enabled())
     call parse_forcing_fields_timer%init('parse_forcing_fields', accessom2%logger, &
                                 accessom2%simple_timers_enabled())
+    call main_loop_timer%init('main_loop_timer', accessom2%logger, &
+                                accessom2%simple_timers_enabled())
+    call extras_timer%init('extras_timer', accessom2%logger, &
+                                accessom2%simple_timers_enabled())
     call init_model_timer%start()
 
     ! Initialise forcing object, this reads config and
     ! tells us how man atm-to-ice fields there are.
     call forcing_config%init(forcing_file, accessom2%logger, &
-                             num_atm_to_ice_fields)
+                             num_atm_to_ice_fields, &
+                             forcing_field_time_cache_size)
+    print*, 'atm, num_atm_to_ice_fields: ', num_atm_to_ice_fields
 
     ! Initialise forcing fields, involves reading details of each from
     ! config file and from netcdf files on disk, and allocating
@@ -120,7 +131,7 @@ program atm
     allocate(to_runoff_map(num_atm_to_ice_fields))
     ri = 1
     do i=1, num_atm_to_ice_fields
-        if (forcing_fields(i)%domain == FORCING_FIELD_DOMAIN_LAND) then
+        if (forcing_fields(i)%realm == FORCING_FIELD_REALM_LAND) then
             to_runoff_map(i) = ri
             ri = ri + 1
         else
@@ -134,7 +145,7 @@ program atm
             ri = to_runoff_map(i)
             runoff_forcing_fields(ri)%coupling_name = &
                 forcing_fields(i)%coupling_name
-            runoff_forcing_fields(ri)%domain = forcing_fields(i)%domain
+            runoff_forcing_fields(ri)%realm = forcing_fields(i)%realm
             allocate(runoff_forcing_fields(ri)%data_array(ice_shape(1), ice_shape(2)))
             call coupler%init_field(runoff_forcing_fields(ri)%coupling_name, &
                                     OASIS_OUT, &
@@ -157,9 +168,12 @@ program atm
 
     do while (.not. accessom2%run_finished())
 
+        call extras_timer%start()
         cur_runtime_in_seconds = int(accessom2%get_cur_runtime_in_seconds())
+        call extras_timer%stop()
 
         ! Send each forcing field
+        call main_loop_timer%start()
         do i=1, num_atm_to_ice_fields
             ri = to_runoff_map(i)
 
@@ -188,6 +202,9 @@ program atm
             endif
             call coupler_put_timer%stop()
         enddo
+        call main_loop_timer%stop()
+
+        call extras_timer%start()
 
         ! Block until we receive from ice. Ice will do a nonblocking send immediately
         ! after receiving the above fields. This prevents the atm from sending continuously.
@@ -203,6 +220,8 @@ program atm
         !call accessom2%logger%write(LOG_INFO, '{ "modeltime_over_walltime_hour_per_hour" : "" ',
 
         call accessom2%progress_date(dt)
+
+        call extras_timer%stop()
     enddo
 
     call field_read_timer%write_stats()
@@ -213,8 +232,14 @@ program atm
     call init_oasis_timer%write_stats()
     call init_model_timer%write_stats()
     call parse_forcing_fields_timer%write_stats()
+    call main_loop_timer%write_stats()
+    call extras_timer%write_stats()
 
     call accessom2%logger%write(LOG_INFO, 'Run complete, calling deinit')
+
+    do i=1, num_atm_to_ice_fields
+        call forcing_fields(i)%deinit()
+    enddo
 
     call coupler%deinit()
     call accessom2%deinit(finalize=.true.)

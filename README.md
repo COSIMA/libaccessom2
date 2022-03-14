@@ -82,12 +82,10 @@ cd libaccessom2
 First do build as above. Then to get some computer resources:
 
 ```{bash}
-qsub -I -P x77 -q normal -lncpus=4 -lmem=16Gb -lwalltime=3:00:00 -lstorage=gdata/ua8+gdata/qv56+gdata/hh5+gdata/ik11
-
-/g/data1b/qv56/
+qsub -I -P x77 -q normal -lncpus=4 -lmem=16Gb -lwalltime=3:00:00 -lstorage=gdata/ua8+gdata/qv56+gdata/hh5+gdata/ik11+gdata/v45+gdata/rt52
 ```
 
-The tests: `JRA55_IAF JRA55_IAF_SINGLE_FIELD JRA55_RYF JRA55_RYF_MINIMAL JRA55_v1p4_IAF` can all be run manually as follows. Replace `JRA55_IAF` with the test to be run.
+The tests: `JRA55_IAF JRA55_IAF_SINGLE_FIELD JRA55_RYF JRA55_RYF_MINIMAL JRA55_v1p4_IAF ERA5` can all be run manually as follows. Replace `JRA55_IAF` with the test to be run.
 
 ```{bash}
 export LIBACCESSOM2_ROOT=$(pwd)
