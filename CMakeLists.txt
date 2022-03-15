@@ -132,15 +132,15 @@ file(GLOB LIB_SOURCES libutil/src/*.F90)
 add_library(util ${LIB_SOURCES})
 add_dependencies(util datetime oasis3-mct)
 
-# libcouple.a library
-file(GLOB LIB_SOURCES libcouple/src/*.F90)
-add_library(couple ${LIB_SOURCES})
-add_dependencies(couple util datetime oasis3-mct)
-
 # libforcing.a library
 file(GLOB LIB_SOURCES libforcing/src/*.F90)
 add_library(forcing ${LIB_SOURCES})
 add_dependencies(forcing util jsonfortran)
+
+# libcouple.a library
+file(GLOB LIB_SOURCES libcouple/src/*.F90)
+add_library(couple ${LIB_SOURCES})
+add_dependencies(couple forcing util datetime oasis3-mct)
 
 # Join all of the above together to make libaccesom2
 # See https://stackoverflow.com/questions/37924383/combining-several-static-libraries-into-one-using-cmake
