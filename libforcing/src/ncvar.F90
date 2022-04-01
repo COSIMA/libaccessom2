@@ -249,7 +249,7 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
             ! Must convert to hours (or days) _and_ seconds rather than just
             ! days to avoid integer overflow.
 
-            ! hod: hours or days
+            ! hod stands for "hours or days"
             hod_before = floor(self%time_bnds(1, i))
             hod_after = floor(self%time_bnds(2, i))
 
@@ -258,12 +258,12 @@ function get_index_for_datetime(self, target_date, from_beginning, guess)
 
             if (self%units_as_seconds == 3600) then
                 td_before = timedelta(hours=hod_before, seconds=seconds_before)
-                td_after = timedelta(hours=hod_after, seconds=seconds_before)
+                td_after = timedelta(hours=hod_after, seconds=seconds_after)
             else
                 call assert(self%units_as_seconds == 86400, &
                                 'Unexpected period for time_bnds')
                 td_before = timedelta(days=hod_before, seconds=seconds_before)
-                td_after = timedelta(days=hod_after, seconds=seconds_before)
+                td_after = timedelta(days=hod_after, seconds=seconds_after)
             endif
 
             if (target_date >= (self%start_date + td_before) .and. &
@@ -335,7 +335,7 @@ subroutine ncvar_read_data(self, indx, dataout)
                    self%cur_time_cache_size, self%data_cache)
 
     do i=1, self%cur_time_cache_size
-        self%cached_indices(i) = indx + i
+        self%cached_indices(i) = indx + (i - 1)
     enddo
 
     dataout(:, :) = self%data_cache(:, :, 1)
