@@ -8,10 +8,10 @@
 libaccessom2 is a library that is linked into all of the ACCESS-OM2 component models, including YATM, CICE and MOM. libaccessom2 provides functionality used by all models as well as providing a interface to inter-model communication and synchronisation tasks. Using a common library reduces code duplication and provides a uniform way for all models to be integrated into ACCESS-OM2.
 
 libaccessom2 functionality includes:
-    * simplified interface to the OASIS3-MCT coupler API
-    * date handling, logging and simple performance timers
-    * configuration synchronisation between models
-    * a single configuration file for common configs (accessom2.nml)
+- simplified interface to the OASIS3-MCT coupler API
+- date handling, logging and simple performance timers
+- configuration synchronisation between models
+- a single configuration file for common configs (accessom2.nml)
 
 Further information about ACCESS-OM2 can be found in the [ACCESS-OM2 wiki](https://github.com/COSIMA/access-om2/wiki)
 
