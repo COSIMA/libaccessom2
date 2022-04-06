@@ -52,7 +52,7 @@ YATM uses two configuration files: `atm.nml`, and `forcing.json`. The latter is 
 
 A unique feature of YATM is that it does not read forcing data by iterating over records. That is, the code does not explicitly read and deliver the 1st forcing record followed by the 2nd etc. The reason for this is that when accounting for complications such as different calendar types, fields with different periods, restarts, etc. this approach can quickly become complex and is error prone. Instead YATM iterates over datetime objects. At the current date (and time) YATM finds all matching forcing fields, reads them from disk, delivers them the coupler and then incrementes current date (and time). This simplification has led to much more concise and easy to understand code.
 
-To further simplify things YATM gathers a lot of it's configuration automatically from the forcing dataset metadata. For example the calendar type and timestep information.
+To further simplify things YATM gathers a lot of its configuration automatically from the forcing dataset metadata. For example the calendar type and timestep information.
 
 ## River runoff remapping
 
@@ -72,7 +72,7 @@ This repository also includes ice and ocean stubs. These are stand-ins for the t
 How to build libaccessom2, YATM, ice\_stub and ocean\_stub on gadi (NCI):
 
 ```{bash}
-git clone https://github.com/COSIMA/libaccessom2.git
+git clone --recursive https://github.com/COSIMA/libaccessom2.git
 cd libaccessom2
 ./build_on_gadi.sh
 ```
