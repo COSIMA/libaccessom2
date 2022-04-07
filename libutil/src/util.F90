@@ -1,7 +1,7 @@
 module util_mod
 
 use netcdf
-use datetime_module, only : datetime
+use datetime_module, only : datetime, isLeapYear
 use error_handler, only : assert
 use, intrinsic :: iso_fortran_env, only : stderr=>error_unit
 
@@ -206,7 +206,11 @@ function filename_for_date(filename_template, date)
     write(month_str, "(I2.2)") month
 
     start_day = 1
-    end_day = DAYS_IN_MONTH(month)
+    if (isLeapYear(year) .and. month == 2) then
+      end_day = 29
+    else
+      end_day = DAYS_IN_MONTH(month)
+    end if
     write(start_day_str, "(I2.2)") start_day
     write(end_day_str, "(I2.2)") end_day
 
