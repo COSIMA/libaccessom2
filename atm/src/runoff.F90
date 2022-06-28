@@ -24,15 +24,15 @@ character(len=1024) :: remap_weights_file
 ! Conservatively redistribute runoff exceeding runoff_cap in specified regions.
 ! Regions specify grid points that will be checked for whether they exceed the cap;
 ! excess runoff from those grid points may be redistributed outside the specified region.
-integer, parameter :: max_caps = 4 ! maximum number of runoff cap regions (increase if want more; also make the default arrays below match)
+integer, parameter :: max_caps = 8 ! maximum number of runoff cap regions (increase if want more; also make the default arrays below match)
 
 integer :: num_runoff_caps = 1 ! number of runoff cap regions to actually use
-real, dimension(max_caps) :: runoff_caps = (/ 0.03, 0.0, 0.0, 0.0 /) ! kg/m^2/s  runoff cap applied in each region (0.0 = no cap)
+real, dimension(max_caps) :: runoff_caps = (/ 0.03, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 /) ! kg/m^2/s  runoff cap applied in each region (0.0 = no cap)
 ! runoff cap is applied to all points between or including these index limits
-integer, dimension(max_caps) :: runoff_caps_is = (/ 0, 0, 0, 0 /) ! starting i index for each runoff region (count from 1)
-integer, dimension(max_caps) :: runoff_caps_ie = (/ 1000000, -1, -1, -1 /) ! ending i index for each runoff region (count from 1)
-integer, dimension(max_caps) :: runoff_caps_js = (/ 0, 0, 0, 0 /) ! starting j index for each runoff region (count from 1)
-integer, dimension(max_caps) :: runoff_caps_je = (/ 1000000, -1, -1, -1 /) ! ending j index for each runoff region (count from 1)
+integer, dimension(max_caps) :: runoff_caps_is = (/ 0, 0, 0, 0, 0, 0, 0, 0 /) ! starting i index for each runoff region (count from 1)
+integer, dimension(max_caps) :: runoff_caps_ie = (/ 1000000, -1, -1, -1, -1, -1, -1, -1 /) ! ending i index for each runoff region (count from 1)
+integer, dimension(max_caps) :: runoff_caps_js = (/ 0, 0, 0, 0, 0, 0, 0, 0 /) ! starting j index for each runoff region (count from 1)
+integer, dimension(max_caps) :: runoff_caps_je = (/ 1000000, -1, -1, -1, -1, -1, -1, -1 /) ! ending j index for each runoff region (count from 1)
 
 namelist /runoff_nml/ &
     check_runoff_conservation, &
