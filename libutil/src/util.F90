@@ -97,7 +97,7 @@ subroutine read_data(ncid, varid, varname, indx, num_time_points, dataout)
     offset = 0.0
     status1 = nf90_get_att(ncid, varid, "scale_factor", scale_factor)
     status2 = nf90_get_att(ncid, varid, "add_offset", offset)
-    if (status1 == nf90_noerr .and. status2 == nf90_noerr) then
+    if (status1 == nf90_noerr .or. status2 == nf90_noerr) then
         dataout = dataout*scale_factor + offset
     endif
 
