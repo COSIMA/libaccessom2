@@ -148,7 +148,7 @@ subroutine ncvar_refresh(self, filename, &
     ! Initialise start date and calendar
     call self%get_time_metadata(time_varid, self%start_date, self%calendar, &
                                 self%units_as_seconds)
-    self%dt = int((self%times(2) - self%times(1))*self%units_as_seconds)
+    self%dt = nint((self%times(2) - self%times(1))*self%units_as_seconds)
 
     status = nf90_get_att(self%ncid, time_varid, "bounds", time_bnds_name)
     if (status == nf90_noerr) then
