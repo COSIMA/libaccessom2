@@ -331,11 +331,11 @@ subroutine ncvar_read_data(self, indx, dataout)
         self%cur_time_cache_size = left_to_read
     endif
 
-    call assert(self%cur_time_cache_size > 0, 'Cache is empty')
-
-    call read_data(self%ncid, self%varid, self%name, indx, &
-                   self%cur_time_cache_size, self%data_cache)
-
+    if (self%cur_time_cache_size > 0) then
+        call read_data(self%ncid, self%varid, self%name, indx, &
+                       self%cur_time_cache_size, self%data_cache)
+    endif
+     
     do i=1, self%cur_time_cache_size
         self%cached_indices(i) = indx + (i - 1)
     enddo
