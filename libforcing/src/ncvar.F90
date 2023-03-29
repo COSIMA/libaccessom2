@@ -148,7 +148,7 @@ subroutine ncvar_refresh(self, filename, &
     ! Initialise start date and calendar
     call self%get_time_metadata(time_varid, self%start_date, self%calendar, &
                                 self%units_as_seconds)
-    self%dt = int((self%times(2) - self%times(1))*self%units_as_seconds)
+    self%dt = nint((self%times(2) - self%times(1))*self%units_as_seconds)
 
     status = nf90_get_att(self%ncid, time_varid, "bounds", time_bnds_name)
     if (status == nf90_noerr) then
@@ -331,9 +331,11 @@ subroutine ncvar_read_data(self, indx, dataout)
         self%cur_time_cache_size = left_to_read
     endif
 
-    call read_data(self%ncid, self%varid, self%name, indx, &
-                   self%cur_time_cache_size, self%data_cache)
-
+    if (self%cur_time_cache_size > 0) then
+        call read_data(self%ncid, self%varid, self%name, indx, &
+                       self%cur_time_cache_size, self%data_cache)
+    endif
+     
     do i=1, self%cur_time_cache_size
         self%cached_indices(i) = indx + (i - 1)
     enddo
