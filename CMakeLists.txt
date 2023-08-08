@@ -108,24 +108,22 @@ set_property(TARGET mpeu PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/Linux/lib/libm
 set_property(TARGET psmile.MPI1 PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/Linux/lib/libpsmile.MPI1.a)
 set_property(TARGET scrip PROPERTY IMPORTED_LOCATION ${BINARY_DIR}/Linux/lib/libscrip.a)
 
-# Get the current working branch
-execute_process(
-  COMMAND git config --get remote.origin.url
-  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-  OUTPUT_VARIABLE GIT_URL
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
 # Get the latest abbreviated commit hash of the working branch
 execute_process(
   COMMAND git rev-parse HEAD
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
   OUTPUT_VARIABLE GIT_COMMIT_HASH
+  RESULT_VARIABLE STATUS
   OUTPUT_STRIP_TRAILING_WHITESPACE
+  ERROR_QUIET
 )
 
+if(STATUS AND NOT STATUS EQUAL 0)
+  set(GIT_COMMIT_HASH "NA")
+  message(STATUS "Not in a git repo, GIT_COMMIT_HASH set to ${GIT_COMMIT_HASH}")
+endif()
+
 add_definitions("-DGIT_COMMIT_HASH='${GIT_COMMIT_HASH}'")
-add_definitions("-DGIT_URL='${GIT_URL}'")
 
 # libutil.a library
 file(GLOB LIB_SOURCES libutil/src/*.F90)
