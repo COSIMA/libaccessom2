@@ -119,8 +119,8 @@ execute_process(
 )
 
 if(STATUS AND NOT STATUS EQUAL 0)
-  set(GIT_COMMIT_HASH "NA")
-  message(STATUS "Not in a git repo, GIT_COMMIT_HASH set to ${GIT_COMMIT_HASH}")
+  set(GIT_COMMIT_HASH "")
+  message(STATUS "Not in a git repo, GIT_COMMIT_HASH set to '${GIT_COMMIT_HASH}'")
 endif()
 
 add_definitions("-DGIT_COMMIT_HASH='${GIT_COMMIT_HASH}'")
